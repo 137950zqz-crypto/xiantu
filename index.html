@@ -18,14 +18,15 @@
   --ink:#4a3c2e; --ink-2:#665442; --primary:#8b5e34; --primary-bg:#e6c8a0;
   --success:#5f7f55; --success-bg:#e2ebd6; --danger:#a85032; --danger-bg:#f5d8cb;
   --muted:#947c62; --line:#e0ccb2; --card:#fff8ec; --bg:#f8f3e8;
-  --radius:12px;
+  --radius:12px; --crystal:#7d5bb8;
 }
-*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",system-ui,-apple-system;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",system-ui,-apple-system,"PingFang SC",sans-serif;}
 html{font-size:15px}
-body{background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
-button{font-size:15px;border:none;border-radius:8px;cursor:pointer;background:var(--primary-bg);color:#4b331c;padding:10px 14px;min-height:44px;transition:transform .15s,opacity .15s}
+body{background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+button{font-size:15px;border:none;border-radius:8px;cursor:pointer;background:var(--primary-bg);color:#4b331c;padding:10px 14px;min-height:44px;transition:transform .15s,opacity .15s;font-family:inherit}
 button:active{transform:scale(.97)}
-input,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 10px;font-size:15px;background:#fffdf8;color:var(--ink);min-height:44px}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 10px;font-size:15px;background:#fffdf8;color:var(--ink);min-height:44px;font-family:inherit}
 textarea{min-height:80px;resize:vertical}
 label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
 .btn{background:var(--primary-bg);color:#4b331c}
@@ -33,22 +34,31 @@ label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
 .btn-danger{background:var(--danger-bg);color:var(--danger)}
 .btn-gray{background:#e2dfd8;color:#555}
 .btn-ghost{background:transparent;color:var(--muted)}
+.btn-warn{background:#f0e6d2;color:var(--ink-2)}
+/* ===== 统一图标 ===== */
+.crystal-ic{font-style:normal;color:var(--crystal);font-weight:bold}
+.aura-ic{font-style:normal;color:var(--success);font-weight:bold}
 /* ===== 布局 ===== */
 .app{display:flex;min-height:100vh}
 .sidebar{display:none}
-.content{flex:1;padding:64px 16px 90px;max-width:760px;margin:0 auto;width:100%}
+.content{flex:1;padding:64px 16px 96px;max-width:760px;margin:0 auto;width:100%}
 /* ===== 全局同步状态条（固定顶部）===== */
 .sync-bar{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line)}
 .sync-bar.sync-ok{background:var(--success-bg);color:var(--success)}
 .sync-bar.sync-syncing{background:#f0e9d2;color:var(--primary)}
 .sync-bar.sync-err{background:var(--danger-bg);color:var(--danger)}
 .sync-bar.sync-off{background:#ece8df;color:var(--muted)}
-.sync-msg{opacity:.85}
 /* ===== 导航 ===== */
 .mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:#fffaf1;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
-.mobile-nav button{flex:1;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:8px 2px;min-height:52px}
+.mobile-nav button{flex:1;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:8px 2px;min-height:56px}
 .mobile-nav button .nav-ic{font-size:20px;line-height:1}
 .mobile-nav button.active{color:var(--primary);font-weight:bold}
+/* ===== 更多菜单 ===== */
+.more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.more-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 6px;text-align:center;cursor:pointer}
+.more-item:active{background:#fff1dc}
+.more-item .ic{font-size:24px;margin-bottom:6px}
+.more-item .t{font-size:13px;color:var(--ink-2)}
 /* ===== 首页 Dashboard ===== */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .hd h1{font-size:26px;color:var(--primary);letter-spacing:4px}
@@ -66,26 +76,32 @@ label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
 .asset{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center}
 .asset .n{font-size:22px;font-weight:bold;color:var(--primary)}
 .asset .t{font-size:13px;color:var(--muted)}
-.continue-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center;margin-top:16px;cursor:pointer}
+.continue-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center;margin-top:16px;cursor:pointer;min-height:52px}
 .continue-card:active{background:#fff1dc}
 .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.menu-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 12px;text-align:center;cursor:pointer}
+.menu-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 8px;text-align:center;cursor:pointer;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .menu-item:active{background:#fff1dc}
-.menu-item .ic{font-size:26px;margin-bottom:6px}
+.menu-item .ic{font-size:26px}
 .menu-item .mt{font-size:15px;color:var(--ink-2)}
 /* ===== 页面通用 ===== */
 .page{display:none}
 .page.active{display:block}
-.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
 .page-head h2{font-size:22px;color:var(--primary)}
 .top-op{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+/* ===== 标签筛选栏 ===== */
+.tagbar{display:flex;gap:8px;overflow-x:auto;padding:8px 0 10px;margin-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tagbar::-webkit-scrollbar{display:none}
+.tag-chip{flex-shrink:0;padding:7px 14px;border-radius:99px;background:#efe7da;color:var(--ink-2);font-size:13px;cursor:pointer;border:1px solid transparent;min-height:36px;display:inline-flex;align-items:center;gap:4px}
+.tag-chip.on{background:var(--primary-bg);border-color:var(--primary);color:#4b331c;font-weight:bold}
+.tag-chip i{font-style:normal;font-size:11px;background:rgba(0,0,0,.08);border-radius:99px;padding:0 6px}
 /* ===== 每日十课 · 实体书架（竖书，可折叠展开） ===== */
 .shelf{background:linear-gradient(180deg,#efe0c2,#e0c89e);border:10px solid #8a5a2b;border-radius:14px;padding:14px;margin-bottom:18px;box-shadow:0 6px 16px rgba(74,55,31,.18)}
 .shelf-head{display:flex;justify-content:space-between;align-items:center;padding:0 4px 10px}
-.shelf-head-info{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.shelf-head-info{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;cursor:pointer;flex:1}
 .shelf-date{font-size:15px;font-weight:bold;color:#5d3d1c}
 .shelf-count{font-size:12px;color:#8a6a3f}
-.shelf-fold-btn{background:rgba(255,255,255,.55);color:#5d3d1c;min-height:34px;padding:4px 10px;border-radius:6px;font-size:13px}
+.shelf-fold-btn{background:rgba(255,255,255,.55);color:#5d3d1c;min-height:38px;padding:4px 12px;border-radius:6px;font-size:13px}
 .shelf-body{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;min-height:178px;padding:4px 2px}
 .shelf-body.folded{display:none}
 /* 书 */
@@ -98,8 +114,11 @@ label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
 .book-progress{width:5px;height:62px;background:rgba(0,0,0,.22);border-radius:3px;overflow:hidden;position:relative}
 .book-progress-fill{position:absolute;bottom:0;left:0;right:0;background:#eaf3dc;transition:height .3s}
 .book-count{font-size:11px;font-weight:bold;color:#fff}
+.book-lock{position:absolute;top:-8px;right:-8px;font-size:15px;background:#fffdf8;border-radius:50%;padding:3px;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}
 /* 书完成度达到100%时变浅玉色 */
 .book.done .book-spine{background:linear-gradient(90deg,#7f9a6f,#a5bf94 22%,#b9d1a6 46%,#a5bf94 80%,#6f8a5f)}
+/* 锁定书变灰 */
+.book.locked .book-spine{filter:grayscale(.3) brightness(.96)}
 /* 展开的书 */
 .book.expanded{width:100%;flex-basis:100%;cursor:default}
 .book.expanded:active{transform:none}
@@ -114,51 +133,72 @@ label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
 .book.expanded .book-open{display:block;background:#fffaf0;border:1px solid #d4bc9c;border-top:none;border-radius:0 0 9px 9px;padding:12px}
 /* 展开区头部 */
 .open-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.open-title{font-size:15px;font-weight:bold;color:var(--ink)}
+.open-title{font-size:15px;font-weight:bold;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .open-meta{font-size:11px;color:var(--muted);margin-top:2px}
-.open-ops{display:flex;gap:8px}
+.open-ops{display:flex;gap:8px;flex-wrap:wrap}
 .open-progress{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .open-progress .pbar{flex:1;margin:0}
 .open-pnum{font-size:12px;color:var(--muted);white-space:nowrap}
+.lock-pill{font-size:12px;color:#fff;background:var(--danger);border-radius:99px;padding:2px 10px}
+.unlock-pill{font-size:12px;color:var(--success);background:var(--success-bg);border-radius:99px;padding:2px 10px}
+.today-pill{font-size:12px;color:#4b331c;background:var(--primary-bg);border-radius:99px;padding:2px 10px}
+.lock-notice{background:var(--danger-bg);color:var(--danger);font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:10px;line-height:1.6}
 /* 空状态 */
 .empty{padding:40px 20px;text-align:center;color:var(--muted)}
 .empty .ic{font-size:40px;margin-bottom:10px}
 .empty .t{font-size:15px;color:var(--ink-2);margin-bottom:6px}
 .empty .d{font-size:13px;line-height:1.6}
-/* ===== 任务列表 ===== */
+/* ===== 任务列表（严格完成交互） ===== */
 .task-list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-.task{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px dashed var(--line);cursor:pointer;min-height:56px}
-.task:last-child{border-bottom:none}
-.task:active{background:#fff1dc}
-.task .num{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:#efdfc8;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold}
-.task.done .num{background:var(--success-bg);color:var(--success)}
-.task .tt{flex:1;font-size:15px;min-width:0;word-break:break-word}
-.task .tt.empty{color:#b0a08a}
-.task.done .tt{text-decoration:line-through;opacity:.7;color:var(--muted)}
-.task .st{flex-shrink:0;font-size:12px;display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;white-space:nowrap}
-.task .st.todo{color:var(--muted);background:#efebe3}
-.task .st.done{color:var(--success);background:var(--success-bg)}
-.task .st.delay{color:var(--danger);background:var(--danger-bg)}
+.task-row{border-bottom:1px dashed var(--line)}
+.task-row:last-child{border-bottom:none}
+.task-main{display:flex;align-items:center;gap:10px;padding:12px 12px;cursor:pointer;min-height:60px}
+.task-main:active{background:#fff1dc}
+.task-main .num{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:#efdfc8;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold}
+.task-row.done .num{background:var(--success-bg);color:var(--success)}
+.task-main .tt{flex:1;font-size:15px;min-width:0;word-break:break-word}
+.task-main .tt.empty{color:#b0a08a}
+.task-row.done .tt{text-decoration:line-through;opacity:.7;color:var(--muted)}
+.task-tags{display:flex;flex-wrap:wrap;gap:4px}
+.task-tag{font-size:11px;padding:2px 8px;border-radius:99px;background:#efe7da;color:var(--muted);white-space:nowrap}
+.todo-btn{flex-shrink:0;min-width:108px;min-height:44px;border-radius:99px;font-size:14px;font-weight:bold;display:inline-flex;align-items:center;justify-content:center;gap:4px;border:2px solid var(--primary);background:#fff;color:var(--primary);cursor:pointer;padding:6px 12px}
+.todo-btn:active{transform:scale(.95)}
+.todo-btn.done{background:var(--success-bg);color:var(--success);border-color:var(--success);font-weight:normal;cursor:pointer}
+.todo-btn.locked{opacity:.65}
+.task-detail{display:none;padding:10px 12px 12px;background:#fff6e6}
+.task-detail.open{display:block}
+.task-detail .td-row{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.6}
+.task-detail .td-ops{display:flex;gap:8px;flex-wrap:wrap}
+/* ===== 行迹 ===== */
+.trail-head-num{font-size:14px;color:var(--muted);font-weight:normal}
+.trail-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.trail-stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px;font-size:13px;color:var(--ink-2)}
+.trail-stat b{color:var(--primary)}
+.trail-card .li-t{font-size:15px}
+.trail-no{color:var(--primary);font-weight:bold;margin-right:6px}
 /* ===== 行囊 ===== */
 .bag-toolbar{display:flex;gap:8px;margin-bottom:12px}
-.bag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:12px}
-.item-slot{background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:10px;position:relative;text-align:center;cursor:pointer;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px}
+.item-slot{background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:10px;position:relative;text-align:center;cursor:pointer;min-height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .item-slot:active{background:#fff1dc}
-.item-thumb{width:100%;aspect-ratio:1;border-radius:8px;background:#f0e6d2;display:flex;align-items:center;justify-content:center;font-size:30px;color:#b8a386;overflow:hidden;margin-bottom:6px}
+.item-thumb{width:100%;aspect-ratio:1;border-radius:8px;background:#f0e6d2;display:flex;align-items:center;justify-content:center;font-size:34px;color:#b8a386;overflow:hidden;margin-bottom:6px}
 .item-thumb img{width:100%;height:100%;object-fit:cover}
 .item-badge{position:absolute;top:6px;right:6px;background:var(--primary);color:#fff;border-radius:99px;min-width:22px;height:22px;padding:0 6px;font-size:12px;display:flex;align-items:center;justify-content:center}
 .item-cb{position:absolute;top:8px;left:8px;width:22px;height:22px;display:none}
 .bag-selecting .item-cb{display:block}
 .bag-selecting .item-slot{padding-top:34px}
 .bag-selecting .item-slot.sel{border-color:var(--primary);background:#f7ead6}
-.selection-bar{position:fixed;bottom:64px;left:0;right:0;z-index:55;background:#fffaf1;border-top:1px solid var(--line);padding:10px 14px;display:none;align-items:center;gap:10px}
+.selection-bar{position:fixed;bottom:70px;left:0;right:0;z-index:55;background:#fffaf1;border-top:1px solid var(--line);padding:10px 14px;display:none;align-items:center;gap:10px}
 .selection-bar.show{display:flex}
-/* ===== 列表卡片（功法/卷宗/悟道）===== */
+/* 图片上传 */
+.img-prev{width:84px;height:84px;border-radius:10px;background:#f0e6d2;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:40px;color:#b8a386;margin:8px 0 2px;border:1px dashed var(--line)}
+.img-prev img{width:100%;height:100%;object-fit:cover}
+/* ===== 列表卡片（功法/卷宗/悟道/行迹）===== */
 .li-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;min-height:60px;display:flex;gap:12px;align-items:flex-start}
 .li-card:active{background:#fff1dc}
 .li-card .li-ic{width:40px;height:40px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0e6d2}
 .li-card .li-main{flex:1;min-width:0}
-.li-card .li-t{font-size:16px;color:var(--ink);font-weight:bold;display:flex;align-items:center;gap:8px}
+.li-card .li-t{font-size:16px;color:var(--ink);font-weight:bold;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .li-card .li-sum{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .li-card .li-meta{font-size:11px;color:var(--muted);margin-top:4px}
 .li-card .li-arrow{color:var(--muted);flex-shrink:0;align-self:center}
@@ -187,14 +227,20 @@ details.adv label{color:var(--muted)}
 /* ===== 弹窗 ===== */
 .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:80}
 .modal-mask.show{display:flex}
-.modal-box{width:100%;max-width:520px;background:#fff9ef;border:2px solid #c9a87c;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;max-height:82vh}
+.modal-box{width:100%;max-width:520px;background:#fff9ef;border:2px solid #c9a87c;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;max-height:86vh}
 .modal-head{padding:14px 18px;border-bottom:1px solid var(--line);font-size:18px;color:var(--primary);font-weight:bold}
-.modal-body{padding:16px 18px;overflow-y:auto}
+.modal-body{padding:16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .modal-footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}
 .note-area{max-height:42vh;overflow-y:auto;word-break:break-word;padding-right:6px;line-height:1.7;color:var(--ink-2)}
+/* 标签编辑 */
+.tag-edit-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;min-height:40px}
+.tag-edit-wrap .tag-chip.on b{font-style:normal;color:var(--danger);margin-left:4px;font-weight:bold}
+.tag-common{margin-top:6px}
+.tag-common .tc-title{font-size:12px;color:var(--muted);margin-bottom:6px}
+.tag-common .tc-list{display:flex;flex-wrap:wrap;gap:6px}
 /* ===== 完成动画 ===== */
 @keyframes pop{0%{transform:scale(.6);opacity:.4}100%{transform:scale(1);opacity:1}}
-.task.done .num{animation:pop .25s ease}
+.task-row.done .num{animation:pop .25s ease}
 /* ===== 桌面端 ===== */
 @media(min-width:900px){
   .sidebar{display:flex;flex-direction:column;width:210px;background:#fdf6e8;border-right:1px solid var(--line);position:fixed;top:0;bottom:0;left:0;padding:20px 12px;z-index:50}
@@ -209,11 +255,10 @@ details.adv label{color:var(--muted)}
   .sidebar{display:none}
 }
 /* ===== 万宝阁 / 晶核系统 ===== */
-.crystal-ic{font-style:normal;color:#7d5bb8}
 .shop-balance{background:linear-gradient(135deg,#fff8ec,#f3e5cf);border:2px solid #d4bc9c;border-radius:16px;padding:16px 18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.shop-bal .k{font-size:12px;color:var(--muted)}
-.shop-bal .v{font-size:22px;font-weight:bold;color:var(--primary)}
-.shop-bal .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.shop-balance .k{font-size:12px;color:var(--muted)}
+.shop-balance .v{font-size:22px;font-weight:bold;color:var(--primary)}
+.shop-balance .sub{font-size:12px;color:var(--muted);margin-top:2px}
 .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .shop-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;position:relative;cursor:pointer;display:flex;flex-direction:column;gap:4px}
 .shop-card:active{background:#fff1dc}
@@ -221,11 +266,10 @@ details.adv label{color:var(--muted)}
 .shop-ic img{width:100%;height:100%;object-fit:cover}
 .shop-name{font-size:15px;font-weight:bold;color:var(--ink);word-break:break-word}
 .shop-desc{font-size:12px;color:var(--muted);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
-.shop-price{font-size:14px;font-weight:bold;color:#7d5bb8;margin-top:auto}
+.shop-price{font-size:14px;font-weight:bold;color:var(--crystal);margin-top:auto}
 .shop-price small{font-size:11px;color:var(--muted);font-weight:normal}
 .shop-op{position:absolute;top:6px;right:6px;font-size:15px;color:var(--muted);padding:4px 8px;cursor:pointer}
 .crystal-toast-undo{background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:bold;pointer-events:auto}
-.aura-num{color:var(--success);font-weight:bold}
 </style>
 </head>
 <body>
@@ -240,11 +284,12 @@ details.adv label{color:var(--muted)}
     <nav id="sideNav">
       <button data-page="home" class="active">🏠 首页</button>
       <button data-page="bag">🎒 物品行囊</button>
+      <button data-page="dailyLesson">⛩ 每日十课</button>
+      <button data-page="trail">🧭 行迹</button>
+      <button data-page="shop">🏯 万宝阁</button>
       <button data-page="passiveSkill">☯ 被动功法</button>
-      <button data-page="dailyLesson">📜 每日十课</button>
       <button data-page="failRecord">⚠ 走火入魔录</button>
       <button data-page="insight">☼ 悟道札记</button>
-      <button data-page="shop">💎 万宝阁</button>
       <button data-page="setting">⚙ 修行设置</button>
     </nav>
   </aside>
@@ -255,7 +300,6 @@ details.adv label{color:var(--muted)}
     <!-- 首页 Dashboard -->
     <div class="page active" id="page-home">
       <div class="hd"><h1>仙途行囊</h1></div>
-      <!-- 今日修行 -->
       <div class="today-card">
         <div class="today-top">
           <span class="today-title">今日修行</span>
@@ -265,38 +309,36 @@ details.adv label{color:var(--muted)}
         <div class="pbar"><div class="pfill" id="todayFill" style="width:0%"></div></div>
         <div id="todayPercent" style="font-size:12px;color:var(--muted)"></div>
       </div>
-      <!-- 晶核 / 灵气 -->
       <div class="shop-balance" style="margin-bottom:16px;cursor:pointer" onclick="openPage('shop')">
         <div>
-          <div class="k">晶核 <span class="crystal-ic">◆</span></div>
-          <div class="v"><span class="crystal-ic">◆</span> <span id="dashCrystal">0</span></div>
+          <div class="k">晶核 <span class="crystal-ic">◇</span></div>
+          <div class="v"><span class="crystal-ic">◇</span> <span id="dashCrystal">0</span></div>
           <div class="sub">完成任务获得 · 可购买 / 吸收</div>
         </div>
         <div style="text-align:right">
-          <div class="k">灵气 ✦</div>
+          <div class="k">灵气 <span class="aura-ic">✦</span></div>
           <div class="v aura-num" id="dashAura">0</div>
           <div class="sub">吸收晶核转化</div>
         </div>
       </div>
-      <!-- 长期资产 -->
       <div class="section-title">长期资产</div>
       <div class="asset-grid">
-        <div class="asset"><span class="t">行囊</span><span class="n" id="dashBag">0</span></div>
-        <div class="asset"><span class="t">功法</span><span class="n" id="dashPassive">0</span></div>
-        <div class="asset"><span class="t">卷宗</span><span class="n" id="dashFail">0</span></div>
-        <div class="asset"><span class="t">悟道</span><span class="n" id="dashInsight">0</span></div>
+        <div class="asset"><span class="t">🎒 行囊</span><span class="n" id="dashBag">0</span></div>
+        <div class="asset"><span class="t">☯ 功法</span><span class="n" id="dashPassive">0</span></div>
+        <div class="asset"><span class="t">🧭 行迹</span><span class="n" id="dashTrail">0</span></div>
+        <div class="asset"><span class="t">☼ 悟道</span><span class="n" id="dashInsight">0</span></div>
       </div>
-      <!-- 继续修行 -->
       <div class="continue-card" id="continueCard" onclick="continuePractice()">
         <span id="continueTxt">继续修行</span>
         <span style="color:var(--primary)">→</span>
       </div>
-      <!-- 模块入口 -->
       <div class="section-title">修行入口</div>
       <div class="menu-grid">
         <div class="menu-item" onclick="openPage('bag')"><div class="ic">🎒</div><div class="mt">物品行囊</div></div>
+        <div class="menu-item" onclick="openPage('dailyLesson')"><div class="ic">⛩</div><div class="mt">每日十课</div></div>
+        <div class="menu-item" onclick="openPage('trail')"><div class="ic">🧭</div><div class="mt">行迹</div></div>
+        <div class="menu-item" onclick="openPage('shop')"><div class="ic">🏯</div><div class="mt">万宝阁</div></div>
         <div class="menu-item" onclick="openPage('passiveSkill')"><div class="ic">☯</div><div class="mt">被动功法</div></div>
-        <div class="menu-item" onclick="openPage('dailyLesson')"><div class="ic">📜</div><div class="mt">每日十课</div></div>
         <div class="menu-item" onclick="openPage('failRecord')"><div class="ic">⚠</div><div class="mt">走火入魔录</div></div>
         <div class="menu-item" onclick="openPage('insight')"><div class="ic">☼</div><div class="mt">悟道札记</div></div>
         <div class="menu-item" onclick="openPage('setting')"><div class="ic">⚙</div><div class="mt">修行设置</div></div>
@@ -311,7 +353,6 @@ details.adv label{color:var(--muted)}
       </div>
       <div class="bag-grid" id="bagContainer"></div>
       <div class="empty" id="bagEmpty" style="display:none"><div class="ic">🎒</div><div class="t">行囊空空</div><div class="d">收集第一件属于你的物品</div></div>
-      <!-- 选择模式操作栏 -->
       <div class="selection-bar" id="selectionBar">
         <button class="btn-gray" onclick="toggleBagSelectAll()">全选</button>
         <span style="flex:1;font-size:13px;color:var(--muted)" id="selCount">已选 0 项</span>
@@ -331,8 +372,19 @@ details.adv label{color:var(--muted)}
     <!-- 每日十课 -->
     <div class="page" id="page-dailyLesson">
       <div class="page-head"><h2>每日十课</h2><button class="btn-primary" onclick="addNewScroll()">＋ 新增卷轴</button></div>
+      <div class="tagbar" id="dailyTagBar"></div>
       <div id="dailyShelfContainer"></div>
       <div class="empty" id="dailyEmpty" style="display:none"><div class="ic">📜</div><div class="t">书架空空</div><div class="d">新增一卷，开始今日修行</div></div>
+    </div>
+
+    <!-- 行迹 -->
+    <div class="page" id="page-trail">
+      <div class="page-head"><h2>🧭 行迹</h2><span class="trail-head-num">累计 <b id="trailTotal">0</b> 次修行</span></div>
+      <div class="trail-summary" id="trailSummary"></div>
+      <input id="trailSearchInput" placeholder="搜索已完成的任务…" oninput="trailSearch=this.value;renderTrail()" style="margin-bottom:6px">
+      <div class="tagbar" id="trailTagBar"></div>
+      <div id="trailContainer"></div>
+      <div class="empty" id="trailEmpty" style="display:none"><div class="ic">🧭</div><div class="t">行迹空空</div><div class="d">完成每日十课的任务，将在此留下永久记录</div></div>
     </div>
 
     <!-- 走火入魔录 -->
@@ -357,7 +409,7 @@ details.adv label{color:var(--muted)}
       <div class="shop-balance">
         <div>
           <div class="k">晶核余额</div>
-          <div class="v"><span class="crystal-ic">◆</span> <span id="shopCrystal">0</span></div>
+          <div class="v"><span class="crystal-ic">◇</span> <span id="shopCrystal">0</span></div>
           <div class="sub">每日十课完成任务获得 · 可购买或吸收</div>
         </div>
         <div style="text-align:right">
@@ -371,13 +423,12 @@ details.adv label{color:var(--muted)}
         <button class="btn-ghost" onclick="openLedger()">流水</button>
       </div>
       <div class="shop-grid" id="shopContainer"></div>
-      <div class="empty" id="shopEmpty" style="display:none"><div class="ic">💎</div><div class="t">万宝阁空空</div><div class="d">新增一件值得用晶核兑换的商品</div></div>
+      <div class="empty" id="shopEmpty" style="display:none"><div class="ic">🏯</div><div class="t">万宝阁空空</div><div class="d">新增一件值得用晶核兑换的商品</div></div>
     </div>
 
     <!-- 设置 -->
     <div class="page" id="page-setting">
       <div class="page-head"><h2>修行设置</h2></div>
-      <!-- 数据同步（普通用户） -->
       <div class="set-section">
         <h4>☁ 数据同步</h4>
         <div class="set-row"><span class="k">同步状态</span><span class="v" id="setSyncStatus">未连接云端</span></div>
@@ -387,7 +438,6 @@ details.adv label{color:var(--muted)}
           <button class="btn-gray" onclick="logoutAll()">退出登录</button>
         </div>
       </div>
-      <!-- 数据管理 -->
       <div class="set-section">
         <h4>数据管理</h4>
         <div class="top-op" style="margin-bottom:0">
@@ -395,7 +445,6 @@ details.adv label{color:var(--muted)}
           <button class="btn-gray" onclick="importAllData()">导入数据</button>
         </div>
       </div>
-      <!-- 高级设置 -->
       <details class="adv">
         <summary>高级设置</summary>
         <div class="adv-body">
@@ -455,10 +504,9 @@ details.adv label{color:var(--muted)}
 <div class="mobile-nav" id="mobileNav">
   <button data-page="home" class="active"><span class="nav-ic">🏠</span>首页</button>
   <button data-page="bag"><span class="nav-ic">🎒</span>行囊</button>
-  <button data-page="dailyLesson"><span class="nav-ic">📜</span>十课</button>
-  <button data-page="insight"><span class="nav-ic">☼</span>悟道</button>
-  <button data-page="shop"><span class="nav-ic">💎</span>万宝阁</button>
-  <button data-page="setting"><span class="nav-ic">⚙</span>设置</button>
+  <button data-page="dailyLesson"><span class="nav-ic">⛩</span>十课</button>
+  <button data-page="trail"><span class="nav-ic">🧭</span>行迹</button>
+  <button onclick="openMoreMenu()"><span class="nav-ic">⋯</span>更多</button>
 </div>
 
 <!-- 通用弹窗 -->
@@ -486,6 +534,17 @@ function fmtDate(d){return d.getFullYear()+"·"+pad(d.getMonth()+1)+"·"+pad(d.g
 function fmtTime(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
 function fmtDateTime(d){return fmtDate(d)+" "+fmtTime(d)}
 function getTodayStr(){const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+/* 卷轴编号展示：2026-09-02 → "9.2" */
+function fmtShortDate(date){const p=String(date||"").split("-");if(p.length<3)return date||"";return Number(p[1])+"."+Number(p[2])}
+function fmtScrollNo(date,no){return fmtShortDate(date)+" 卷"+no}
+
+/* ================= 统一图标 ================= */
+const IC={
+  home:"🏠", bag:"🎒", lesson:"⛩", trail:"🧭", scroll:"📜", shop:"🏯",
+  passive:"☯", fail:"⚠", insight:"☼", setting:"⚙", crystal:"◇", aura:"✦",
+  lock:"🔒", unlock:"🔓", done:"✓", todo:"○", sync:"☁", item:"📦", more:"⋯"
+};
 
 /* ================= Toast（统一） ================= */
 function toast(msg, type){
@@ -503,7 +562,7 @@ function toast(msg, type){
 /* ================= 统一确认弹窗 ================= */
 function showConfirm(title, text, danger, onOk){
   showModal(title,
-    `<div style="font-size:14px;color:var(--ink-2);line-height:1.7">${text}</div>`,
+    `<div style="font-size:14px;color:var(--ink-2);line-height:1.8">${text}</div>`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button>
      <button class="${danger?'btn-danger':'btn-primary'}" id="confirmOkBtn">确定${danger?'删除':''}</button>`);
   document.getElementById("confirmOkBtn").onclick = ()=>{closeAllModal();onOk();};
@@ -514,19 +573,23 @@ const STORAGE_KEY_BAG="xiantu_bag_data", STORAGE_KEY_PASSIVE="xiantu_passive",
       STORAGE_KEY_DAILY="xiantu_daily_scroll", STORAGE_KEY_FAIL="xiantu_fail",
       STORAGE_KEY_INSIGHT="xiantu_insight", STORAGE_KEY_NOTION="xiantu_notion_config",
       STORAGE_KEY_FB="xiantu_firebase_config", CLOUD_CFG_KEY="xiantu_cloud_config_v1", CLOUD_META_KEY="xiantu_cloud_meta_v1",
-      STORAGE_KEY_CRYSTAL="xiantu_crystal", STORAGE_KEY_AURA="xiantu_aura", STORAGE_KEY_SHOP="xiantu_shop_items", STORAGE_KEY_LEDGER="xiantu_ledger";
+      STORAGE_KEY_CRYSTAL="xiantu_crystal", STORAGE_KEY_AURA="xiantu_aura", STORAGE_KEY_SHOP="xiantu_shop_items", STORAGE_KEY_LEDGER="xiantu_ledger",
+      STORAGE_KEY_TRAIL="xiantu_trail";
 
 /* ================= 数据层 ================= */
 function getBagData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_BAG))||[]}catch(e){return []}}
 function saveBag(a){localStorage.setItem(STORAGE_KEY_BAG,JSON.stringify(a));fbAutoUpload("bag");cloudQueueSync();}
 function getPassive(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_PASSIVE))||[]}catch(e){return []}}
 function savePassive(a){localStorage.setItem(STORAGE_KEY_PASSIVE,JSON.stringify(a));fbAutoUpload("passive");cloudQueueSync();}
-function getDailyScrolls(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_DAILY))||[]}catch(e){return []}}
+function getDailyScrolls(){try{const d=JSON.parse(localStorage.getItem(STORAGE_KEY_DAILY))||[];if(d.length>1){const order=new Map(d.map((s,i)=>[s,i]));d.sort((a,b)=>{if(a.date!==b.date)return a.date<b.date?1:-1;return order.get(a)-order.get(b)});}return d}catch(e){return []}}
 function saveDailyScrolls(a){localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify(a));fbAutoUpload("daily");cloudQueueSync();}
 function getFail(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_FAIL))||[]}catch(e){return []}}
 function saveFail(a){localStorage.setItem(STORAGE_KEY_FAIL,JSON.stringify(a));fbAutoUpload("fail");cloudQueueSync();}
 function getInsight(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_INSIGHT))||[]}catch(e){return []}}
 function saveInsight(a){localStorage.setItem(STORAGE_KEY_INSIGHT,JSON.stringify(a));fbAutoUpload("insight");cloudQueueSync();}
+/* 行迹（永久完成记录） */
+function getTrail(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_TRAIL))||[]}catch(e){return []}}
+function saveTrail(a){localStorage.setItem(STORAGE_KEY_TRAIL,JSON.stringify(a));fbAutoUpload("trail");cloudQueueSync();}
 /* 晶核 / 灵气 / 万宝阁 */
 function getCrystal(){const v=parseInt(localStorage.getItem(STORAGE_KEY_CRYSTAL),10);return isNaN(v)?0:v}
 function setCrystal(n){n=Math.max(0,Math.floor(n||0));localStorage.setItem(STORAGE_KEY_CRYSTAL,String(n));fbAutoUpload("crystal");cloudQueueSync();}
@@ -536,6 +599,21 @@ function getShopItems(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_S
 function saveShopItems(a){localStorage.setItem(STORAGE_KEY_SHOP,JSON.stringify(a));fbAutoUpload("shop");cloudQueueSync();}
 function getLedger(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_LEDGER))||[]}catch(e){return []}}
 function addLedger(entry){const l=getLedger();l.unshift(Object.assign({ts:fmtDateTime(new Date())},entry||{}));localStorage.setItem(STORAGE_KEY_LEDGER,JSON.stringify(l.slice(0,300)));}
+
+/* 数据迁移：为旧数据补齐 id / tags / unlocked */
+function normalizeDaily(){
+  const list=getDailyScrolls();let changed=false;
+  list.forEach(s=>{
+    if(!s.id){s.id=uid();changed=true}
+    if(s.unlocked===undefined){s.unlocked=false;changed=true}
+    if(!Array.isArray(s.tasks)){s.tasks=[];changed=true}
+    s.tasks.forEach(t=>{
+      if(t.id===undefined){t.id=uid();changed=true}
+      if(!Array.isArray(t.tags)){t.tags=[];changed=true}
+    });
+  });
+  if(changed)saveDailyScrolls(list);
+}
 
 /* 默认数据 */
 function initDefaultData(){
@@ -557,19 +635,15 @@ function initDefaultData(){
   }
   if(!localStorage.getItem(STORAGE_KEY_DAILY)){
     const now=new Date();
+    const mk=()=>({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[]});
     localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify([{
-      date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),
+      id:uid(),date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,
       tasks:[
-        {title:"月度算钱",completed:false,completeTime:"",delayDays:0},
-        {title:"交医保",completed:false,completeTime:"",delayDays:0},
-        {title:"滚珠香水",completed:false,completeTime:"",delayDays:0},
-        {title:"完成油画",completed:false,completeTime:"",delayDays:0},
-        {title:"",completed:false,completeTime:"",delayDays:0},
-        {title:"",completed:false,completeTime:"",delayDays:0},
-        {title:"",completed:false,completeTime:"",delayDays:0},
-        {title:"",completed:false,completeTime:"",delayDays:0},
-        {title:"",completed:false,completeTime:"",delayDays:0},
-        {title:"",completed:false,completeTime:"",delayDays:0}
+        Object.assign(mk(),{title:"月度算钱",tags:["理财","长期"]}),
+        Object.assign(mk(),{title:"交医保",tags:["理财","健康"]}),
+        Object.assign(mk(),{title:"滚珠香水",tags:["生活"]}),
+        Object.assign(mk(),{title:"完成油画",tags:["创作","长期"]}),
+        mk(),mk(),mk(),mk(),mk(),mk()
       ]
     }]));
   }
@@ -582,6 +656,7 @@ function initDefaultData(){
   if(!localStorage.getItem(STORAGE_KEY_CRYSTAL)){localStorage.setItem(STORAGE_KEY_CRYSTAL,"0")}
   if(!localStorage.getItem(STORAGE_KEY_AURA)){localStorage.setItem(STORAGE_KEY_AURA,"0")}
   if(!localStorage.getItem(STORAGE_KEY_LEDGER)){localStorage.setItem(STORAGE_KEY_LEDGER,"[]")}
+  if(!localStorage.getItem(STORAGE_KEY_TRAIL)){localStorage.setItem(STORAGE_KEY_TRAIL,"[]")}
   if(!localStorage.getItem(STORAGE_KEY_SHOP)){
     localStorage.setItem(STORAGE_KEY_SHOP,JSON.stringify([
       {id:1,name:"☕ 咖啡",desc:"奖励自己一杯咖啡",price:20,icon:"☕",type:"实物"},
@@ -596,7 +671,9 @@ function initDefaultData(){
 let currentPage="home";
 function openPage(p){
   document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
-  document.getElementById("page-"+p).classList.add("active");
+  const el=document.getElementById("page-"+p);
+  if(!el)return;
+  el.classList.add("active");
   currentPage=p;
   document.querySelectorAll("#sideNav button,.mobile-nav button").forEach(b=>{
     b.classList.toggle("active", b.dataset.page===p);
@@ -605,6 +682,7 @@ function openPage(p){
   if(p==="bag") renderBag();
   if(p==="passiveSkill") renderPassive();
   if(p==="dailyLesson") renderDailyShelf();
+  if(p==="trail") renderTrail();
   if(p==="failRecord") renderFail();
   if(p==="insight") renderInsight();
   if(p==="shop") renderShop();
@@ -612,8 +690,20 @@ function openPage(p){
   window.scrollTo(0,0);
 }
 document.querySelectorAll("#sideNav button,.mobile-nav button").forEach(b=>{
-  b.addEventListener("click",()=>openPage(b.dataset.page));
+  b.addEventListener("click",()=>{if(b.dataset.page)openPage(b.dataset.page)});
 });
+
+/* ================= 更多菜单（手机端） ================= */
+const moreItems=[
+  {p:"shop",ic:"🏯",t:"万宝阁"},{p:"passiveSkill",ic:"☯",t:"被动功法"},
+  {p:"failRecord",ic:"⚠",t:"走火入魔录"},{p:"insight",ic:"☼",t:"悟道札记"},
+  {p:"setting",ic:"⚙",t:"设置"}
+];
+function openMoreMenu(){
+  showModal("更多",
+    `<div class="more-grid">${moreItems.map(x=>`<div class="more-item" onclick="closeAllModal();openPage('${x.p}')"><div class="ic">${x.ic}</div><div class="t">${x.t}</div></div>`).join("")}</div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">关闭</button>`);
+}
 
 /* ================= 弹窗 ================= */
 function showModal(head,body,footer){
@@ -631,7 +721,7 @@ let tsx=0;
 document.addEventListener("touchstart",e=>tsx=e.touches[0].clientX);
 document.addEventListener("touchend",e=>{if(e.changedTouches[0].clientX-tsx>80)closeAllModal()});
 
-/* ================= 首页 Dashboard（P1-4） ================= */
+/* ================= 首页 Dashboard ================= */
 function getTodayStats(){
   const list=getDailyScrolls();
   const today=getTodayStr();
@@ -646,13 +736,12 @@ function renderHome(){
   document.getElementById("todayNum").innerHTML = st.done + " <small>/ "+st.total+" 课</small>";
   document.getElementById("todayFill").style.width = st.percent+"%";
   document.getElementById("todayPercent").innerText = st.vol>0? (`${st.vol} 卷 · ${st.percent}% 完成`) : "今日尚未修行";
-  document.getElementById("dashBag").innerText=getBagData().length;
-  document.getElementById("dashPassive").innerText=getPassive().length;
-  document.getElementById("dashFail").innerText=getFail().length;
-  document.getElementById("dashInsight").innerText=getInsight().length;
-  const hc=document.getElementById("dashCrystal");if(hc)hc.innerText=getCrystal();
-  const ha=document.getElementById("dashAura");if(ha)ha.innerText=getAura();
-  // 继续修行：找最后一个未完成的卷
+  document.getElementById("dashBag").textContent=getBagData().length;
+  document.getElementById("dashPassive").textContent=getPassive().length;
+  document.getElementById("dashTrail").textContent=getTrail().length;
+  document.getElementById("dashInsight").textContent=getInsight().length;
+  const hc=document.getElementById("dashCrystal");if(hc)hc.textContent=getCrystal();
+  const ha=document.getElementById("dashAura");if(ha)ha.textContent=getAura();
   const list=getDailyScrolls();
   let target=null;
   for(let i=list.length-1;i>=0;i--){
@@ -661,7 +750,7 @@ function renderHome(){
   const cont=document.getElementById("continueTxt");
   if(target!==null){
     const idxInDay=getDayScrollIndex(target);
-    cont.innerText=`继续修行 [${list[target].date} · 第 ${idxInDay} 卷 →]`;
+    cont.innerText=`继续修行 [${fmtScrollNo(list[target].date,idxInDay)} →]`;
   }else{
     cont.innerText = list.length? "今日已全部完成，新增一卷 →" : "开始今日修行 →";
   }
@@ -675,68 +764,79 @@ function continuePractice(){
   openPage("dailyLesson");
 }
 
-/* ================= 每日十课 · 实体书架（竖书，可折叠展开） ================= */
-let currentScrollIndex=-1;            // 当前展开的卷轴索引，-1 表示全部收起
-let lastLongPress=0;             // 长按标记，防止长按后误触点击
-const shelfFoldState={};              // 日期格折叠状态: date -> true/false
-function toggleShelfFold(date){shelfFoldState[date]=!shelfFoldState[date];renderDailyShelf()}
+/* ================= 每日十课 · 卷轴书架 ================= */
+let currentScrollIndex=-1;            // 当前展开的卷轴索引
+let lastLongPress=0;
+const taskOpen={};                    // 任务详情展开: "si-ti" -> bool
+let dailyTagFilter="";                // 每日十课标签筛选
+
+/* 卷轴是否封卷：非今日且未解封 */
+function isScrollLocked(s){return s && s.date!==getTodayStr() && !s.unlocked}
+/* 当日第几卷（同日期按数组顺序计数） */
 function getDayScrollIndex(idx){
   const list=getDailyScrolls();
+  if(idx<0||idx>=list.length)return 1;
   let n=0;
   for(let i=0;i<=idx;i++){ if(list[i].date===list[idx].date) n++; }
   return n;
 }
+function getScrollNoById(scrollId){
+  const list=getDailyScrolls();const idx=list.findIndex(s=>s.id===scrollId);
+  return idx>=0?getDayScrollIndex(idx):1;
+}
+
+/* 全站标签集合 */
+function collectAllTags(){
+  const set=new Set();
+  getDailyScrolls().forEach(s=>(s.tasks||[]).forEach(t=>(t.tags||[]).forEach(x=>{if(x)set.add(x)})));
+  getTrail().forEach(e=>(e.tags||[]).forEach(x=>{if(x)set.add(x)}));
+  return Array.from(set).sort();
+}
+function renderDailyTagBar(){
+  const bar=document.getElementById("dailyTagBar");if(!bar)return;
+  const all=collectAllTags();
+  let h=`<span class="tag-chip ${!dailyTagFilter?'on':''}" data-tg="" onclick="setDailyTagFilter('')">全部</span>`;
+  all.forEach(tg=>{h+=`<span class="tag-chip ${dailyTagFilter===tg?'on':''}" data-tg="${esc(tg)}" onclick="setDailyTagFilter('${esc(tg)}')">${esc(tg)}</span>`});
+  bar.innerHTML=h;
+}
+function setDailyTagFilter(tg){dailyTagFilter=tg;renderDailyTagBar();renderDailyShelf()}
+
 function renderDailyShelf(){
   const list=getDailyScrolls();
   const wrap=document.getElementById("dailyShelfContainer");
   wrap.innerHTML="";
   document.getElementById("dailyEmpty").style.display = list.length?"none":"block";
-  // 按日期分组（新的在前）
-  const groups=[];
-  list.forEach((s,i)=>{const g=groups.find(x=>x.date===s.date);if(g)g.items.push({s,i});else groups.push({date:s.date,items:[{s,i}]})});
-  groups.sort((a,b)=>a.date<b.date?1:-1);
-  groups.forEach(g=>{
-    const shelf=document.createElement("div");shelf.className="shelf";
-    const isToday=g.date===getTodayStr();
-    let doneSum=0,totalSum=0;
-    g.items.forEach(({s})=>{s.tasks.forEach(t=>{totalSum++;if(t.completed)doneSum++})});
-    // 日期格头部（可折叠整格）
-    const head=document.createElement("div");head.className="shelf-head";
-    head.innerHTML=`<div class="shelf-head-info" onclick="toggleShelfFold('${g.date}')">
-        <span class="shelf-date">${esc(g.date)}${isToday?' · 今日修行':''}</span>
-        <span class="shelf-count">${g.items.length} 卷 · ${doneSum}/${totalSum}</span>
+  renderDailyTagBar();
+  if(!list.length)return;
+  const shelf=document.createElement("div");shelf.className="shelf";
+  const body=document.createElement("div");body.className="shelf-body";
+  list.forEach((s,i)=>{
+    const book=document.createElement("div");
+    const isExpanded=(i===currentScrollIndex);
+    const done=s.tasks.filter(t=>t.completed).length;
+    const total=s.tasks.length||10;
+    const pct=total?Math.round(done/total*100):0;
+    const n=getDayScrollIndex(i);
+    const lock=isScrollLocked(s);
+    const isToday=s.date===getTodayStr();
+    book.className="book"+(isExpanded?" expanded":"")+(done===total&&total>0?" done":"")+(lock?" locked":"")+(isToday?" today":"");
+    book.dataset.idx=i;
+    book.innerHTML=`<div class="book-spine">
+        <div class="book-date">${esc(fmtShortDate(s.date))}</div>
+        <div class="book-vol">卷${n}</div>
+        ${lock?`<div class="book-lock">🔒</div>`:""}
+        <div class="book-progress"><div class="book-progress-fill" style="height:${pct}%"></div></div>
+        <div class="book-count">${done}/${total}</div>
       </div>
-      <button class="shelf-fold-btn" onclick="toggleShelfFold('${g.date}')">${shelfFoldState[g.date]?"▸":"▾"}</button>`;
-    shelf.appendChild(head);
-    // 书架槽：竖着放书
-    const body=document.createElement("div");body.className="shelf-body"+(shelfFoldState[g.date]?" folded":"");
-    g.items.forEach(({s,i})=>{
-      const book=document.createElement("div");
-      const isExpanded=(i===currentScrollIndex);
-      const done=s.tasks.filter(t=>t.completed).length;
-      const total=s.tasks.length||10;
-      const pct=total?Math.round(done/total*100):0;
-      const dm=s.date.split("-");const dateLabel=Number(dm[1])+"·"+Number(dm[2]);
-      const n=getDayScrollIndex(i);
-      book.className="book"+(isExpanded?" expanded":"")+(done===total&&total>0?" done":"");
-      book.dataset.idx=i;
-      book.innerHTML=`<div class="book-spine">
-          <div class="book-date">${esc(dateLabel)}</div>
-          <div class="book-vol">卷${n}</div>
-          <div class="book-progress"><div class="book-progress-fill" style="height:${pct}%"></div></div>
-          <div class="book-count">${done}/${total}</div>
-        </div>
-        <div class="book-open"></div>`;
-      book.addEventListener("click",e=>{
-        if(e.target.closest(".book-open")||e.target.closest("button"))return;
-        toggleScrollExpand(i);
-      });
-      body.appendChild(book);
+      <div class="book-open"></div>`;
+    book.addEventListener("click",e=>{
+      if(e.target.closest(".book-open")||e.target.closest("button"))return;
+      toggleScrollExpand(i);
     });
-    shelf.appendChild(body);
-    wrap.appendChild(shelf);
+    body.appendChild(book);
   });
-  // 若有展开的卷，填充其任务列表
+  shelf.appendChild(body);
+  wrap.appendChild(shelf);
   if(currentScrollIndex>=0) renderScrollOpen(currentScrollIndex);
 }
 /* 点击书：展开/折叠 */
@@ -744,83 +844,150 @@ function toggleScrollExpand(idx){
   currentScrollIndex = (currentScrollIndex===idx)? -1 : idx;
   renderDailyShelf();
 }
+/* 解封卷轴（二次确认） */
+function unlockScroll(idx){
+  const list=getDailyScrolls();if(!list[idx])return;
+  showConfirm("🔓 解封卷轴",
+    "是否解封此卷轴？<br><b>切忌自我欺骗</b>，确认解封后方可修改。",false,()=>{
+    const l2=getDailyScrolls();l2[idx].unlocked=true;l2[idx].updatedAt=fmtDateTime(new Date());
+    saveDailyScrolls(l2);renderDailyShelf();toast("🔓 已解封，可修改");
+  });
+}
+/* 重新封印（二次确认）：解封后的过期卷可再封起 */
+function resealScroll(idx){
+  const list=getDailyScrolls();const s=list[idx];
+  if(!s)return;
+  if(s.date===getTodayStr()){toast("今日卷轴将在 00:00 自动封卷","warn");return}
+  if(isScrollLocked(s))return;
+  showConfirm("🔒 重新封印","确定重新封印此卷轴？<br>封印后将恢复锁定状态，仅可查看历史内容，解封后方可修改。",true,()=>{
+    const l2=getDailyScrolls();l2[idx].unlocked=false;l2[idx].updatedAt=fmtDateTime(new Date());
+    saveDailyScrolls(l2);renderDailyShelf();toast("🔒 已重新封印");
+  });
+}
 /* 展开书：填充任务列表 */
 function renderScrollOpen(idx){
-  const s=getDailyScrolls()[idx];
+  const list=getDailyScrolls();const s=list[idx];
   const bookEl=document.querySelector(`.book[data-idx="${idx}"]`);
   const openEl=bookEl&&bookEl.querySelector(".book-open");
   if(!s||!openEl)return;
   const n=getDayScrollIndex(idx);
   const done=s.tasks.filter(t=>t.completed).length;
   const total=s.tasks.length;
+  const lock=isScrollLocked(s);
+  const isToday=s.date===getTodayStr();
+  const statePill = lock?`<span class="lock-pill">🔒 已封卷</span>`:(isToday?`<span class="today-pill">今日修行</span>`:`<span class="unlock-pill">🔓 已解封</span>`);
   openEl.innerHTML=`
     <div class="open-head">
       <div>
-        <div class="open-title">${esc(s.date)} · 第 ${n} 卷</div>
+        <div class="open-title">${esc(fmtScrollNo(s.date,n))} ${statePill}</div>
         <div class="open-meta">创建 ${esc(s.createdAt||"--")} · 修改 ${esc(s.updatedAt||"--")}</div>
       </div>
       <div class="open-ops">
         <button class="btn-gray" onclick="toggleScrollExpand(${idx})">收起</button>
+        ${lock?`<button class="btn-primary" onclick="unlockScroll(${idx})">🔓 解封</button>`:""}
+        ${(!lock&&!isToday)?`<button class="btn-gray" onclick="resealScroll(${idx})">🔒 重新封印</button>`:""}
         <button class="btn-danger" onclick="delScroll(${idx})">删除本卷</button>
       </div>
     </div>
+    ${lock?`<div class="lock-notice">🔒 该卷轴已封卷，仅可查看历史内容。解封后可恢复编辑与修行。</div>`:""}
     <div class="open-progress">
       <div class="pbar"><div class="pfill" style="width:${total?done/total*100:0}%"></div></div>
       <span class="open-pnum">${done}/${total} 课</span>
     </div>
     <div class="task-list"></div>`;
-  renderTaskList(s, openEl.querySelector(".task-list"));
+  renderTaskList(s, openEl.querySelector(".task-list"), idx);
 }
-function renderTaskList(s, wrap){
+
+/* 任务列表：严格「待修行」完成交互 */
+function renderTaskList(s, wrap, si){
   wrap.innerHTML="";
+  const lock=isScrollLocked(s);
   s.tasks.forEach((t,i)=>{
+    if(dailyTagFilter && !(t.tags||[]).includes(dailyTagFilter))return;
     const div=document.createElement("div");
-    div.className="task"+(t.completed?" done":"");
-    let st="";
-    if(t.completed){st=`<span class="st done">✓ ${esc(t.completeTime||"--")} 完成</span>`}
-    else if(t.delayDays>0){st=`<span class="st delay">↻ 已延迟 ${t.delayDays} 天</span>`}
-    else{st=`<span class="st todo">待修行</span>`}
-    div.innerHTML=`<div class="num">${i+1}</div>
-      <div class="tt ${t.title?'':'empty'}">${esc(t.title||"（点击添加）")}</div>
-      ${st}`;
-    div.addEventListener("click",e=>{if(Date.now()-lastLongPress<700){e.preventDefault();return}e.stopPropagation();toggleTask(i)});
-    div.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();openEditTask(i)});
-    (function(el,j){let lt=null;el.addEventListener("touchstart",()=>{lt=setTimeout(()=>{lt=null;lastLongPress=Date.now();openEditTask(j)},500)});el.addEventListener("touchend",e=>{if(lt)clearTimeout(lt);lt=null;if(Date.now()-lastLongPress<700)e.preventDefault()});el.addEventListener("touchmove",()=>{if(lt)clearTimeout(lt);lt=null})})(div,i);
+    div.className="task-row"+(t.completed?" done":"");
+    const key=si+"-"+i;
+    const open=!!taskOpen[key];
+    const tags=(t.tags||[]).filter(Boolean);
+    const tagsHtml=tags.length?`<div class="task-tags">${tags.map(x=>`<span class="task-tag">${esc(x)}</span>`).join("")}</div>`:"";
+    const btnHtml = t.completed
+      ? `<span class="todo-btn done" onclick="event.stopPropagation();toggleTaskOpen('${key}')">✓ ${esc(t.completeTime||"")}</span>`
+      : `<button class="todo-btn${lock?' locked':''}" onclick="event.stopPropagation();doCompleteTask(${si},${i})">${lock?"🔒 ":""}○ 待修行</button>`;
+    const opsHtml = lock ? "" : `
+      <button class="btn-gray" onclick="openEditTask(${si},${i})">✎ 编辑</button>
+      ${t.completed?`<button class="btn-warn" onclick="cancelCompletion(${si},${i})">↺ 取消完成</button>`:""}
+      ${s.tasks.length>1?`<button class="btn-danger" onclick="delTaskInScroll(${si},${i})">✕ 删除</button>`:""}`;
+    div.innerHTML=`
+      <div class="task-main" onclick="event.stopPropagation();toggleTaskOpen('${key}')">
+        <div class="num">${i+1}</div>
+        <div class="tt ${t.title?'':'empty'}">${esc(t.title||"（空任务，点击填写）")}</div>
+        ${tagsHtml}
+        ${btnHtml}
+      </div>
+      <div class="task-detail ${open?'open':''}" onclick="event.stopPropagation()">
+        <div class="td-row">${t.completed?("✓ 完成时间："+esc(t.completeTime||"--")):"○ 待修行中"}</div>
+        <div class="td-row">🏷 标签：${tags.length?tagsHtml:"无"}</div>
+        ${lock?`<div class="td-row">🔒 已封卷，仅可查看</div>`:""}
+        <div class="td-ops">${opsHtml}</div>
+      </div>`;
+    (function(el,j){let lt=null;
+      el.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();if(!lock)openEditTask(si,j)});
+      el.addEventListener("touchstart",()=>{lt=setTimeout(()=>{lt=null;lastLongPress=Date.now();if(!lock)openEditTask(si,j)},500)});
+      el.addEventListener("touchend",e=>{if(lt){clearTimeout(lt);lt=null;if(Date.now()-lastLongPress<700)e.preventDefault()}});
+      el.addEventListener("touchmove",()=>{if(lt){clearTimeout(lt);lt=null}});
+    })(div,i);
     wrap.appendChild(div);
   });
 }
-/* 点整行：完成/取消；无标题时直接编辑 */
-/* 完成 → 晶核 +1（浮窗可撤回）；取消完成 → 晶核 -1 */
-function toggleTask(i){
-  const list=getDailyScrolls();
-  const t=list[currentScrollIndex].tasks[i];
-  if(!t.title.trim()){openEditTask(i);return}
-  const wasDone=t.completed;
-  t.completed=!t.completed;
-  if(t.completed){const n=new Date();t.completeTime=fmtTime(n)}else{t.completeTime=""}
-  list[currentScrollIndex].updatedAt=fmtDateTime(new Date());
-  saveDailyScrolls(list);renderScrollOpen(currentScrollIndex);
-  if(t.completed){
-    // 完成：晶核 +1，浮窗支持 2 秒内撤回
-    setCrystal(getCrystal()+1);
-    addLedger({type:"earn",amount:1,note:"完成一课"});
-    showCrystalToast(1, function(){
-      const l2=getDailyScrolls();
-      const tt=l2[currentScrollIndex]&&l2[currentScrollIndex].tasks[i];
-      if(!tt||!tt.completed)return;
-      tt.completed=false;tt.completeTime="";
-      l2[currentScrollIndex].updatedAt=fmtDateTime(new Date());
-      saveDailyScrolls(l2);renderScrollOpen(currentScrollIndex);
-      setCrystal(getCrystal()-1);
-      addLedger({type:"refund",amount:-1,note:"撤回完成"});
-      toast("已撤回，晶核 -1","warn");
-    });
-  }else if(wasDone){
-    // 主动取消已完成任务：扣回晶核
+function toggleTaskOpen(key){
+  taskOpen[key]=!taskOpen[key];
+  if(currentScrollIndex>=0)renderScrollOpen(currentScrollIndex);
+}
+
+/* ================= 完成 / 取消完成（严格交互） ================= */
+function doCompleteTask(si,ti){
+  const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
+  if(!s||!t)return;
+  if(isScrollLocked(s)){toast("🔒 该卷轴已封卷，解封后方可修行","warn");return}
+  if(t.completed)return;
+  if(!t.title.trim()){toast("先为任务填写名称","warn");return}
+  t.completed=true;t.completeTime=fmtTime(new Date());
+  s.updatedAt=fmtDateTime(new Date());
+  const order=getTrail().filter(x=>x.scrollId===s.id).length+1;   // 本卷实际完成顺序
+  saveDailyScrolls(list);
+  addToTrail(s,t,order);
+  setCrystal(getCrystal()+1);
+  addLedger({type:"earn",amount:1,note:"完成一课 · "+(t.title||"")});
+  renderScrollOpen(si);renderHome();
+  showCrystalToast(1, function(){
+    const l2=getDailyScrolls();const s2=l2[si];const t2=s2&&s2.tasks[ti];
+    if(!t2||!t2.completed)return;
+    t2.completed=false;t2.completeTime="";
+    s2.updatedAt=fmtDateTime(new Date());
+    saveDailyScrolls(l2);
+    removeTrailForTask(s2.id,t2.id);
     setCrystal(getCrystal()-1);
-    addLedger({type:"refund",amount:-1,note:"取消完成"});
-    toast("已取消完成，晶核 -1","warn");
-  }
+    addLedger({type:"refund",amount:-1,note:"撤回完成"});
+    renderScrollOpen(si);renderHome();toast("已撤回，晶核 -1","warn");
+  });
+}
+/* 主动取消完成（详情中按钮，二次确认） */
+function cancelCompletion(si,ti){
+  const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
+  if(!s||!t||!t.completed)return;
+  if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能修改","warn");return}
+  closeAllModal();
+  showConfirm("↺ 取消完成","确定取消「"+esc(t.title||"该任务")+"」的完成状态？<br>晶核 -1，并移除对应的行迹记录。",true,()=>{
+    const l2=getDailyScrolls();const s2=l2[si];const t2=s2&&s2.tasks[ti];
+    if(!t2||!t2.completed)return;
+    t2.completed=false;t2.completeTime="";
+    s2.updatedAt=fmtDateTime(new Date());
+    saveDailyScrolls(l2);
+    removeTrailForTask(s2.id,t2.id);
+    setCrystal(getCrystal()-1);
+    addLedger({type:"refund",amount:-1,note:"取消完成 · "+(t2.title||"")});
+    renderScrollOpen(si);renderHome();toast("已取消完成，晶核 -1","warn");
+  });
 }
 /* 晶核获得浮窗（半透明、2 秒、带撤回按钮） */
 function showCrystalToast(amount, onUndo){
@@ -830,56 +997,179 @@ function showCrystalToast(amount, onUndo){
   t.className="toast show";
   t.style.background="linear-gradient(135deg,#7d5bb8,#5f3f9e)";
   t.style.minWidth="200px";
-  t.innerHTML='<span class="crystal-ic" style="color:#fff">◆</span> 获得晶核 ×'+amount+' <span class="crystal-toast-undo" id="crystalUndoBtn">撤回</span>';
+  t.innerHTML='<span class="crystal-ic" style="color:#fff">◇</span> 获得晶核 ×'+amount+' <span class="crystal-toast-undo" id="crystalUndoBtn">撤回</span>';
   w.appendChild(t);
   let undid=false;
   const btn=t.querySelector("#crystalUndoBtn");
   if(btn){btn.onclick=function(e){e.stopPropagation();if(undid)return;undid=true;clearTimeout(timer);t.remove();if(onUndo)onUndo();}}
   const timer=setTimeout(function(){if(!undid){t.classList.remove("show");setTimeout(function(){t.remove()},300)}},2000);
 }
-/* 长按/右键打开编辑 */
-function openEditTask(i){
-  const t=getDailyScrolls()[currentScrollIndex].tasks[i];
-  showModal(`第 ${i+1} 课`,
-    `<label>任务名称</label><input id="taskEditInput" value="${esc(t.title)}">
-     <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="taskClearCk" style="width:auto;min-height:auto"> 清空完成状态</label>`,
+
+/* ================= 行迹（永久完成记录） ================= */
+function addToTrail(scroll, task, order){
+  const t=getTrail();
+  t.push({
+    id:uid(),
+    scrollId:scroll.id,
+    taskId:task.id,
+    scrollDate:scroll.date,
+    scrollNo:getScrollNoById(scroll.id),
+    order:order,
+    title:(task.title||"").trim(),
+    tags:(task.tags||[]).slice(),
+    completeTime:task.completeTime||"",
+    completeDateTime:fmtDateTime(new Date())
+  });
+  saveTrail(t);
+}
+/* 移除某任务的完成记录并重排行迹编号（保持连续） */
+function removeTrailForTask(scrollId, taskId){
+  const t=getTrail().filter(x=>!(x.scrollId===scrollId&&x.taskId===taskId));
+  if(t.length===getTrail().length)return;
+  // 重排该卷剩余条目的 order
+  let k=1;
+  t.filter(x=>x.scrollId===scrollId).sort((a,b)=>a.order-b.order).forEach(x=>{x.order=k++});
+  saveTrail(t);
+}
+function nextTrailOrder(scrollId){return getTrail().filter(x=>x.scrollId===scrollId).length+1}
+
+let trailTagFilter="", trailSearch="";
+function renderTrail(){
+  const list=getTrail();
+  const total=document.getElementById("trailTotal");if(total)total.textContent=list.length;
+  // 统计标签
+  const cnt={};list.forEach(e=>(e.tags||[]).forEach(x=>{if(x)cnt[x]=(cnt[x]||0)+1}));
+  const sum=document.getElementById("trailSummary");
+  if(sum){
+    const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    sum.innerHTML=`<span class="trail-stat">🧭 累计完成 <b>${list.length}</b> 次</span>`+
+      (top.length?`<span class="trail-stat">🔥 高频标签 ${top.map(x=>`${esc(x[0])}×${x[1]}`).join("、")}</span>`:"");
+  }
+  const all=collectAllTags();
+  const bar=document.getElementById("trailTagBar");
+  if(bar){
+    let h=`<span class="tag-chip ${!trailTagFilter?'on':''}" onclick="setTrailTagFilter('')">全部</span>`;
+    all.forEach(tg=>{h+=`<span class="tag-chip ${trailTagFilter===tg?'on':''}" onclick="setTrailTagFilter('${esc(tg)}')">${esc(tg)}<i>${cnt[tg]||0}</i></span>`});
+    bar.innerHTML=h;
+  }
+  const wrap=document.getElementById("trailContainer");
+  wrap.innerHTML="";
+  document.getElementById("trailEmpty").style.display=list.length?"none":"block";
+  let filtered=list.slice().sort((a,b)=>String(b.completeDateTime||"").localeCompare(String(a.completeDateTime||"")));
+  if(trailTagFilter)filtered=filtered.filter(e=>(e.tags||[]).includes(trailTagFilter));
+  const q=(trailSearch||"").trim().toLowerCase();
+  if(q)filtered=filtered.filter(e=>(e.title||"").toLowerCase().includes(q));
+  filtered.forEach(e=>{
+    const d=document.createElement("div");d.className="li-card trail-card";
+    const tags=(e.tags||[]).filter(Boolean);
+    d.innerHTML=`<div class="li-ic">🧭</div>
+      <div class="li-main">
+        <div class="li-t"><span class="trail-no">${esc(fmtScrollNo(e.scrollDate,e.scrollNo))}-${esc(String(e.order))}</span>${esc(e.title||"无名")}</div>
+        ${tags.length?`<div class="task-tags" style="margin-top:4px">${tags.map(x=>`<span class="task-tag">${esc(x)}</span>`).join("")}</div>`:""}
+        <div class="li-meta">✓ 完成于 ${esc(e.completeTime||"--")} · ${esc(e.scrollDate||"")}</div>
+      </div>
+      <div class="li-arrow">›</div>`;
+    d.addEventListener("click",()=>openTrailDetail(e));
+    wrap.appendChild(d);
+  });
+}
+function setTrailTagFilter(tg){trailTagFilter=tg;renderTrail()}
+function openTrailDetail(e){
+  const tags=(e.tags||[]).filter(Boolean);
+  showModal(`行迹 · ${esc(fmtScrollNo(e.scrollDate,e.scrollNo))}-${esc(String(e.order))}`,
+    `<div class="note-area">
+      <div style="font-size:16px;font-weight:bold;color:var(--ink);margin-bottom:8px">${esc(e.title||"无名")}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:2">
+        原卷轴：${esc(e.scrollDate||"--")} · 第 ${esc(String(e.scrollNo))} 卷<br>
+        完成顺序：本卷第 ${esc(String(e.order))} 个完成<br>
+        完成时间：✓ ${esc(e.completeDateTime||"--")}
+      </div>
+      ${tags.length?`<div style="margin-top:8px"><div class="task-tags">${tags.map(x=>`<span class="task-tag">${esc(x)}</span>`).join("")}</div></div>`:""}
+    </div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">关闭</button>`);
+}
+
+/* ================= 任务编辑（含标签） ================= */
+let editingTags=[];
+function addEditingTag(tg){
+  tg=String(tg||"").replace(/[#"'"<>]/g,"").trim();
+  if(!tg)return;
+  if(!editingTags.includes(tg))editingTags.push(tg);
+  renderTagEditUI();
+}
+function removeEditingTag(tg){editingTags=editingTags.filter(x=>x!==tg);renderTagEditUI()}
+function addEditingTagFromInput(){
+  const el=document.getElementById("taskTagInput");
+  if(el){el.value.split(/[,，、\s]+/).forEach(addEditingTag);el.value=""}
+}
+function toggleCommonTag(tg){if(editingTags.includes(tg))removeEditingTag(tg);else addEditingTag(tg)}
+function renderTagEditUI(){
+  const w=document.getElementById("tagEditWrap");if(!w)return;
+  w.innerHTML=editingTags.map(tg=>`<span class="tag-chip on" data-tg="${esc(tg)}">${esc(tg)}<b onclick="removeEditingTag('${esc(tg)}')">✕</b></span>`).join("")||'<span style="font-size:12px;color:var(--muted)">暂无标签</span>';
+  const cl=document.getElementById("tagCommonList");
+  if(cl)cl.querySelectorAll(".tag-chip").forEach(c=>{c.classList.toggle("on",editingTags.includes(c.dataset.tg))});
+}
+function openEditTask(si,ti){
+  const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
+  if(!s||!t)return;
+  if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能编辑","warn");return}
+  editingTags=(t.tags||[]).slice();
+  const all=collectAllTags();
+  showModal(`✎ 第 ${ti+1} 课`,
+    `<label>任务名称</label><input id="taskEditInput" value="${esc(t.title)}" placeholder="输入任务内容">
+     <label>🏷 标签（可多选 / 输入后回车新建）</label>
+     <div class="tag-edit-wrap" id="tagEditWrap"></div>
+     <input id="taskTagInput" placeholder="输入新标签后回车" onkeydown="if(event.key==='Enter'){event.preventDefault();addEditingTagFromInput()}">
+     ${all.length?`<div class="tag-common"><div class="tc-title">常用标签（点击切换）</div><div class="tc-list" id="tagCommonList">${all.map(tg=>`<span class="tag-chip ${editingTags.includes(tg)?'on':''}" data-tg="${esc(tg)}" onclick="toggleCommonTag('${esc(tg)}')">${esc(tg)}</span>`).join("")}</div></div>`:""}`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button>
-     <button class="btn-primary" onclick="saveEditTask(${i})">保存</button>`);
+     <button class="btn-primary" onclick="saveEditTask(${si},${ti})">保存</button>`);
+  renderTagEditUI();
 }
-function saveEditTask(i){
-  const list=getDailyScrolls();
-  list[currentScrollIndex].tasks[i].title=document.getElementById("taskEditInput").value;
-  if(document.getElementById("taskClearCk").checked){list[currentScrollIndex].tasks[i].completed=false;list[currentScrollIndex].tasks[i].completeTime=""}
-  list[currentScrollIndex].updatedAt=fmtDateTime(new Date());
-  saveDailyScrolls(list);closeAllModal();renderScrollOpen(currentScrollIndex);toast("已保存");
+function saveEditTask(si,ti){
+  const list=getDailyScrolls();const s=list[si];const t=s.tasks[ti];
+  if(!s||!t)return;
+  if(isScrollLocked(s)){toast("🔒 已封卷","warn");closeAllModal();return}
+  t.title=document.getElementById("taskEditInput").value.trim();
+  t.tags=editingTags.slice();
+  s.updatedAt=fmtDateTime(new Date());
+  saveDailyScrolls(list);closeAllModal();renderScrollOpen(si);renderDailyTagBar();renderHome();toast("已保存");
 }
-function backToShelf(){currentScrollIndex=-1;renderDailyShelf()}
-/* 新增卷轴：同日可多卷，顺延上一卷未完成任务，新增后自动展开 */
+function delTaskInScroll(si,ti){
+  const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
+  if(!s||!t)return;
+  if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能修改","warn");return}
+  showConfirm("✕ 删除任务","确定删除任务「"+esc(t.title||"空任务")+"」？",true,()=>{
+    const l2=getDailyScrolls();l2[si].tasks.splice(ti,1);l2[si].updatedAt=fmtDateTime(new Date());
+    saveDailyScrolls(l2);renderScrollOpen(si);renderHome();toast("已删除");
+  });
+}
+/* 新增卷轴：同日可多卷，顺延上一卷未完成任务，保留标签 */
 function addNewScroll(){
   const list=getDailyScrolls();
   const now=new Date();
   let carry=[];
   if(list.length){
     const last=list[list.length-1];
-    carry=last.tasks.filter(t=>!t.completed&&t.title.trim()!=="").map(t=>({title:t.title,completed:false,completeTime:"",delayDays:t.delayDays+1}));
+    carry=last.tasks.filter(t=>!t.completed&&t.title.trim()!=="").map(t=>({id:uid(),title:t.title,completed:false,completeTime:"",delayDays:(t.delayDays||0)+1,tags:(t.tags||[]).slice()}));
   }
-  while(carry.length<10)carry.push({title:"",completed:false,completeTime:"",delayDays:0});
-  list.push({date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),tasks:carry.slice(0,10)});
+  while(carry.length<10)carry.push({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[]});
+  list.push({id:uid(),date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,tasks:carry.slice(0,10)});
   saveDailyScrolls(list);
-  currentScrollIndex=list.length-1;   // 自动展开新卷
-  renderDailyShelf();
+  currentScrollIndex=list.length-1;
+  renderDailyShelf();renderHome();
   toast(carry.filter(t=>t.title).length?`已新增卷轴，顺延 ${carry.filter(t=>t.title).length} 个任务`:"已新增卷轴");
 }
 function delScroll(idx){
   const list=getDailyScrolls();
   if(!list[idx])return;
+  if(isScrollLocked(list[idx])){toast("🔒 已封卷，解封后才能删除","warn");return}
   const n=getDayScrollIndex(idx);
-  showConfirm("删除卷轴",`确定删除 ${list[idx].date} · 第 ${n} 卷？此操作不可撤销。`,true,()=>{
+  showConfirm("删除卷轴",`确定删除 ${esc(fmtScrollNo(list[idx].date,n))}？<br>（行迹中的历史记录将保留）`,true,()=>{
     list.splice(idx,1);saveDailyScrolls(list);currentScrollIndex=-1;renderDailyShelf();toast("已删除");
   });
 }
 
-/* ================= 物品行囊（P1-8/9） ================= */
+/* ================= 物品行囊（在线/本地图片） ================= */
 let bagSelectMode=false, bagSel=new Set();
 function renderBag(){
   const list=getBagData();
@@ -892,7 +1182,7 @@ function renderBag(){
   list.forEach((it,i)=>{
     const d=document.createElement("div");
     d.className="item-slot"+(bagSel.has(i)?" sel":"");
-    const ic = it.img?`<img src="${esc(it.img)}">`:(it.name.charAt(0)||"◇");
+    const ic = it.img?`<img src="${esc(it.img)}">`:"📦";
     d.innerHTML=`
       <input type="checkbox" class="item-cb" ${bagSel.has(i)?"checked":""}>
       <div class="item-thumb">${ic}</div>
@@ -920,7 +1210,7 @@ function toggleBagSelectAll(){
   if(bagSel.size===list.length)bagSel.clear();else list.forEach((_,i)=>bagSel.add(i));
   renderBag();
 }
-function updateSelCount(){const el=document.getElementById("selCount");if(el)el.innerText=`已选 ${bagSel.size} 项`}
+function updateSelCount(){const el=document.getElementById("selCount");if(el)el.textContent=`已选 ${bagSel.size} 项`}
 function confirmDeleteBagSelected(){
   if(bagSel.size===0){toast("未选择任何物品","warn");return}
   showConfirm("删除物品",`确定删除选中的 ${bagSel.size} 件物品？`,true,()=>{
@@ -928,17 +1218,72 @@ function confirmDeleteBagSelected(){
     saveBag(arr);bagSel.clear();bagSelectMode=false;renderBag();toast("已删除");
   });
 }
+/* 本地图片 → 压缩 dataURL（避免撑爆 localStorage） */
+function fileToDataUrl(file,cb){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=320;let w=img.width,h=img.height;
+      const r=Math.min(1,max/Math.max(w,h));
+      if(r<1){w=Math.round(w*r);h=Math.round(h*r)}
+      const c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      cb(c.toDataURL("image/jpeg",0.82));
+    };
+    img.onerror=()=>cb("");
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+let itemImgData="";
+function itemImageSection(value){
+  return `<label>物品图片（可选）</label>
+  <div class="img-prev" id="imgPrev">${value?`<img src="${esc(value)}">`:"📦"}</div>
+  <div class="top-op" style="margin-top:6px">
+    <button type="button" class="btn-gray" onclick="document.getElementById('itemImgFile').click()">＋ 上传本地图片</button>
+    <button type="button" class="btn-ghost" onclick="clearItemImg()">清除图片</button>
+  </div>
+  <input type="file" id="itemImgFile" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleItemFile(this.files[0])">
+  <label>或输入在线图片 URL</label>
+  <input id="iimg" value="${esc(value||"")}" placeholder="https://..." oninput="previewItemImgUrl(this.value)">`;
+}
+function handleItemFile(f){
+  if(!f)return;
+  if(!/image\/(jpeg|png|webp)/.test(f.type)){toast("仅支持 JPG / PNG / WebP","warn");return}
+  document.getElementById("imgPrev").innerHTML='<span style="font-size:12px;color:var(--muted)">处理中…</span>';
+  fileToDataUrl(f,data=>{
+    if(!data){toast("图片读取失败","error");return}
+    itemImgData=data;
+    const p=document.getElementById("imgPrev");if(p)p.innerHTML=`<img src="${data}">`;
+  });
+}
+function clearItemImg(){
+  itemImgData="";
+  const p=document.getElementById("imgPrev");if(p)p.innerHTML="📦";
+  const inp=document.getElementById("iimg");if(inp)inp.value="";
+}
+function previewItemImgUrl(v){
+  if(v){itemImgData=""}
+  const p=document.getElementById("imgPrev");
+  if(p)p.innerHTML=v?`<img src="${esc(v)}">`:"📦";
+}
+function resolveItemImg(){
+  const url=document.getElementById("iimg").value.trim();
+  return url||itemImgData;
+}
 function openAddItem(){
-  showModal("新增行囊物品",`
-    <label>物品名称</label><input id="iname" placeholder="输入名称">
-    <label>数量</label><input id="icount" type="number" value="1">
-    <label>图片链接</label><input id="iimg" placeholder="粘贴图片url">
-    <label>备注</label><textarea id="inote" rows="4"></textarea>`,
+  itemImgData="";
+  showModal("新增行囊物品",
+    `<label>物品名称</label><input id="iname" placeholder="输入名称">
+     <label>数量</label><input id="icount" type="number" value="1">
+     ${itemImageSection("")}
+     <label>备注</label><textarea id="inote" rows="4"></textarea>`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveNewBagItem()">保存</button>`);
 }
 function saveNewBagItem(){
   const arr=getBagData();
-  arr.push({name:document.getElementById("iname").value,count:Number(document.getElementById("icount").value)||1,img:document.getElementById("iimg").value,note:document.getElementById("inote").value});
+  arr.push({name:document.getElementById("iname").value.trim(),count:Number(document.getElementById("icount").value)||1,img:resolveItemImg(),note:document.getElementById("inote").value.trim()});
   saveBag(arr);closeAllModal();renderBag();toast("已添加");
 }
 function openBagDetail(i){
@@ -953,16 +1298,17 @@ function openBagDetail(i){
 }
 function openBagEdit(i){
   const it=getBagData()[i];
+  itemImgData="";
   showModal("编辑物品",
     `<label>物品名称</label><input id="einame" value="${esc(it.name)}">
      <label>数量</label><input id="eicount" type="number" value="${esc(String(it.count))}">
-     <label>图片链接</label><input id="eiimg" value="${esc(it.img)}">
-     <label>备注</label><textarea id="einote" rows="4">${esc(it.note)}</textarea>`,
+     ${itemImageSection(it.img||"")}
+     <label>备注</label><textarea id="einote" rows="4">${esc(it.note||"")}</textarea>`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditBag(${i})">保存修改</button>`);
 }
 function saveEditBag(i){
   const arr=getBagData();
-  arr[i]={name:document.getElementById("einame").value,count:Number(document.getElementById("eicount").value)||1,img:document.getElementById("eiimg").value,note:document.getElementById("einote").value};
+  arr[i]={name:document.getElementById("einame").value.trim(),count:Number(document.getElementById("eicount").value)||1,img:resolveItemImg(),note:document.getElementById("einote").value.trim()};
   saveBag(arr);closeAllModal();renderBag();toast("已保存");
 }
 function confirmDelBag(i){
@@ -972,7 +1318,7 @@ function confirmDelBag(i){
   });
 }
 
-/* ================= 被动功法（P1-10 已掌握） ================= */
+/* ================= 被动功法 ================= */
 function renderPassive(){
   const wrap=document.getElementById("passiveContainer");
   wrap.innerHTML="";
@@ -996,7 +1342,7 @@ function openAddPassive(){
 }
 function saveAddPassive(){
   const arr=getPassive();
-  arr.push({title:document.getElementById("ptitle").value,desc:document.getElementById("pdesc").value,mastered:false});
+  arr.push({title:document.getElementById("ptitle").value.trim(),desc:document.getElementById("pdesc").value.trim(),mastered:false});
   savePassive(arr);closeAllModal();renderPassive();toast("已添加");
 }
 function openPassiveEdit(i){
@@ -1009,7 +1355,7 @@ function openPassiveEdit(i){
 }
 function saveEditPassive(i){
   const arr=getPassive();
-  arr[i]={title:document.getElementById("eptitle").value,desc:document.getElementById("epdesc").value,mastered:document.getElementById("emastered").checked};
+  arr[i]={title:document.getElementById("eptitle").value.trim(),desc:document.getElementById("epdesc").value.trim(),mastered:document.getElementById("emastered").checked};
   savePassive(arr);closeAllModal();renderPassive();toast("已保存");
 }
 function confirmDelPassive(i){
@@ -1019,7 +1365,7 @@ function confirmDelPassive(i){
   });
 }
 
-/* ================= 走火入魔录（P1-11 摘要） ================= */
+/* ================= 走火入魔录 ================= */
 function renderFail(){
   const wrap=document.getElementById("failContainer");
   wrap.innerHTML="";
@@ -1043,7 +1389,7 @@ function openAddFail(){
 }
 function saveAddFail(){
   const arr=getFail();
-  arr.push({title:document.getElementById("ftitle").value,reason:document.getElementById("freason").value});
+  arr.push({title:document.getElementById("ftitle").value.trim(),reason:document.getElementById("freason").value});
   saveFail(arr);closeAllModal();renderFail();toast("已记录");
 }
 function openFailDetail(i){
@@ -1060,7 +1406,7 @@ function openEditFail(i){
 }
 function saveEditFail(i){
   const arr=getFail();
-  arr[i]={title:document.getElementById("eft").value,reason:document.getElementById("efr").value};
+  arr[i]={title:document.getElementById("eft").value.trim(),reason:document.getElementById("efr").value};
   saveFail(arr);closeAllModal();renderFail();toast("已保存");
 }
 function confirmDelFail(i){
@@ -1070,7 +1416,7 @@ function confirmDelFail(i){
   });
 }
 
-/* ================= 悟道札记（P1-12 摘要） ================= */
+/* ================= 悟道札记 ================= */
 function renderInsight(){
   const wrap=document.getElementById("insightContainer");
   wrap.innerHTML="";
@@ -1094,7 +1440,7 @@ function openAddInsight(){
 }
 function saveAddInsight(){
   const arr=getInsight();
-  arr.push({title:document.getElementById("ititle").value,content:document.getElementById("icontent").value});
+  arr.push({title:document.getElementById("ititle").value.trim(),content:document.getElementById("icontent").value});
   saveInsight(arr);closeAllModal();renderInsight();toast("已记录");
 }
 function openInsightDetail(i){
@@ -1111,7 +1457,7 @@ function openEditInsight(i){
 }
 function saveEditInsight(i){
   const arr=getInsight();
-  arr[i]={title:document.getElementById("eit").value,content:document.getElementById("eic").value};
+  arr[i]={title:document.getElementById("eit").value.trim(),content:document.getElementById("eic").value};
   saveInsight(arr);closeAllModal();renderInsight();toast("已保存");
 }
 function confirmDelInsight(i){
@@ -1123,20 +1469,20 @@ function confirmDelInsight(i){
 
 /* ================= 万宝阁（晶核商店） ================= */
 function renderShop(){
-  const elC=document.getElementById("shopCrystal");if(elC)elC.innerText=getCrystal();
-  const elA=document.getElementById("shopAura");if(elA)elA.innerText=getAura();
+  const elC=document.getElementById("shopCrystal");if(elC)elC.textContent=getCrystal();
+  const elA=document.getElementById("shopAura");if(elA)elA.textContent=getAura();
   const list=getShopItems();
   const wrap=document.getElementById("shopContainer");if(!wrap)return;
   wrap.innerHTML="";
   const empty=document.getElementById("shopEmpty");if(empty)empty.style.display=list.length?"none":"block";
   list.forEach((it,idx)=>{
     const d=document.createElement("div");d.className="shop-card";
-    let ic="◆";
+    let ic="◇";
     if(it.icon){ic=(String(it.icon).startsWith("http"))?`<img src="${esc(it.icon)}">`:`<span>${esc(it.icon)}</span>`}
     d.innerHTML=`<div class="shop-ic">${ic}</div>
       <div class="shop-name">${esc(it.name||"无名商品")}</div>
       <div class="shop-desc">${esc(it.desc||"")}</div>
-      <div class="shop-price"><span class="crystal-ic">◆</span> ${esc(String(it.price))} <small>晶核</small></div>
+      <div class="shop-price"><span class="crystal-ic">◇</span> ${esc(String(it.price))} <small>晶核</small></div>
       <div class="shop-op" title="管理">⋯</div>`;
     d.querySelector(".shop-op").addEventListener("click",function(e){e.stopPropagation();openShopItemMenu(idx)});
     d.addEventListener("click",function(){openShopBuy(idx)});
@@ -1146,7 +1492,7 @@ function renderShop(){
 function openShopItemMenu(idx){
   const it=getShopItems()[idx];if(!it)return;
   showModal("商品管理 · "+esc(it.name),
-    `<div style="font-size:13px;color:var(--ink-2);line-height:1.8">价格：<span class="crystal-ic">◆</span> ${esc(String(it.price))} 晶核<br>类型：${esc(it.type||"其他")}</div>`,
+    `<div style="font-size:13px;color:var(--ink-2);line-height:1.8">价格：<span class="crystal-ic">◇</span> ${esc(String(it.price))} 晶核<br>类型：${esc(it.type||"其他")}</div>`,
     `<button class="btn-gray" onclick="closeAllModal()">关闭</button>
      <button class="btn-primary" onclick="openShopEdit(${idx})">编辑</button>
      <button class="btn-danger" onclick="confirmDelShop(${idx})">删除</button>`);
@@ -1196,8 +1542,8 @@ function openShopBuy(idx){
   const c=getCrystal();
   showModal("购买 · "+esc(it.name),
     `<div style="font-size:14px;color:var(--ink-2);line-height:1.9">
-       需要消耗 <span style="color:#7d5bb8;font-weight:bold">◆ ${esc(String(it.price))} 晶核</span><br>
-       当前拥有 <span class="crystal-ic">◆</span> ${c} 晶核<br>
+       需要消耗 <span style="color:#7d5bb8;font-weight:bold">◇ ${esc(String(it.price))} 晶核</span><br>
+       当前拥有 <span class="crystal-ic">◇</span> ${c} 晶核<br>
        ${it.desc?`<div style="margin-top:6px;font-size:13px;color:var(--muted)">${esc(it.desc)}</div>`:""}
      </div>`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button>
@@ -1223,7 +1569,7 @@ function openAbsorb(){
   showModal("吸收晶核",
     `<div style="font-size:14px;color:var(--ink-2);line-height:2">
        吸收 <span style="color:#7d5bb8;font-weight:bold">1 枚晶核</span>，转化为 <span style="color:var(--success);font-weight:bold">+100 灵气</span><br>
-       当前：<span class="crystal-ic">◆</span> ${c} 晶核 · ✦ ${getAura()} 灵气
+       当前：<span class="crystal-ic">◇</span> ${c} 晶核 · <span class="aura-ic">✦</span> ${getAura()} 灵气
      </div>`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="doAbsorb(1)">吸收</button>`);
 }
@@ -1245,13 +1591,12 @@ function openLedger(){
     const sign=x.amount>0?"+"+x.amount:x.amount;
     return `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)">
       <div><div style="font-size:13px;color:var(--ink-2)">${esc(x.note||"")}</div><div style="font-size:11px;color:var(--muted)">${esc(x.ts||"")}</div></div>
-      <div style="font-size:13px;color:${color};font-weight:bold;white-space:nowrap">${sign} ◆</div>
+      <div style="font-size:13px;color:${color};font-weight:bold;white-space:nowrap">${sign} ◇</div>
     </div>`;
   }).join("");
   showModal("晶核流水",`<div style="max-height:46vh;overflow-y:auto">${rows}</div>`,`<button class="btn-gray" onclick="closeAllModal()">关闭</button>`);
 }
-
-/* ================= 全局同步状态（P0-3） ================= */
+/* ================= 全局同步状态 ================= */
 let syncState={status:"off",time:""};
 function markSync(status,time){
   syncState.status=status;if(time!==undefined)syncState.time=time;
@@ -1295,7 +1640,7 @@ function logoutAll(){
   renderSyncBar();renderSetSync();toast("已退出所有云端账户");
 }
 
-/* ================= Firebase 云同步 ================= */
+/* ================= Firebase 云同步（含行迹模块） ================= */
 let fbApp=null,fbAuth=null,fbDb=null,fbUser=null,fbSyncOn=false,fbSuppress=false,fbUnsubs=[];
 function getFbConfig(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_FB))||{config:""}}catch(e){return {config:""}}}
 function saveFbConfig(c){localStorage.setItem(STORAGE_KEY_FB,JSON.stringify(c))}
@@ -1347,9 +1692,9 @@ async function fbEmailLogin(mode){
   }catch(e){setFbStatus((mode==='login'?"登录":"注册")+"失败："+e.message);toast((mode==='login'?"登录":"注册")+"失败："+e.message,"error")}
 }
 function fbAfterLogin(){fbPullAll();setFbAutoSync(true)}
-function getMods(){return["bag","passive","daily","fail","insight","crystal","aura","shop"]}
-function getModuleData(m){switch(m){case"bag":return getBagData();case"passive":return getPassive();case"daily":return getDailyScrolls();case"fail":return getFail();case"insight":return getInsight();case"crystal":return getCrystal();case"aura":return getAura();case"shop":return getShopItems()}}
-function applyModuleData(m,d){fbSuppress=true;try{switch(m){case"bag":saveBag(d);break;case"passive":savePassive(d);break;case"daily":saveDailyScrolls(d);break;case"fail":saveFail(d);break;case"insight":saveInsight(d);break;case"crystal":setCrystal(d);break;case"aura":setAura(d);break;case"shop":saveShopItems(d);break}}finally{fbSuppress=false}}
+function getMods(){return["bag","passive","daily","fail","insight","trail","crystal","aura","shop"]}
+function getModuleData(m){switch(m){case"bag":return getBagData();case"passive":return getPassive();case"daily":return getDailyScrolls();case"fail":return getFail();case"insight":return getInsight();case"trail":return getTrail();case"crystal":return getCrystal();case"aura":return getAura();case"shop":return getShopItems()}}
+function applyModuleData(m,d){fbSuppress=true;try{switch(m){case"bag":saveBag(d);break;case"passive":savePassive(d);break;case"daily":saveDailyScrolls(d);break;case"fail":saveFail(d);break;case"insight":saveInsight(d);break;case"trail":saveTrail(d);break;case"crystal":setCrystal(d);break;case"aura":setAura(d);break;case"shop":saveShopItems(d);break}}finally{fbSuppress=false}}
 async function fbUploadModule(m){
   markSync("syncing");
   await fbDb.collection("xiantu").doc(m).set({data:JSON.stringify(getModuleData(m)),updated:firebase.firestore.FieldValue.serverTimestamp()});
@@ -1399,7 +1744,7 @@ function fbInit(){
   }catch(e){}
 }
 
-/* ================= Supabase 云同步 ================= */
+/* ================= Supabase 云同步（含行迹列） ================= */
 let cloudClient=null,cloudUser=null,cloudSyncTimer=null,cloudBusy=false;
 const CLOUD_SQL=`create table if not exists public.xiantu_data (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -1408,6 +1753,11 @@ const CLOUD_SQL=`create table if not exists public.xiantu_data (
   daily jsonb not null default '[]'::jsonb,
   fail jsonb not null default '[]'::jsonb,
   insight jsonb not null default '[]'::jsonb,
+  trail jsonb not null default '[]'::jsonb,
+  crystal bigint not null default 0,
+  aura bigint not null default 0,
+  shop jsonb not null default '[]'::jsonb,
+  ledger jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
 alter table public.xiantu_data enable row level security;
@@ -1416,20 +1766,28 @@ drop policy if exists "xiantu_insert_own" on public.xiantu_data;
 drop policy if exists "xiantu_update_own" on public.xiantu_data;
 create policy "xiantu_select_own" on public.xiantu_data for select using (auth.uid() = user_id);
 create policy "xiantu_insert_own" on public.xiantu_data for insert with check (auth.uid() = user_id);
-create policy "xiantu_update_own" on public.xiantu_data for update using (auth.uid() = user_id) with check (auth.uid() = user_id);`;
+create policy "xiantu_update_own" on public.xiantu_data for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- 若已按旧版建表，请执行以下语句补齐新增列：
+-- alter table public.xiantu_data add column if not exists trail jsonb not null default '[]'::jsonb;
+-- alter table public.xiantu_data add column if not exists crystal bigint not null default 0;
+-- alter table public.xiantu_data add column if not exists aura bigint not null default 0;
+-- alter table public.xiantu_data add column if not exists shop jsonb not null default '[]'::jsonb;
+-- alter table public.xiantu_data add column if not exists ledger jsonb not null default '[]'::jsonb;`;
 function cloudCfg(){try{return JSON.parse(localStorage.getItem(CLOUD_CFG_KEY))||{}}catch(e){return {}}}
 function cloudMeta(){try{return JSON.parse(localStorage.getItem(CLOUD_META_KEY))||{}}catch(e){return {}}}
 function setCloudMeta(x){localStorage.setItem(CLOUD_META_KEY,JSON.stringify(x));renderCloudStatus()}
-function cloudSnapshot(){return{bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),crystal:getCrystal(),aura:getAura(),shop:getShopItems()}}
+function cloudSnapshot(){return{bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),trail:getTrail(),crystal:getCrystal(),aura:getAura(),shop:getShopItems(),ledger:getLedger()}}
 function setLocalSnapshot(d){
   localStorage.setItem(STORAGE_KEY_BAG,JSON.stringify(d.bag||[]));
   localStorage.setItem(STORAGE_KEY_PASSIVE,JSON.stringify(d.passive||[]));
   localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify(d.daily||[]));
   localStorage.setItem(STORAGE_KEY_FAIL,JSON.stringify(d.fail||[]));
   localStorage.setItem(STORAGE_KEY_INSIGHT,JSON.stringify(d.insight||[]));
+  if(d.trail!==undefined)localStorage.setItem(STORAGE_KEY_TRAIL,JSON.stringify(d.trail||[]));
   if(d.crystal!==undefined)localStorage.setItem(STORAGE_KEY_CRYSTAL,String(Math.max(0,Math.floor(d.crystal||0))));
   if(d.aura!==undefined)localStorage.setItem(STORAGE_KEY_AURA,String(Math.max(0,Math.floor(d.aura||0))));
   if(d.shop!==undefined)localStorage.setItem(STORAGE_KEY_SHOP,JSON.stringify(d.shop||[]));
+  if(d.ledger!==undefined)localStorage.setItem(STORAGE_KEY_LEDGER,JSON.stringify(d.ledger||[]));
 }
 function renderCloudStatus(){
   const el=document.getElementById("cloudStatus");if(!el)return;
@@ -1524,7 +1882,7 @@ async function cloudLogout(){
   cloudUser=null;renderCloudStatus();renderSyncBar();renderSetSync();toast("已退出 Supabase");
 }
 
-/* ================= Notion 云同步 ================= */
+/* ================= Notion 云同步（含行迹模块） ================= */
 function getNotionConfig(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_NOTION))||{token:"",dbId:""}}catch(e){return{token:"",dbId:""}}}
 function saveNotionConfig(c){localStorage.setItem(STORAGE_KEY_NOTION,JSON.stringify(c))}
 function renderNotionConfig(){
@@ -1550,7 +1908,7 @@ async function notionFetch(path,options){
 function setNotionStatus(t){const el=document.getElementById("notionStatus");if(el)el.innerText=t}
 async function uploadAllToNotion(){
   markSync("syncing");const cfg=getNotionConfig();
-  const modules={bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight()};
+  const modules={bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),trail:getTrail()};
   try{
     const q=await notionFetch("/databases/"+cfg.dbId+"/query",{method:"POST",body:{}});
     const existing={};(q.results||[]).forEach(r=>{const n=r.properties&&r.properties["模块"]&&r.properties["模块"].title&&r.properties["模块"].title[0]?r.properties["模块"].title[0].text.content:"";if(n)existing[n]=r.id});
@@ -1570,15 +1928,15 @@ async function pullFromNotion(){
     (q.results||[]).forEach(r=>{
       const n=r.properties&&r.properties["模块"]&&r.properties["模块"].title&&r.properties["模块"].title[0]?r.properties["模块"].title[0].text.content:"";
       const rt=r.properties&&r.properties["数据"]&&r.properties["数据"].rich_text&&r.properties["数据"].rich_text[0]?r.properties["数据"].rich_text[0].text.content:"";
-      if(n&&rt){try{const d=JSON.parse(rt);if(n==="bag")saveBag(d);else if(n==="passive")savePassive(d);else if(n==="daily")saveDailyScrolls(d);else if(n==="fail")saveFail(d);else if(n==="insight")saveInsight(d);found++}catch(e){}}
+      if(n&&rt){try{const d=JSON.parse(rt);if(n==="bag")saveBag(d);else if(n==="passive")savePassive(d);else if(n==="daily")saveDailyScrolls(d);else if(n==="fail")saveFail(d);else if(n==="insight")saveInsight(d);else if(n==="trail")saveTrail(d);found++}catch(e){}}
     });
     renderHomeDashboardAll();markSync("synced",fmtTime(new Date()));toast(found?("已拉取 "+found+" 个模块"):"Notion 中暂无数据");
   }catch(e){markSync("failed")}
 }
 
-/* ================= 数据导出/导入/重置 ================= */
+/* ================= 数据导出/导入/重置（含行迹） ================= */
 function exportAllData(){
-  const all={version:3,exportTime:new Date().toLocaleString(),bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),crystal:getCrystal(),aura:getAura(),shop:getShopItems(),ledger:getLedger()};
+  const all={version:4,exportTime:new Date().toLocaleString(),bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),trail:getTrail(),crystal:getCrystal(),aura:getAura(),shop:getShopItems(),ledger:getLedger()};
   const b=new Blob([JSON.stringify(all,null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`仙途行囊备份_${Date.now()}.json`;a.click();toast("已导出全部数据");
 }
@@ -1588,30 +1946,32 @@ function importAllData(){
     const d=JSON.parse(ev.target.result);
     if(d.bag!==undefined&&d.daily!==undefined){
       saveBag(d.bag||[]);savePassive(d.passive||[]);saveDailyScrolls(d.daily||[]);saveFail(d.fail||[]);saveInsight(d.insight||[]);
+      if(d.trail!==undefined)saveTrail(d.trail||[]);
       if(d.crystal!==undefined)setCrystal(d.crystal);
       if(d.aura!==undefined)setAura(d.aura);
       if(d.shop!==undefined)saveShopItems(d.shop);
       if(d.ledger!==undefined)localStorage.setItem(STORAGE_KEY_LEDGER,JSON.stringify(d.ledger||[]));
-      renderHomeDashboardAll();toast("导入成功");
+      normalizeDaily();renderHomeDashboardAll();toast("导入成功");
     }else toast("备份文件格式不正确","error");
   }catch(err){toast("文件解析失败","error")}};r.readAsText(e.target.files[0])};
   inp.click();
 }
-function exportSingle(t){let d,n;switch(t){case"bag":d=getBagData();n="物品行囊";break;case"passive":d=getPassive();n="被动功法";break;case"daily":d=getDailyScrolls();n="每日十课";break;case"fail":d=getFail();n="走火入魔录";break;case"insight":d=getInsight();n="悟道札记";break;default:return}
+function exportSingle(t){let d,n;switch(t){case"bag":d=getBagData();n="物品行囊";break;case"passive":d=getPassive();n="被动功法";break;case"daily":d=getDailyScrolls();n="每日十课";break;case"fail":d=getFail();n="走火入魔录";break;case"insight":d=getInsight();n="悟道札记";break;case"trail":d=getTrail();n="行迹";break;default:return}
   const b=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`${n}备份_${Date.now()}.json`;a.click();toast(n+"已导出");
 }
 function confirmResetAll(){
   showConfirm("重置全部数据","确定清空所有自定义数据，恢复默认示例？此操作不可撤销！",true,()=>{
     localStorage.removeItem(STORAGE_KEY_BAG);localStorage.removeItem(STORAGE_KEY_PASSIVE);localStorage.removeItem(STORAGE_KEY_DAILY);localStorage.removeItem(STORAGE_KEY_FAIL);localStorage.removeItem(STORAGE_KEY_INSIGHT);
-    localStorage.removeItem(STORAGE_KEY_CRYSTAL);localStorage.removeItem(STORAGE_KEY_AURA);localStorage.removeItem(STORAGE_KEY_SHOP);localStorage.removeItem(STORAGE_KEY_LEDGER);
-    initDefaultData();renderHomeDashboardAll();toast("已重置为默认数据");
+    localStorage.removeItem(STORAGE_KEY_CRYSTAL);localStorage.removeItem(STORAGE_KEY_AURA);localStorage.removeItem(STORAGE_KEY_SHOP);localStorage.removeItem(STORAGE_KEY_LEDGER);localStorage.removeItem(STORAGE_KEY_TRAIL);
+    initDefaultData();normalizeDaily();renderHomeDashboardAll();toast("已重置为默认数据");
   });
 }
 function renderHomeDashboardAll(){renderHome();renderDailyShelf()}
 
 /* ================= 初始化 ================= */
 initDefaultData();
+normalizeDaily();
 renderHome();
 fbInit();
 initCloud();
