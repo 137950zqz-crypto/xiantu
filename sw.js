@@ -1,7 +1,7 @@
 /* 仙途行囊 Service Worker
- * 版本 v1：核心页面离线缓存 + CDN 网络优先回退缓存
+ * 版本 v2：核心页面离线缓存 + CDN 网络优先回退缓存
  */
-const CACHE = 'xiantu-v1';
+const CACHE = 'xiantu-v2';
 const CORE = [
   './',
   './index.html',

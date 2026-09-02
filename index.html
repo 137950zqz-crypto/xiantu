@@ -208,6 +208,24 @@ details.adv label{color:var(--muted)}
 @media(max-width:899px){
   .sidebar{display:none}
 }
+/* ===== 万宝阁 / 晶核系统 ===== */
+.crystal-ic{font-style:normal;color:#7d5bb8}
+.shop-balance{background:linear-gradient(135deg,#fff8ec,#f3e5cf);border:2px solid #d4bc9c;border-radius:16px;padding:16px 18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.shop-bal .k{font-size:12px;color:var(--muted)}
+.shop-bal .v{font-size:22px;font-weight:bold;color:var(--primary)}
+.shop-bal .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.shop-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;position:relative;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.shop-card:active{background:#fff1dc}
+.shop-ic{width:46px;height:46px;border-radius:10px;background:#f0e6d2;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:4px;overflow:hidden;flex-shrink:0}
+.shop-ic img{width:100%;height:100%;object-fit:cover}
+.shop-name{font-size:15px;font-weight:bold;color:var(--ink);word-break:break-word}
+.shop-desc{font-size:12px;color:var(--muted);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
+.shop-price{font-size:14px;font-weight:bold;color:#7d5bb8;margin-top:auto}
+.shop-price small{font-size:11px;color:var(--muted);font-weight:normal}
+.shop-op{position:absolute;top:6px;right:6px;font-size:15px;color:var(--muted);padding:4px 8px;cursor:pointer}
+.crystal-toast-undo{background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:bold;pointer-events:auto}
+.aura-num{color:var(--success);font-weight:bold}
 </style>
 </head>
 <body>
@@ -226,6 +244,7 @@ details.adv label{color:var(--muted)}
       <button data-page="dailyLesson">📜 每日十课</button>
       <button data-page="failRecord">⚠ 走火入魔录</button>
       <button data-page="insight">☼ 悟道札记</button>
+      <button data-page="shop">💎 万宝阁</button>
       <button data-page="setting">⚙ 修行设置</button>
     </nav>
   </aside>
@@ -245,6 +264,19 @@ details.adv label{color:var(--muted)}
         <div class="today-num" id="todayNum">0 <small>/ 0 课</small></div>
         <div class="pbar"><div class="pfill" id="todayFill" style="width:0%"></div></div>
         <div id="todayPercent" style="font-size:12px;color:var(--muted)"></div>
+      </div>
+      <!-- 晶核 / 灵气 -->
+      <div class="shop-balance" style="margin-bottom:16px;cursor:pointer" onclick="openPage('shop')">
+        <div>
+          <div class="k">晶核 <span class="crystal-ic">◆</span></div>
+          <div class="v"><span class="crystal-ic">◆</span> <span id="dashCrystal">0</span></div>
+          <div class="sub">完成任务获得 · 可购买 / 吸收</div>
+        </div>
+        <div style="text-align:right">
+          <div class="k">灵气 ✦</div>
+          <div class="v aura-num" id="dashAura">0</div>
+          <div class="sub">吸收晶核转化</div>
+        </div>
       </div>
       <!-- 长期资产 -->
       <div class="section-title">长期资产</div>
@@ -317,6 +349,29 @@ details.adv label{color:var(--muted)}
       <div class="top-op"><button class="btn-primary" onclick="openAddInsight()">＋ 记录悟道</button></div>
       <div id="insightContainer"></div>
       <div class="empty" id="insightEmpty" style="display:none"><div class="ic">☼</div><div class="t">尚未悟道</div><div class="d">当一个经验值得反复使用时，把它记录下来</div></div>
+    </div>
+
+    <!-- 万宝阁 -->
+    <div class="page" id="page-shop">
+      <div class="page-head"><h2>万宝阁</h2></div>
+      <div class="shop-balance">
+        <div>
+          <div class="k">晶核余额</div>
+          <div class="v"><span class="crystal-ic">◆</span> <span id="shopCrystal">0</span></div>
+          <div class="sub">每日十课完成任务获得 · 可购买或吸收</div>
+        </div>
+        <div style="text-align:right">
+          <div class="k">灵气</div>
+          <div class="v aura-num"><span id="shopAura">0</span></div>
+          <button class="btn-gray" style="margin-top:4px;padding:6px 12px;font-size:12px" onclick="openAbsorb()">吸收晶核</button>
+        </div>
+      </div>
+      <div class="top-op">
+        <button class="btn-primary" onclick="openAddShopItem()">＋ 新增商品</button>
+        <button class="btn-ghost" onclick="openLedger()">流水</button>
+      </div>
+      <div class="shop-grid" id="shopContainer"></div>
+      <div class="empty" id="shopEmpty" style="display:none"><div class="ic">💎</div><div class="t">万宝阁空空</div><div class="d">新增一件值得用晶核兑换的商品</div></div>
     </div>
 
     <!-- 设置 -->
@@ -402,6 +457,7 @@ details.adv label{color:var(--muted)}
   <button data-page="bag"><span class="nav-ic">🎒</span>行囊</button>
   <button data-page="dailyLesson"><span class="nav-ic">📜</span>十课</button>
   <button data-page="insight"><span class="nav-ic">☼</span>悟道</button>
+  <button data-page="shop"><span class="nav-ic">💎</span>万宝阁</button>
   <button data-page="setting"><span class="nav-ic">⚙</span>设置</button>
 </div>
 
@@ -457,7 +513,8 @@ function showConfirm(title, text, danger, onOk){
 const STORAGE_KEY_BAG="xiantu_bag_data", STORAGE_KEY_PASSIVE="xiantu_passive",
       STORAGE_KEY_DAILY="xiantu_daily_scroll", STORAGE_KEY_FAIL="xiantu_fail",
       STORAGE_KEY_INSIGHT="xiantu_insight", STORAGE_KEY_NOTION="xiantu_notion_config",
-      STORAGE_KEY_FB="xiantu_firebase_config", CLOUD_CFG_KEY="xiantu_cloud_config_v1", CLOUD_META_KEY="xiantu_cloud_meta_v1";
+      STORAGE_KEY_FB="xiantu_firebase_config", CLOUD_CFG_KEY="xiantu_cloud_config_v1", CLOUD_META_KEY="xiantu_cloud_meta_v1",
+      STORAGE_KEY_CRYSTAL="xiantu_crystal", STORAGE_KEY_AURA="xiantu_aura", STORAGE_KEY_SHOP="xiantu_shop_items", STORAGE_KEY_LEDGER="xiantu_ledger";
 
 /* ================= 数据层 ================= */
 function getBagData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_BAG))||[]}catch(e){return []}}
@@ -470,6 +527,15 @@ function getFail(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_FAIL))
 function saveFail(a){localStorage.setItem(STORAGE_KEY_FAIL,JSON.stringify(a));fbAutoUpload("fail");cloudQueueSync();}
 function getInsight(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_INSIGHT))||[]}catch(e){return []}}
 function saveInsight(a){localStorage.setItem(STORAGE_KEY_INSIGHT,JSON.stringify(a));fbAutoUpload("insight");cloudQueueSync();}
+/* 晶核 / 灵气 / 万宝阁 */
+function getCrystal(){const v=parseInt(localStorage.getItem(STORAGE_KEY_CRYSTAL),10);return isNaN(v)?0:v}
+function setCrystal(n){n=Math.max(0,Math.floor(n||0));localStorage.setItem(STORAGE_KEY_CRYSTAL,String(n));fbAutoUpload("crystal");cloudQueueSync();}
+function getAura(){const v=parseInt(localStorage.getItem(STORAGE_KEY_AURA),10);return isNaN(v)?0:v}
+function setAura(n){n=Math.max(0,Math.floor(n||0));localStorage.setItem(STORAGE_KEY_AURA,String(n));fbAutoUpload("aura");cloudQueueSync();}
+function getShopItems(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_SHOP))||[]}catch(e){return []}}
+function saveShopItems(a){localStorage.setItem(STORAGE_KEY_SHOP,JSON.stringify(a));fbAutoUpload("shop");cloudQueueSync();}
+function getLedger(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_LEDGER))||[]}catch(e){return []}}
+function addLedger(entry){const l=getLedger();l.unshift(Object.assign({ts:fmtDateTime(new Date())},entry||{}));localStorage.setItem(STORAGE_KEY_LEDGER,JSON.stringify(l.slice(0,300)));}
 
 /* 默认数据 */
 function initDefaultData(){
@@ -513,6 +579,17 @@ function initDefaultData(){
   if(!localStorage.getItem(STORAGE_KEY_INSIGHT)){
     localStorage.setItem(STORAGE_KEY_INSIGHT,JSON.stringify([{title:"晨起静坐一刻钟",content:"晨起空腹静坐，心神最易收敛，此时杂念最少，最容易进入静定状态。坚持半月，整日精神都更清明。"}]));
   }
+  if(!localStorage.getItem(STORAGE_KEY_CRYSTAL)){localStorage.setItem(STORAGE_KEY_CRYSTAL,"0")}
+  if(!localStorage.getItem(STORAGE_KEY_AURA)){localStorage.setItem(STORAGE_KEY_AURA,"0")}
+  if(!localStorage.getItem(STORAGE_KEY_LEDGER)){localStorage.setItem(STORAGE_KEY_LEDGER,"[]")}
+  if(!localStorage.getItem(STORAGE_KEY_SHOP)){
+    localStorage.setItem(STORAGE_KEY_SHOP,JSON.stringify([
+      {id:1,name:"☕ 咖啡",desc:"奖励自己一杯咖啡",price:20,icon:"☕",type:"实物"},
+      {id:2,name:"🎬 看一集剧",desc:"放松看一集喜欢的剧",price:30,icon:"🎬",type:"娱乐"},
+      {id:3,name:"🍰 吃甜点",desc:"犒劳一块小甜点",price:50,icon:"🍰",type:"实物"},
+      {id:4,name:"💤 睡懒觉",desc:"周末多睡半小时",price:40,icon:"💤",type:"休息"}
+    ]));
+  }
 }
 
 /* ================= 导航 ================= */
@@ -530,6 +607,7 @@ function openPage(p){
   if(p==="dailyLesson") renderDailyShelf();
   if(p==="failRecord") renderFail();
   if(p==="insight") renderInsight();
+  if(p==="shop") renderShop();
   if(p==="setting"){renderNotionConfig();renderFbConfig();renderCloudStatus();renderSetSync();}
   window.scrollTo(0,0);
 }
@@ -572,6 +650,8 @@ function renderHome(){
   document.getElementById("dashPassive").innerText=getPassive().length;
   document.getElementById("dashFail").innerText=getFail().length;
   document.getElementById("dashInsight").innerText=getInsight().length;
+  const hc=document.getElementById("dashCrystal");if(hc)hc.innerText=getCrystal();
+  const ha=document.getElementById("dashAura");if(ha)ha.innerText=getAura();
   // 继续修行：找最后一个未完成的卷
   const list=getDailyScrolls();
   let target=null;
@@ -710,14 +790,52 @@ function renderTaskList(s, wrap){
   });
 }
 /* 点整行：完成/取消；无标题时直接编辑 */
+/* 完成 → 晶核 +1（浮窗可撤回）；取消完成 → 晶核 -1 */
 function toggleTask(i){
   const list=getDailyScrolls();
   const t=list[currentScrollIndex].tasks[i];
   if(!t.title.trim()){openEditTask(i);return}
+  const wasDone=t.completed;
   t.completed=!t.completed;
   if(t.completed){const n=new Date();t.completeTime=fmtTime(n)}else{t.completeTime=""}
   list[currentScrollIndex].updatedAt=fmtDateTime(new Date());
   saveDailyScrolls(list);renderScrollOpen(currentScrollIndex);
+  if(t.completed){
+    // 完成：晶核 +1，浮窗支持 2 秒内撤回
+    setCrystal(getCrystal()+1);
+    addLedger({type:"earn",amount:1,note:"完成一课"});
+    showCrystalToast(1, function(){
+      const l2=getDailyScrolls();
+      const tt=l2[currentScrollIndex]&&l2[currentScrollIndex].tasks[i];
+      if(!tt||!tt.completed)return;
+      tt.completed=false;tt.completeTime="";
+      l2[currentScrollIndex].updatedAt=fmtDateTime(new Date());
+      saveDailyScrolls(l2);renderScrollOpen(currentScrollIndex);
+      setCrystal(getCrystal()-1);
+      addLedger({type:"refund",amount:-1,note:"撤回完成"});
+      toast("已撤回，晶核 -1","warn");
+    });
+  }else if(wasDone){
+    // 主动取消已完成任务：扣回晶核
+    setCrystal(getCrystal()-1);
+    addLedger({type:"refund",amount:-1,note:"取消完成"});
+    toast("已取消完成，晶核 -1","warn");
+  }
+}
+/* 晶核获得浮窗（半透明、2 秒、带撤回按钮） */
+function showCrystalToast(amount, onUndo){
+  const w=document.getElementById("toastWrap");
+  if(!w)return;
+  const t=document.createElement("div");
+  t.className="toast show";
+  t.style.background="linear-gradient(135deg,#7d5bb8,#5f3f9e)";
+  t.style.minWidth="200px";
+  t.innerHTML='<span class="crystal-ic" style="color:#fff">◆</span> 获得晶核 ×'+amount+' <span class="crystal-toast-undo" id="crystalUndoBtn">撤回</span>';
+  w.appendChild(t);
+  let undid=false;
+  const btn=t.querySelector("#crystalUndoBtn");
+  if(btn){btn.onclick=function(e){e.stopPropagation();if(undid)return;undid=true;clearTimeout(timer);t.remove();if(onUndo)onUndo();}}
+  const timer=setTimeout(function(){if(!undid){t.classList.remove("show");setTimeout(function(){t.remove()},300)}},2000);
 }
 /* 长按/右键打开编辑 */
 function openEditTask(i){
@@ -1003,6 +1121,136 @@ function confirmDelInsight(i){
   });
 }
 
+/* ================= 万宝阁（晶核商店） ================= */
+function renderShop(){
+  const elC=document.getElementById("shopCrystal");if(elC)elC.innerText=getCrystal();
+  const elA=document.getElementById("shopAura");if(elA)elA.innerText=getAura();
+  const list=getShopItems();
+  const wrap=document.getElementById("shopContainer");if(!wrap)return;
+  wrap.innerHTML="";
+  const empty=document.getElementById("shopEmpty");if(empty)empty.style.display=list.length?"none":"block";
+  list.forEach((it,idx)=>{
+    const d=document.createElement("div");d.className="shop-card";
+    let ic="◆";
+    if(it.icon){ic=(String(it.icon).startsWith("http"))?`<img src="${esc(it.icon)}">`:`<span>${esc(it.icon)}</span>`}
+    d.innerHTML=`<div class="shop-ic">${ic}</div>
+      <div class="shop-name">${esc(it.name||"无名商品")}</div>
+      <div class="shop-desc">${esc(it.desc||"")}</div>
+      <div class="shop-price"><span class="crystal-ic">◆</span> ${esc(String(it.price))} <small>晶核</small></div>
+      <div class="shop-op" title="管理">⋯</div>`;
+    d.querySelector(".shop-op").addEventListener("click",function(e){e.stopPropagation();openShopItemMenu(idx)});
+    d.addEventListener("click",function(){openShopBuy(idx)});
+    wrap.appendChild(d);
+  });
+}
+function openShopItemMenu(idx){
+  const it=getShopItems()[idx];if(!it)return;
+  showModal("商品管理 · "+esc(it.name),
+    `<div style="font-size:13px;color:var(--ink-2);line-height:1.8">价格：<span class="crystal-ic">◆</span> ${esc(String(it.price))} 晶核<br>类型：${esc(it.type||"其他")}</div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">关闭</button>
+     <button class="btn-primary" onclick="openShopEdit(${idx})">编辑</button>
+     <button class="btn-danger" onclick="confirmDelShop(${idx})">删除</button>`);
+}
+function openAddShopItem(){
+  showModal("新增商品",
+    `<label>商品名称</label><input id="sname" placeholder="如：☕ 咖啡">
+     <label>描述</label><textarea id="sdesc" rows="2" placeholder="简短说明"></textarea>
+     <label>价格（晶核）</label><input id="sprice" type="number" value="10">
+     <label>图标 / 图片链接</label><input id="sicon" placeholder="Emoji 或图片URL">
+     <label>类型</label>
+     <select id="stype" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 10px;font-size:15px;background:#fffdf8;color:var(--ink)"><option>实物</option><option>娱乐</option><option>休息</option><option>其他</option></select>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveAddShopItem()">保存</button>`);
+}
+function saveAddShopItem(){
+  const arr=getShopItems();
+  const price=Math.max(0,parseInt(document.getElementById("sprice").value,10)||0);
+  arr.push({id:(arr.reduce(function(m,x){return Math.max(m,x.id||0)},0)+1),name:document.getElementById("sname").value.trim(),desc:document.getElementById("sdesc").value.trim(),price:price,icon:document.getElementById("sicon").value.trim(),type:document.getElementById("stype").value});
+  saveShopItems(arr);closeAllModal();renderShop();toast("已添加商品");
+}
+function openShopEdit(idx){
+  const it=getShopItems()[idx];if(!it)return;
+  const opts=["实物","娱乐","休息","其他"].map(function(x){return '<option '+(x===it.type?"selected":"")+'>'+x+'</option>'}).join("");
+  showModal("编辑商品",
+    `<label>商品名称</label><input id="sname" value="${esc(it.name)}">
+     <label>描述</label><textarea id="sdesc" rows="2">${esc(it.desc)}</textarea>
+     <label>价格（晶核）</label><input id="sprice" type="number" value="${esc(String(it.price))}">
+     <label>图标 / 图片链接</label><input id="sicon" value="${esc(it.icon)}">
+     <label>类型</label>
+     <select id="stype" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 10px;font-size:15px;background:#fffdf8;color:var(--ink)">${opts}</select>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditShop(${idx})">保存</button>`);
+}
+function saveEditShop(idx){
+  const arr=getShopItems();
+  arr[idx]=Object.assign({},arr[idx],{name:document.getElementById("sname").value.trim(),desc:document.getElementById("sdesc").value.trim(),price:Math.max(0,parseInt(document.getElementById("sprice").value,10)||0),icon:document.getElementById("sicon").value.trim(),type:document.getElementById("stype").value});
+  saveShopItems(arr);closeAllModal();renderShop();toast("已保存");
+}
+function confirmDelShop(idx){
+  const it=getShopItems()[idx];
+  showConfirm("删除商品","确定删除「"+esc(it.name)+"」？",true,function(){
+    const arr=getShopItems();arr.splice(idx,1);saveShopItems(arr);closeAllModal();renderShop();toast("已删除");
+  });
+}
+/* 购买：选择「放入行囊」或「立即使用」 */
+function openShopBuy(idx){
+  const it=getShopItems()[idx];if(!it)return;
+  const c=getCrystal();
+  showModal("购买 · "+esc(it.name),
+    `<div style="font-size:14px;color:var(--ink-2);line-height:1.9">
+       需要消耗 <span style="color:#7d5bb8;font-weight:bold">◆ ${esc(String(it.price))} 晶核</span><br>
+       当前拥有 <span class="crystal-ic">◆</span> ${c} 晶核<br>
+       ${it.desc?`<div style="margin-top:6px;font-size:13px;color:var(--muted)">${esc(it.desc)}</div>`:""}
+     </div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button>
+     <button class="btn-primary" onclick="doShopBuy(${idx},false)">购买并放入行囊</button>
+     <button class="btn-primary" onclick="doShopBuy(${idx},true)">购买并使用</button>`);
+}
+function doShopBuy(idx,useNow){
+  const it=getShopItems()[idx];if(!it)return;
+  const c=getCrystal();
+  if(c<it.price){closeAllModal();toast("晶核不足","error");return}
+  setCrystal(c-it.price);
+  addLedger({type:"spend",amount:-it.price,note:"购买 "+(it.name||"")});
+  const bag=getBagData();
+  bag.push({name:it.name||"商品",count:1,img:(it.icon&&String(it.icon).startsWith("http"))?it.icon:"",note:(useNow?"（已使用）":"购自万宝阁"+(it.desc?" · "+it.desc:""))});
+  saveBag(bag);
+  closeAllModal();renderShop();renderBag();
+  toast((it.name||"商品")+(useNow?" 已使用":" 已放入行囊"));
+}
+/* 吸收晶核：1 晶核 = 100 灵气 */
+function openAbsorb(){
+  const c=getCrystal();
+  if(c<1){toast("没有可吸收的晶核","warn");return}
+  showModal("吸收晶核",
+    `<div style="font-size:14px;color:var(--ink-2);line-height:2">
+       吸收 <span style="color:#7d5bb8;font-weight:bold">1 枚晶核</span>，转化为 <span style="color:var(--success);font-weight:bold">+100 灵气</span><br>
+       当前：<span class="crystal-ic">◆</span> ${c} 晶核 · ✦ ${getAura()} 灵气
+     </div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="doAbsorb(1)">吸收</button>`);
+}
+function doAbsorb(n){
+  n=Math.max(1,Math.floor(n||1));
+  const c=getCrystal();
+  if(c<n){toast("晶核不足","error");return}
+  setCrystal(c-n);
+  setAura(getAura()+n*100);
+  addLedger({type:"absorb",amount:-n,note:"吸收晶核，灵气 +"+(n*100)});
+  closeAllModal();renderShop();toast("灵气 +"+(n*100));
+}
+/* 晶核流水 */
+function openLedger(){
+  const l=getLedger();
+  if(!l.length){toast("暂无交易记录","warn");return}
+  const rows=l.slice(0,50).map(function(x){
+    const color=x.amount>=0?"var(--success)":"var(--danger)";
+    const sign=x.amount>0?"+"+x.amount:x.amount;
+    return `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)">
+      <div><div style="font-size:13px;color:var(--ink-2)">${esc(x.note||"")}</div><div style="font-size:11px;color:var(--muted)">${esc(x.ts||"")}</div></div>
+      <div style="font-size:13px;color:${color};font-weight:bold;white-space:nowrap">${sign} ◆</div>
+    </div>`;
+  }).join("");
+  showModal("晶核流水",`<div style="max-height:46vh;overflow-y:auto">${rows}</div>`,`<button class="btn-gray" onclick="closeAllModal()">关闭</button>`);
+}
+
 /* ================= 全局同步状态（P0-3） ================= */
 let syncState={status:"off",time:""};
 function markSync(status,time){
@@ -1099,9 +1347,9 @@ async function fbEmailLogin(mode){
   }catch(e){setFbStatus((mode==='login'?"登录":"注册")+"失败："+e.message);toast((mode==='login'?"登录":"注册")+"失败："+e.message,"error")}
 }
 function fbAfterLogin(){fbPullAll();setFbAutoSync(true)}
-function getMods(){return["bag","passive","daily","fail","insight"]}
-function getModuleData(m){switch(m){case"bag":return getBagData();case"passive":return getPassive();case"daily":return getDailyScrolls();case"fail":return getFail();case"insight":return getInsight()}}
-function applyModuleData(m,d){fbSuppress=true;try{switch(m){case"bag":saveBag(d);break;case"passive":savePassive(d);break;case"daily":saveDailyScrolls(d);break;case"fail":saveFail(d);break;case"insight":saveInsight(d);break}}finally{fbSuppress=false}}
+function getMods(){return["bag","passive","daily","fail","insight","crystal","aura","shop"]}
+function getModuleData(m){switch(m){case"bag":return getBagData();case"passive":return getPassive();case"daily":return getDailyScrolls();case"fail":return getFail();case"insight":return getInsight();case"crystal":return getCrystal();case"aura":return getAura();case"shop":return getShopItems()}}
+function applyModuleData(m,d){fbSuppress=true;try{switch(m){case"bag":saveBag(d);break;case"passive":savePassive(d);break;case"daily":saveDailyScrolls(d);break;case"fail":saveFail(d);break;case"insight":saveInsight(d);break;case"crystal":setCrystal(d);break;case"aura":setAura(d);break;case"shop":saveShopItems(d);break}}finally{fbSuppress=false}}
 async function fbUploadModule(m){
   markSync("syncing");
   await fbDb.collection("xiantu").doc(m).set({data:JSON.stringify(getModuleData(m)),updated:firebase.firestore.FieldValue.serverTimestamp()});
@@ -1172,13 +1420,16 @@ create policy "xiantu_update_own" on public.xiantu_data for update using (auth.u
 function cloudCfg(){try{return JSON.parse(localStorage.getItem(CLOUD_CFG_KEY))||{}}catch(e){return {}}}
 function cloudMeta(){try{return JSON.parse(localStorage.getItem(CLOUD_META_KEY))||{}}catch(e){return {}}}
 function setCloudMeta(x){localStorage.setItem(CLOUD_META_KEY,JSON.stringify(x));renderCloudStatus()}
-function cloudSnapshot(){return{bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight()}}
+function cloudSnapshot(){return{bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),crystal:getCrystal(),aura:getAura(),shop:getShopItems()}}
 function setLocalSnapshot(d){
   localStorage.setItem(STORAGE_KEY_BAG,JSON.stringify(d.bag||[]));
   localStorage.setItem(STORAGE_KEY_PASSIVE,JSON.stringify(d.passive||[]));
   localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify(d.daily||[]));
   localStorage.setItem(STORAGE_KEY_FAIL,JSON.stringify(d.fail||[]));
   localStorage.setItem(STORAGE_KEY_INSIGHT,JSON.stringify(d.insight||[]));
+  if(d.crystal!==undefined)localStorage.setItem(STORAGE_KEY_CRYSTAL,String(Math.max(0,Math.floor(d.crystal||0))));
+  if(d.aura!==undefined)localStorage.setItem(STORAGE_KEY_AURA,String(Math.max(0,Math.floor(d.aura||0))));
+  if(d.shop!==undefined)localStorage.setItem(STORAGE_KEY_SHOP,JSON.stringify(d.shop||[]));
 }
 function renderCloudStatus(){
   const el=document.getElementById("cloudStatus");if(!el)return;
@@ -1327,7 +1578,7 @@ async function pullFromNotion(){
 
 /* ================= 数据导出/导入/重置 ================= */
 function exportAllData(){
-  const all={version:2,exportTime:new Date().toLocaleString(),bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight()};
+  const all={version:3,exportTime:new Date().toLocaleString(),bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),crystal:getCrystal(),aura:getAura(),shop:getShopItems(),ledger:getLedger()};
   const b=new Blob([JSON.stringify(all,null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`仙途行囊备份_${Date.now()}.json`;a.click();toast("已导出全部数据");
 }
@@ -1337,6 +1588,10 @@ function importAllData(){
     const d=JSON.parse(ev.target.result);
     if(d.bag!==undefined&&d.daily!==undefined){
       saveBag(d.bag||[]);savePassive(d.passive||[]);saveDailyScrolls(d.daily||[]);saveFail(d.fail||[]);saveInsight(d.insight||[]);
+      if(d.crystal!==undefined)setCrystal(d.crystal);
+      if(d.aura!==undefined)setAura(d.aura);
+      if(d.shop!==undefined)saveShopItems(d.shop);
+      if(d.ledger!==undefined)localStorage.setItem(STORAGE_KEY_LEDGER,JSON.stringify(d.ledger||[]));
       renderHomeDashboardAll();toast("导入成功");
     }else toast("备份文件格式不正确","error");
   }catch(err){toast("文件解析失败","error")}};r.readAsText(e.target.files[0])};
@@ -1349,6 +1604,7 @@ function exportSingle(t){let d,n;switch(t){case"bag":d=getBagData();n="物品行
 function confirmResetAll(){
   showConfirm("重置全部数据","确定清空所有自定义数据，恢复默认示例？此操作不可撤销！",true,()=>{
     localStorage.removeItem(STORAGE_KEY_BAG);localStorage.removeItem(STORAGE_KEY_PASSIVE);localStorage.removeItem(STORAGE_KEY_DAILY);localStorage.removeItem(STORAGE_KEY_FAIL);localStorage.removeItem(STORAGE_KEY_INSIGHT);
+    localStorage.removeItem(STORAGE_KEY_CRYSTAL);localStorage.removeItem(STORAGE_KEY_AURA);localStorage.removeItem(STORAGE_KEY_SHOP);localStorage.removeItem(STORAGE_KEY_LEDGER);
     initDefaultData();renderHomeDashboardAll();toast("已重置为默认数据");
   });
 }
