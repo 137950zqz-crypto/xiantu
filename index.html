@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>仙途行囊</title>
+<!-- ===== PWA 支持 ===== -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8b5e34">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="仙途行囊">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+:root{
+  --ink:#4a3c2e; --ink-2:#665442; --primary:#8b5e34; --primary-bg:#e6c8a0;
+  --success:#5f7f55; --success-bg:#e2ebd6; --danger:#a85032; --danger-bg:#f5d8cb;
+  --muted:#947c62; --line:#e0ccb2; --card:#fff8ec; --bg:#f8f3e8;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",system-ui,-apple-system;}
+html{font-size:15px}
+body{background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+button{font-size:15px;border:none;border-radius:8px;cursor:pointer;background:var(--primary-bg);color:#4b331c;padding:10px 14px;min-height:44px;transition:transform .15s,opacity .15s}
+button:active{transform:scale(.97)}
+input,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 10px;font-size:15px;background:#fffdf8;color:var(--ink);min-height:44px}
+textarea{min-height:80px;resize:vertical}
+label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
+.btn{background:var(--primary-bg);color:#4b331c}
+.btn-primary{background:var(--primary-bg);color:#4b331c}
+.btn-danger{background:var(--danger-bg);color:var(--danger)}
+.btn-gray{background:#e2dfd8;color:#555}
+.btn-ghost{background:transparent;color:var(--muted)}
+/* ===== 布局 ===== */
+.app{display:flex;min-height:100vh}
+.sidebar{display:none}
+.content{flex:1;padding:64px 16px 90px;max-width:760px;margin:0 auto;width:100%}
+/* ===== 全局同步状态条（固定顶部）===== */
+.sync-bar{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line)}
+.sync-bar.sync-ok{background:var(--success-bg);color:var(--success)}
+.sync-bar.sync-syncing{background:#f0e9d2;color:var(--primary)}
+.sync-bar.sync-err{background:var(--danger-bg);color:var(--danger)}
+.sync-bar.sync-off{background:#ece8df;color:var(--muted)}
+.sync-msg{opacity:.85}
+/* ===== 导航 ===== */
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:#fffaf1;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.mobile-nav button{flex:1;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:8px 2px;min-height:52px}
+.mobile-nav button .nav-ic{font-size:20px;line-height:1}
+.mobile-nav button.active{color:var(--primary);font-weight:bold}
+/* ===== 首页 Dashboard ===== */
+.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.hd h1{font-size:26px;color:var(--primary);letter-spacing:4px}
+.today-card{background:linear-gradient(135deg,#fff8ec,#f3e5cf);border:2px solid #d4bc9c;border-radius:16px;padding:20px;margin-bottom:16px}
+.today-top{display:flex;justify-content:space-between;align-items:baseline}
+.today-title{font-size:16px;color:var(--ink-2)}
+.today-vol{font-size:13px;color:var(--muted)}
+.today-num{font-size:30px;font-weight:bold;color:var(--primary);margin:8px 0 4px}
+.today-num small{font-size:15px;color:var(--muted);font-weight:normal}
+.pbar{height:10px;background:#e8ddcc;border-radius:99px;overflow:hidden;margin:8px 0}
+.pfill{height:100%;background:linear-gradient(90deg,#c89a5e,#b8864e);border-radius:99px;transition:width .3s ease}
+.section-title{font-size:13px;color:var(--muted);margin:18px 0 8px;letter-spacing:2px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:"";flex:1;height:1px;background:var(--line)}
+.asset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.asset{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center}
+.asset .n{font-size:22px;font-weight:bold;color:var(--primary)}
+.asset .t{font-size:13px;color:var(--muted)}
+.continue-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center;margin-top:16px;cursor:pointer}
+.continue-card:active{background:#fff1dc}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.menu-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 12px;text-align:center;cursor:pointer}
+.menu-item:active{background:#fff1dc}
+.menu-item .ic{font-size:26px;margin-bottom:6px}
+.menu-item .mt{font-size:15px;color:var(--ink-2)}
+/* ===== 页面通用 ===== */
+.page{display:none}
+.page.active{display:block}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.page-head h2{font-size:22px;color:var(--primary)}
+.top-op{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+/* ===== 每日十课 · 实体书架（竖书，可折叠展开） ===== */
+.shelf{background:linear-gradient(180deg,#efe0c2,#e0c89e);border:10px solid #8a5a2b;border-radius:14px;padding:14px;margin-bottom:18px;box-shadow:0 6px 16px rgba(74,55,31,.18)}
+.shelf-head{display:flex;justify-content:space-between;align-items:center;padding:0 4px 10px}
+.shelf-head-info{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.shelf-date{font-size:15px;font-weight:bold;color:#5d3d1c}
+.shelf-count{font-size:12px;color:#8a6a3f}
+.shelf-fold-btn{background:rgba(255,255,255,.55);color:#5d3d1c;min-height:34px;padding:4px 10px;border-radius:6px;font-size:13px}
+.shelf-body{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;min-height:178px;padding:4px 2px}
+.shelf-body.folded{display:none}
+/* 书 */
+.book{width:54px;cursor:pointer;position:relative;transition:transform .2s ease,width .2s ease}
+.book:active{transform:translateY(-3px)}
+.book-spine{width:100%;height:168px;border-radius:5px 5px 9px 9px;background:linear-gradient(90deg,#b07f45,#d9b276 22%,#e8ca94 46%,#d9b276 80%,#a4763d);border:1px solid #96693a;box-shadow:3px 4px 7px rgba(74,55,31,.35);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 4px 8px;color:#fff;position:relative}
+.book-spine::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:rgba(0,0,0,.16);border-radius:5px 0 0 9px}
+.book-date{writing-mode:vertical-rl;letter-spacing:3px;font-size:14px;font-weight:bold;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.book-vol{font-size:10px;background:rgba(255,255,255,.3);border-radius:4px;padding:2px 4px;writing-mode:vertical-rl}
+.book-progress{width:5px;height:62px;background:rgba(0,0,0,.22);border-radius:3px;overflow:hidden;position:relative}
+.book-progress-fill{position:absolute;bottom:0;left:0;right:0;background:#eaf3dc;transition:height .3s}
+.book-count{font-size:11px;font-weight:bold;color:#fff}
+/* 书完成度达到100%时变浅玉色 */
+.book.done .book-spine{background:linear-gradient(90deg,#7f9a6f,#a5bf94 22%,#b9d1a6 46%,#a5bf94 80%,#6f8a5f)}
+/* 展开的书 */
+.book.expanded{width:100%;flex-basis:100%;cursor:default}
+.book.expanded:active{transform:none}
+.book.expanded .book-spine{height:auto;width:100%;flex-direction:row;justify-content:flex-start;gap:14px;align-items:center;padding:12px 16px;border-radius:9px 9px 0 0}
+.book.expanded .book-spine::before{display:none}
+.book.expanded .book-date{writing-mode:horizontal-tb;letter-spacing:0;font-size:16px}
+.book.expanded .book-vol{writing-mode:horizontal-tb}
+.book.expanded .book-progress{width:130px;height:10px;border-radius:5px}
+.book.expanded .book-progress-fill{height:100%;width:0;top:0;bottom:auto}
+.book.expanded .book-count{font-size:13px}
+.book-open{display:none;width:100%}
+.book.expanded .book-open{display:block;background:#fffaf0;border:1px solid #d4bc9c;border-top:none;border-radius:0 0 9px 9px;padding:12px}
+/* 展开区头部 */
+.open-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.open-title{font-size:15px;font-weight:bold;color:var(--ink)}
+.open-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.open-ops{display:flex;gap:8px}
+.open-progress{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.open-progress .pbar{flex:1;margin:0}
+.open-pnum{font-size:12px;color:var(--muted);white-space:nowrap}
+/* 空状态 */
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.empty .ic{font-size:40px;margin-bottom:10px}
+.empty .t{font-size:15px;color:var(--ink-2);margin-bottom:6px}
+.empty .d{font-size:13px;line-height:1.6}
+/* ===== 任务列表 ===== */
+.task-list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.task{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px dashed var(--line);cursor:pointer;min-height:56px}
+.task:last-child{border-bottom:none}
+.task:active{background:#fff1dc}
+.task .num{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:#efdfc8;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold}
+.task.done .num{background:var(--success-bg);color:var(--success)}
+.task .tt{flex:1;font-size:15px;min-width:0;word-break:break-word}
+.task .tt.empty{color:#b0a08a}
+.task.done .tt{text-decoration:line-through;opacity:.7;color:var(--muted)}
+.task .st{flex-shrink:0;font-size:12px;display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.task .st.todo{color:var(--muted);background:#efebe3}
+.task .st.done{color:var(--success);background:var(--success-bg)}
+.task .st.delay{color:var(--danger);background:var(--danger-bg)}
+/* ===== 行囊 ===== */
+.bag-toolbar{display:flex;gap:8px;margin-bottom:12px}
+.bag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:12px}
+.item-slot{background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:10px;position:relative;text-align:center;cursor:pointer;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.item-slot:active{background:#fff1dc}
+.item-thumb{width:100%;aspect-ratio:1;border-radius:8px;background:#f0e6d2;display:flex;align-items:center;justify-content:center;font-size:30px;color:#b8a386;overflow:hidden;margin-bottom:6px}
+.item-thumb img{width:100%;height:100%;object-fit:cover}
+.item-badge{position:absolute;top:6px;right:6px;background:var(--primary);color:#fff;border-radius:99px;min-width:22px;height:22px;padding:0 6px;font-size:12px;display:flex;align-items:center;justify-content:center}
+.item-cb{position:absolute;top:8px;left:8px;width:22px;height:22px;display:none}
+.bag-selecting .item-cb{display:block}
+.bag-selecting .item-slot{padding-top:34px}
+.bag-selecting .item-slot.sel{border-color:var(--primary);background:#f7ead6}
+.selection-bar{position:fixed;bottom:64px;left:0;right:0;z-index:55;background:#fffaf1;border-top:1px solid var(--line);padding:10px 14px;display:none;align-items:center;gap:10px}
+.selection-bar.show{display:flex}
+/* ===== 列表卡片（功法/卷宗/悟道）===== */
+.li-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;min-height:60px;display:flex;gap:12px;align-items:flex-start}
+.li-card:active{background:#fff1dc}
+.li-card .li-ic{width:40px;height:40px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0e6d2}
+.li-card .li-main{flex:1;min-width:0}
+.li-card .li-t{font-size:16px;color:var(--ink);font-weight:bold;display:flex;align-items:center;gap:8px}
+.li-card .li-sum{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.li-card .li-meta{font-size:11px;color:var(--muted);margin-top:4px}
+.li-card .li-arrow{color:var(--muted);flex-shrink:0;align-self:center}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--success-bg);color:var(--success);white-space:nowrap}
+.tag-warn{background:var(--danger-bg);color:var(--danger)}
+/* ===== 设置 ===== */
+.set-section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.set-section h4{color:var(--primary);font-size:16px;margin-bottom:10px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.set-row:last-child{border-bottom:none}
+.set-row .k{font-size:15px;color:var(--ink)}
+.set-row .v{font-size:13px;color:var(--muted)}
+details.adv{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);margin-bottom:12px}
+details.adv summary{padding:14px;cursor:pointer;font-size:15px;color:var(--ink-2);list-style:none}
+details.adv summary::before{content:"▸ ";color:var(--primary)}
+details.adv[open] summary::before{content:"▾ "}
+details.adv .adv-body{padding:0 14px 14px}
+details.adv label{color:var(--muted)}
+/* ===== Toast ===== */
+#toastWrap{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:rgba(60,50,40,.92);color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;opacity:0;transform:translateY(-6px);transition:all .25s;min-width:140px;text-align:center}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--success)}
+.toast.warn{background:#b8864e}
+.toast.error{background:var(--danger)}
+/* ===== 弹窗 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:80}
+.modal-mask.show{display:flex}
+.modal-box{width:100%;max-width:520px;background:#fff9ef;border:2px solid #c9a87c;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;max-height:82vh}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--line);font-size:18px;color:var(--primary);font-weight:bold}
+.modal-body{padding:16px 18px;overflow-y:auto}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}
+.note-area{max-height:42vh;overflow-y:auto;word-break:break-word;padding-right:6px;line-height:1.7;color:var(--ink-2)}
+/* ===== 完成动画 ===== */
+@keyframes pop{0%{transform:scale(.6);opacity:.4}100%{transform:scale(1);opacity:1}}
+.task.done .num{animation:pop .25s ease}
+/* ===== 桌面端 ===== */
+@media(min-width:900px){
+  .sidebar{display:flex;flex-direction:column;width:210px;background:#fdf6e8;border-right:1px solid var(--line);position:fixed;top:0;bottom:0;left:0;padding:20px 12px;z-index:50}
+  .sidebar .brand{font-size:20px;color:var(--primary);letter-spacing:3px;text-align:center;margin-bottom:24px;padding-top:44px}
+  .sidebar nav{display:flex;flex-direction:column;gap:4px}
+  .sidebar nav button{background:transparent;color:var(--ink-2);justify-content:flex-start;text-align:left;padding:11px 14px;border-radius:8px;min-height:44px;font-size:14px}
+  .sidebar nav button.active{background:var(--primary-bg);color:#4b331c;font-weight:bold}
+  .mobile-nav{display:none}
+  .content{padding:84px 24px 40px;max-width:900px;margin:0 auto;margin-left:210px}
+}
+@media(max-width:899px){
+  .sidebar{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- 全局同步状态条 -->
+<div class="sync-bar sync-off" id="syncBar" onclick="openPage('setting')">☁ 未连接云端</div>
+
+<div class="app">
+  <!-- 桌面侧边栏 -->
+  <aside class="sidebar">
+    <div class="brand">仙途行囊</div>
+    <nav id="sideNav">
+      <button data-page="home" class="active">🏠 首页</button>
+      <button data-page="bag">🎒 物品行囊</button>
+      <button data-page="passiveSkill">☯ 被动功法</button>
+      <button data-page="dailyLesson">📜 每日十课</button>
+      <button data-page="failRecord">⚠ 走火入魔录</button>
+      <button data-page="insight">☼ 悟道札记</button>
+      <button data-page="setting">⚙ 修行设置</button>
+    </nav>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="content">
+
+    <!-- 首页 Dashboard -->
+    <div class="page active" id="page-home">
+      <div class="hd"><h1>仙途行囊</h1></div>
+      <!-- 今日修行 -->
+      <div class="today-card">
+        <div class="today-top">
+          <span class="today-title">今日修行</span>
+          <span class="today-vol" id="todayVol"></span>
+        </div>
+        <div class="today-num" id="todayNum">0 <small>/ 0 课</small></div>
+        <div class="pbar"><div class="pfill" id="todayFill" style="width:0%"></div></div>
+        <div id="todayPercent" style="font-size:12px;color:var(--muted)"></div>
+      </div>
+      <!-- 长期资产 -->
+      <div class="section-title">长期资产</div>
+      <div class="asset-grid">
+        <div class="asset"><span class="t">行囊</span><span class="n" id="dashBag">0</span></div>
+        <div class="asset"><span class="t">功法</span><span class="n" id="dashPassive">0</span></div>
+        <div class="asset"><span class="t">卷宗</span><span class="n" id="dashFail">0</span></div>
+        <div class="asset"><span class="t">悟道</span><span class="n" id="dashInsight">0</span></div>
+      </div>
+      <!-- 继续修行 -->
+      <div class="continue-card" id="continueCard" onclick="continuePractice()">
+        <span id="continueTxt">继续修行</span>
+        <span style="color:var(--primary)">→</span>
+      </div>
+      <!-- 模块入口 -->
+      <div class="section-title">修行入口</div>
+      <div class="menu-grid">
+        <div class="menu-item" onclick="openPage('bag')"><div class="ic">🎒</div><div class="mt">物品行囊</div></div>
+        <div class="menu-item" onclick="openPage('passiveSkill')"><div class="ic">☯</div><div class="mt">被动功法</div></div>
+        <div class="menu-item" onclick="openPage('dailyLesson')"><div class="ic">📜</div><div class="mt">每日十课</div></div>
+        <div class="menu-item" onclick="openPage('failRecord')"><div class="ic">⚠</div><div class="mt">走火入魔录</div></div>
+        <div class="menu-item" onclick="openPage('insight')"><div class="ic">☼</div><div class="mt">悟道札记</div></div>
+        <div class="menu-item" onclick="openPage('setting')"><div class="ic">⚙</div><div class="mt">修行设置</div></div>
+      </div>
+    </div>
+
+    <!-- 物品行囊 -->
+    <div class="page" id="page-bag">
+      <div class="page-head"><h2>物品行囊</h2><button class="btn-ghost" id="bagSelectBtn" onclick="toggleBagSelectMode()">选择</button></div>
+      <div class="bag-toolbar">
+        <button class="btn-primary" onclick="openAddItem()">＋ 新增物品</button>
+      </div>
+      <div class="bag-grid" id="bagContainer"></div>
+      <div class="empty" id="bagEmpty" style="display:none"><div class="ic">🎒</div><div class="t">行囊空空</div><div class="d">收集第一件属于你的物品</div></div>
+      <!-- 选择模式操作栏 -->
+      <div class="selection-bar" id="selectionBar">
+        <button class="btn-gray" onclick="toggleBagSelectAll()">全选</button>
+        <span style="flex:1;font-size:13px;color:var(--muted)" id="selCount">已选 0 项</span>
+        <button class="btn-danger" onclick="confirmDeleteBagSelected()">删除所选</button>
+        <button class="btn-ghost" onclick="toggleBagSelectMode(false)">取消</button>
+      </div>
+    </div>
+
+    <!-- 被动功法 -->
+    <div class="page" id="page-passiveSkill">
+      <div class="page-head"><h2>被动功法</h2></div>
+      <div class="top-op"><button class="btn-primary" onclick="openAddPassive()">＋ 添加功法</button></div>
+      <div id="passiveContainer"></div>
+      <div class="empty" id="passiveEmpty" style="display:none"><div class="ic">☯</div><div class="t">尚未习得功法</div><div class="d">从一个零阻力的小习惯开始</div></div>
+    </div>
+
+    <!-- 每日十课 -->
+    <div class="page" id="page-dailyLesson">
+      <div class="page-head"><h2>每日十课</h2><button class="btn-primary" onclick="addNewScroll()">＋ 新增卷轴</button></div>
+      <div id="dailyShelfContainer"></div>
+      <div class="empty" id="dailyEmpty" style="display:none"><div class="ic">📜</div><div class="t">书架空空</div><div class="d">新增一卷，开始今日修行</div></div>
+    </div>
+
+    <!-- 走火入魔录 -->
+    <div class="page" id="page-failRecord">
+      <div class="page-head"><h2>走火入魔录</h2></div>
+      <div class="top-op"><button class="btn-primary" onclick="openAddFail()">＋ 记录失败</button></div>
+      <div id="failContainer"></div>
+      <div class="empty" id="failEmpty" style="display:none"><div class="ic">⚠</div><div class="t">尚无走火入魔</div><div class="d">还没有失败记录</div></div>
+    </div>
+
+    <!-- 悟道札记 -->
+    <div class="page" id="page-insight">
+      <div class="page-head"><h2>悟道札记</h2></div>
+      <div class="top-op"><button class="btn-primary" onclick="openAddInsight()">＋ 记录悟道</button></div>
+      <div id="insightContainer"></div>
+      <div class="empty" id="insightEmpty" style="display:none"><div class="ic">☼</div><div class="t">尚未悟道</div><div class="d">当一个经验值得反复使用时，把它记录下来</div></div>
+    </div>
+
+    <!-- 设置 -->
+    <div class="page" id="page-setting">
+      <div class="page-head"><h2>修行设置</h2></div>
+      <!-- 数据同步（普通用户） -->
+      <div class="set-section">
+        <h4>☁ 数据同步</h4>
+        <div class="set-row"><span class="k">同步状态</span><span class="v" id="setSyncStatus">未连接云端</span></div>
+        <div class="set-row"><span class="k">当前账户</span><span class="v" id="setAccount">未登录</span></div>
+        <div class="top-op" style="margin-top:10px;margin-bottom:0">
+          <button class="btn-primary" onclick="syncNow()">立即同步</button>
+          <button class="btn-gray" onclick="logoutAll()">退出登录</button>
+        </div>
+      </div>
+      <!-- 数据管理 -->
+      <div class="set-section">
+        <h4>数据管理</h4>
+        <div class="top-op" style="margin-bottom:0">
+          <button class="btn-primary" onclick="exportAllData()">导出全部数据</button>
+          <button class="btn-gray" onclick="importAllData()">导入数据</button>
+        </div>
+      </div>
+      <!-- 高级设置 -->
+      <details class="adv">
+        <summary>高级设置</summary>
+        <div class="adv-body">
+          <div class="set-section" style="margin-bottom:10px">
+            <h4>Firebase 云同步</h4>
+            <label>Firebase Web 配置（可粘贴 const firebaseConfig = {...} 整段）</label>
+            <textarea id="fbConfigInput" rows="4" placeholder='{"apiKey":"...","projectId":"..."}'></textarea>
+            <div class="top-op">
+              <button class="btn-primary" onclick="saveFbConfigBtn()">保存配置</button>
+              <button class="btn-primary" onclick="fbAnonymousLogin()">⚡ 匿名登录</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input id="fbEmail" placeholder="邮箱" style="flex:1;min-width:130px">
+              <input id="fbPass" type="password" placeholder="密码" style="flex:1;min-width:130px">
+            </div>
+            <div class="top-op">
+              <button class="btn-gray" onclick="fbEmailLogin('login')">邮箱登录</button>
+              <button class="btn-gray" onclick="fbEmailLogin('signup')">邮箱注册</button>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:6px"><input type="checkbox" id="fbAutoSync" onchange="fbToggleAutoSync(this)" style="width:auto;min-height:auto"> 开启实时自动同步</label>
+            <div class="v" id="fbStatus" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+          </div>
+          <div class="set-section" style="margin-bottom:10px">
+            <h4>Supabase 云同步</h4>
+            <div id="cloudStatus" style="font-size:13px;color:var(--muted);margin-bottom:8px">未配置云端</div>
+            <div class="top-op">
+              <button class="btn-primary" onclick="openCloudSetup()">配置 / 登录</button>
+              <button class="btn-gray" onclick="cloudSyncNow()">立即同步</button>
+              <button class="btn-gray" onclick="cloudLogout()">退出登录</button>
+            </div>
+          </div>
+          <div class="set-section" style="margin-bottom:10px">
+            <h4>Notion 云同步</h4>
+            <label>Notion Token</label>
+            <input id="notionToken" placeholder="secret_...">
+            <label>Notion 数据库 ID</label>
+            <input id="notionDbId" placeholder="数据库链接中的ID">
+            <div class="top-op">
+              <button class="btn-primary" onclick="saveNotionConfigBtn()">保存配置</button>
+              <button class="btn-primary" onclick="uploadAllToNotion()">上传到 Notion</button>
+              <button class="btn-gray" onclick="pullFromNotion()">从 Notion 拉取</button>
+            </div>
+            <div class="v" id="notionStatus" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+          </div>
+          <div class="set-section" style="margin-bottom:10px">
+            <h4>数据重置</h4>
+            <button class="btn-danger" onclick="confirmResetAll()">重置全部数据，恢复默认示例</button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+  </main>
+</div>
+
+<!-- 移动端底部导航 -->
+<div class="mobile-nav" id="mobileNav">
+  <button data-page="home" class="active"><span class="nav-ic">🏠</span>首页</button>
+  <button data-page="bag"><span class="nav-ic">🎒</span>行囊</button>
+  <button data-page="dailyLesson"><span class="nav-ic">📜</span>十课</button>
+  <button data-page="insight"><span class="nav-ic">☼</span>悟道</button>
+  <button data-page="setting"><span class="nav-ic">⚙</span>设置</button>
+</div>
+
+<!-- 通用弹窗 -->
+<div class="modal-mask" id="globalMask" onclick="closeAllModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-head" id="modalHead"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<div id="toastWrap"></div>
+
+<!-- 云端 SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* ================= 工具 ================= */
+function esc(s){if(s===null||s===undefined)return "";return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function pad(n){return String(n).padStart(2,'0')}
+function fmtDate(d){return d.getFullYear()+"·"+pad(d.getMonth()+1)+"·"+pad(d.getDate())}
+function fmtTime(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
+function fmtDateTime(d){return fmtDate(d)+" "+fmtTime(d)}
+function getTodayStr(){const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+
+/* ================= Toast（统一） ================= */
+function toast(msg, type){
+  type = type || "success";
+  const w = document.getElementById("toastWrap");
+  const t = document.createElement("div");
+  t.className = "toast " + type;
+  const ic = type==="success"?"✓ ":type==="error"?"✕ ":"⚠ ";
+  t.innerText = ic + msg;
+  w.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add("show"));
+  setTimeout(()=>{t.classList.remove("show");setTimeout(()=>t.remove(),300)},2200);
+}
+
+/* ================= 统一确认弹窗 ================= */
+function showConfirm(title, text, danger, onOk){
+  showModal(title,
+    `<div style="font-size:14px;color:var(--ink-2);line-height:1.7">${text}</div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button>
+     <button class="${danger?'btn-danger':'btn-primary'}" id="confirmOkBtn">确定${danger?'删除':''}</button>`);
+  document.getElementById("confirmOkBtn").onclick = ()=>{closeAllModal();onOk();};
+}
+
+/* ================= 存储 ================= */
+const STORAGE_KEY_BAG="xiantu_bag_data", STORAGE_KEY_PASSIVE="xiantu_passive",
+      STORAGE_KEY_DAILY="xiantu_daily_scroll", STORAGE_KEY_FAIL="xiantu_fail",
+      STORAGE_KEY_INSIGHT="xiantu_insight", STORAGE_KEY_NOTION="xiantu_notion_config",
+      STORAGE_KEY_FB="xiantu_firebase_config", CLOUD_CFG_KEY="xiantu_cloud_config_v1", CLOUD_META_KEY="xiantu_cloud_meta_v1";
+
+/* ================= 数据层 ================= */
+function getBagData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_BAG))||[]}catch(e){return []}}
+function saveBag(a){localStorage.setItem(STORAGE_KEY_BAG,JSON.stringify(a));fbAutoUpload("bag");cloudQueueSync();}
+function getPassive(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_PASSIVE))||[]}catch(e){return []}}
+function savePassive(a){localStorage.setItem(STORAGE_KEY_PASSIVE,JSON.stringify(a));fbAutoUpload("passive");cloudQueueSync();}
+function getDailyScrolls(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_DAILY))||[]}catch(e){return []}}
+function saveDailyScrolls(a){localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify(a));fbAutoUpload("daily");cloudQueueSync();}
+function getFail(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_FAIL))||[]}catch(e){return []}}
+function saveFail(a){localStorage.setItem(STORAGE_KEY_FAIL,JSON.stringify(a));fbAutoUpload("fail");cloudQueueSync();}
+function getInsight(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_INSIGHT))||[]}catch(e){return []}}
+function saveInsight(a){localStorage.setItem(STORAGE_KEY_INSIGHT,JSON.stringify(a));fbAutoUpload("insight");cloudQueueSync();}
+
+/* 默认数据 */
+function initDefaultData(){
+  if(!localStorage.getItem(STORAGE_KEY_BAG)){
+    localStorage.setItem(STORAGE_KEY_BAG,JSON.stringify([
+      {name:"清灵玉佩",count:2,img:"",note:"随身佩戴，安神静心"},
+      {name:"凝神香",count:5,img:"",note:"静坐时点燃，收敛心神"},
+      {name:"辟谷丹",count:3,img:"",note:"减少饥欲，辅助修行"},
+      {name:"传讯符",count:1,img:"",note:"可远距离传递简短讯息"}
+    ]));
+  }
+  if(!localStorage.getItem(STORAGE_KEY_PASSIVE)){
+    localStorage.setItem(STORAGE_KEY_PASSIVE,JSON.stringify([
+      {title:"睡醒理床铺",desc:"起床之后顺手整理床铺，建立秩序开端",mastered:false},
+      {title:"睡前刷牙洗脸",desc:"睡前固定流程，标记一天结束",mastered:false},
+      {title:"喷香氛",desc:"环境气味微调，改善心境",mastered:true},
+      {title:"一直戴表",desc:"持续感知时间流逝",mastered:false}
+    ]));
+  }
+  if(!localStorage.getItem(STORAGE_KEY_DAILY)){
+    const now=new Date();
+    localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify([{
+      date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),
+      tasks:[
+        {title:"月度算钱",completed:false,completeTime:"",delayDays:0},
+        {title:"交医保",completed:false,completeTime:"",delayDays:0},
+        {title:"滚珠香水",completed:false,completeTime:"",delayDays:0},
+        {title:"完成油画",completed:false,completeTime:"",delayDays:0},
+        {title:"",completed:false,completeTime:"",delayDays:0},
+        {title:"",completed:false,completeTime:"",delayDays:0},
+        {title:"",completed:false,completeTime:"",delayDays:0},
+        {title:"",completed:false,completeTime:"",delayDays:0},
+        {title:"",completed:false,completeTime:"",delayDays:0},
+        {title:"",completed:false,completeTime:"",delayDays:0}
+      ]
+    }]));
+  }
+  if(!localStorage.getItem(STORAGE_KEY_FAIL)){
+    localStorage.setItem(STORAGE_KEY_FAIL,JSON.stringify([{title:"用日历将时间具像化",reason:"其本意是每过一天就用笔划掉，让时间的流逝变得具象，然后给人一种时间一天天过去的紧迫感，然后抓紧利用时间。但是，会忘记划掉，如果不在家也会忘掉，通常是补划，所以，没有太大的用处，并且没有感觉，没有动容的感觉。所以类似的具像化时间流逝的方法都没有很大用处。我并不是时间具像化之后就会有紧迫感之人，需要寻找其他，让四维时空观成立的方法。"}]));
+  }
+  if(!localStorage.getItem(STORAGE_KEY_INSIGHT)){
+    localStorage.setItem(STORAGE_KEY_INSIGHT,JSON.stringify([{title:"晨起静坐一刻钟",content:"晨起空腹静坐，心神最易收敛，此时杂念最少，最容易进入静定状态。坚持半月，整日精神都更清明。"}]));
+  }
+}
+
+/* ================= 导航 ================= */
+let currentPage="home";
+function openPage(p){
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  document.getElementById("page-"+p).classList.add("active");
+  currentPage=p;
+  document.querySelectorAll("#sideNav button,.mobile-nav button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.page===p);
+  });
+  if(p==="home") renderHome();
+  if(p==="bag") renderBag();
+  if(p==="passiveSkill") renderPassive();
+  if(p==="dailyLesson") renderDailyShelf();
+  if(p==="failRecord") renderFail();
+  if(p==="insight") renderInsight();
+  if(p==="setting"){renderNotionConfig();renderFbConfig();renderCloudStatus();renderSetSync();}
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("#sideNav button,.mobile-nav button").forEach(b=>{
+  b.addEventListener("click",()=>openPage(b.dataset.page));
+});
+
+/* ================= 弹窗 ================= */
+function showModal(head,body,footer){
+  document.getElementById("modalHead").innerHTML=head;
+  document.getElementById("modalBody").innerHTML=body;
+  document.getElementById("modalFooter").innerHTML=footer||"";
+  document.getElementById("globalMask").classList.add("show");
+}
+function closeAllModal(e){
+  if(e && e.target!==document.getElementById("globalMask"))return;
+  document.getElementById("globalMask").classList.remove("show");
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAllModal()});
+let tsx=0;
+document.addEventListener("touchstart",e=>tsx=e.touches[0].clientX);
+document.addEventListener("touchend",e=>{if(e.changedTouches[0].clientX-tsx>80)closeAllModal()});
+
+/* ================= 首页 Dashboard（P1-4） ================= */
+function getTodayStats(){
+  const list=getDailyScrolls();
+  const today=getTodayStr();
+  const t=list.filter(s=>s.date===today);
+  let total=0, done=0;
+  t.forEach(s=>{total+=s.tasks.length;done+=s.tasks.filter(x=>x.completed).length});
+  return {vol:t.length, total, done, percent: total?Math.round(done/total*100):0};
+}
+function renderHome(){
+  const st=getTodayStats();
+  document.getElementById("todayVol").innerText = st.vol>0? (`${st.vol} 卷`) : "";
+  document.getElementById("todayNum").innerHTML = st.done + " <small>/ "+st.total+" 课</small>";
+  document.getElementById("todayFill").style.width = st.percent+"%";
+  document.getElementById("todayPercent").innerText = st.vol>0? (`${st.vol} 卷 · ${st.percent}% 完成`) : "今日尚未修行";
+  document.getElementById("dashBag").innerText=getBagData().length;
+  document.getElementById("dashPassive").innerText=getPassive().length;
+  document.getElementById("dashFail").innerText=getFail().length;
+  document.getElementById("dashInsight").innerText=getInsight().length;
+  // 继续修行：找最后一个未完成的卷
+  const list=getDailyScrolls();
+  let target=null;
+  for(let i=list.length-1;i>=0;i--){
+    if(list[i].tasks.some(t=>!t.completed)){target=i;break}
+  }
+  const cont=document.getElementById("continueTxt");
+  if(target!==null){
+    const idxInDay=getDayScrollIndex(target);
+    cont.innerText=`继续修行 [${list[target].date} · 第 ${idxInDay} 卷 →]`;
+  }else{
+    cont.innerText = list.length? "今日已全部完成，新增一卷 →" : "开始今日修行 →";
+  }
+  renderSyncBar();
+}
+function continuePractice(){
+  const list=getDailyScrolls();
+  for(let i=list.length-1;i>=0;i--){
+    if(list[i].tasks.some(t=>!t.completed)){currentScrollIndex=i;openPage("dailyLesson");return}
+  }
+  openPage("dailyLesson");
+}
+
+/* ================= 每日十课 · 实体书架（竖书，可折叠展开） ================= */
+let currentScrollIndex=-1;            // 当前展开的卷轴索引，-1 表示全部收起
+let lastLongPress=0;             // 长按标记，防止长按后误触点击
+const shelfFoldState={};              // 日期格折叠状态: date -> true/false
+function toggleShelfFold(date){shelfFoldState[date]=!shelfFoldState[date];renderDailyShelf()}
+function getDayScrollIndex(idx){
+  const list=getDailyScrolls();
+  let n=0;
+  for(let i=0;i<=idx;i++){ if(list[i].date===list[idx].date) n++; }
+  return n;
+}
+function renderDailyShelf(){
+  const list=getDailyScrolls();
+  const wrap=document.getElementById("dailyShelfContainer");
+  wrap.innerHTML="";
+  document.getElementById("dailyEmpty").style.display = list.length?"none":"block";
+  // 按日期分组（新的在前）
+  const groups=[];
+  list.forEach((s,i)=>{const g=groups.find(x=>x.date===s.date);if(g)g.items.push({s,i});else groups.push({date:s.date,items:[{s,i}]})});
+  groups.sort((a,b)=>a.date<b.date?1:-1);
+  groups.forEach(g=>{
+    const shelf=document.createElement("div");shelf.className="shelf";
+    const isToday=g.date===getTodayStr();
+    let doneSum=0,totalSum=0;
+    g.items.forEach(({s})=>{s.tasks.forEach(t=>{totalSum++;if(t.completed)doneSum++})});
+    // 日期格头部（可折叠整格）
+    const head=document.createElement("div");head.className="shelf-head";
+    head.innerHTML=`<div class="shelf-head-info" onclick="toggleShelfFold('${g.date}')">
+        <span class="shelf-date">${esc(g.date)}${isToday?' · 今日修行':''}</span>
+        <span class="shelf-count">${g.items.length} 卷 · ${doneSum}/${totalSum}</span>
+      </div>
+      <button class="shelf-fold-btn" onclick="toggleShelfFold('${g.date}')">${shelfFoldState[g.date]?"▸":"▾"}</button>`;
+    shelf.appendChild(head);
+    // 书架槽：竖着放书
+    const body=document.createElement("div");body.className="shelf-body"+(shelfFoldState[g.date]?" folded":"");
+    g.items.forEach(({s,i})=>{
+      const book=document.createElement("div");
+      const isExpanded=(i===currentScrollIndex);
+      const done=s.tasks.filter(t=>t.completed).length;
+      const total=s.tasks.length||10;
+      const pct=total?Math.round(done/total*100):0;
+      const dm=s.date.split("-");const dateLabel=Number(dm[1])+"·"+Number(dm[2]);
+      const n=getDayScrollIndex(i);
+      book.className="book"+(isExpanded?" expanded":"")+(done===total&&total>0?" done":"");
+      book.dataset.idx=i;
+      book.innerHTML=`<div class="book-spine">
+          <div class="book-date">${esc(dateLabel)}</div>
+          <div class="book-vol">卷${n}</div>
+          <div class="book-progress"><div class="book-progress-fill" style="height:${pct}%"></div></div>
+          <div class="book-count">${done}/${total}</div>
+        </div>
+        <div class="book-open"></div>`;
+      book.addEventListener("click",e=>{
+        if(e.target.closest(".book-open")||e.target.closest("button"))return;
+        toggleScrollExpand(i);
+      });
+      body.appendChild(book);
+    });
+    shelf.appendChild(body);
+    wrap.appendChild(shelf);
+  });
+  // 若有展开的卷，填充其任务列表
+  if(currentScrollIndex>=0) renderScrollOpen(currentScrollIndex);
+}
+/* 点击书：展开/折叠 */
+function toggleScrollExpand(idx){
+  currentScrollIndex = (currentScrollIndex===idx)? -1 : idx;
+  renderDailyShelf();
+}
+/* 展开书：填充任务列表 */
+function renderScrollOpen(idx){
+  const s=getDailyScrolls()[idx];
+  const bookEl=document.querySelector(`.book[data-idx="${idx}"]`);
+  const openEl=bookEl&&bookEl.querySelector(".book-open");
+  if(!s||!openEl)return;
+  const n=getDayScrollIndex(idx);
+  const done=s.tasks.filter(t=>t.completed).length;
+  const total=s.tasks.length;
+  openEl.innerHTML=`
+    <div class="open-head">
+      <div>
+        <div class="open-title">${esc(s.date)} · 第 ${n} 卷</div>
+        <div class="open-meta">创建 ${esc(s.createdAt||"--")} · 修改 ${esc(s.updatedAt||"--")}</div>
+      </div>
+      <div class="open-ops">
+        <button class="btn-gray" onclick="toggleScrollExpand(${idx})">收起</button>
+        <button class="btn-danger" onclick="delScroll(${idx})">删除本卷</button>
+      </div>
+    </div>
+    <div class="open-progress">
+      <div class="pbar"><div class="pfill" style="width:${total?done/total*100:0}%"></div></div>
+      <span class="open-pnum">${done}/${total} 课</span>
+    </div>
+    <div class="task-list"></div>`;
+  renderTaskList(s, openEl.querySelector(".task-list"));
+}
+function renderTaskList(s, wrap){
+  wrap.innerHTML="";
+  s.tasks.forEach((t,i)=>{
+    const div=document.createElement("div");
+    div.className="task"+(t.completed?" done":"");
+    let st="";
+    if(t.completed){st=`<span class="st done">✓ ${esc(t.completeTime||"--")} 完成</span>`}
+    else if(t.delayDays>0){st=`<span class="st delay">↻ 已延迟 ${t.delayDays} 天</span>`}
+    else{st=`<span class="st todo">待修行</span>`}
+    div.innerHTML=`<div class="num">${i+1}</div>
+      <div class="tt ${t.title?'':'empty'}">${esc(t.title||"（点击添加）")}</div>
+      ${st}`;
+    div.addEventListener("click",e=>{if(Date.now()-lastLongPress<700){e.preventDefault();return}e.stopPropagation();toggleTask(i)});
+    div.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();openEditTask(i)});
+    (function(el,j){let lt=null;el.addEventListener("touchstart",()=>{lt=setTimeout(()=>{lt=null;lastLongPress=Date.now();openEditTask(j)},500)});el.addEventListener("touchend",e=>{if(lt)clearTimeout(lt);lt=null;if(Date.now()-lastLongPress<700)e.preventDefault()});el.addEventListener("touchmove",()=>{if(lt)clearTimeout(lt);lt=null})})(div,i);
+    wrap.appendChild(div);
+  });
+}
+/* 点整行：完成/取消；无标题时直接编辑 */
+function toggleTask(i){
+  const list=getDailyScrolls();
+  const t=list[currentScrollIndex].tasks[i];
+  if(!t.title.trim()){openEditTask(i);return}
+  t.completed=!t.completed;
+  if(t.completed){const n=new Date();t.completeTime=fmtTime(n)}else{t.completeTime=""}
+  list[currentScrollIndex].updatedAt=fmtDateTime(new Date());
+  saveDailyScrolls(list);renderScrollOpen(currentScrollIndex);
+}
+/* 长按/右键打开编辑 */
+function openEditTask(i){
+  const t=getDailyScrolls()[currentScrollIndex].tasks[i];
+  showModal(`第 ${i+1} 课`,
+    `<label>任务名称</label><input id="taskEditInput" value="${esc(t.title)}">
+     <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="taskClearCk" style="width:auto;min-height:auto"> 清空完成状态</label>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button>
+     <button class="btn-primary" onclick="saveEditTask(${i})">保存</button>`);
+}
+function saveEditTask(i){
+  const list=getDailyScrolls();
+  list[currentScrollIndex].tasks[i].title=document.getElementById("taskEditInput").value;
+  if(document.getElementById("taskClearCk").checked){list[currentScrollIndex].tasks[i].completed=false;list[currentScrollIndex].tasks[i].completeTime=""}
+  list[currentScrollIndex].updatedAt=fmtDateTime(new Date());
+  saveDailyScrolls(list);closeAllModal();renderScrollOpen(currentScrollIndex);toast("已保存");
+}
+function backToShelf(){currentScrollIndex=-1;renderDailyShelf()}
+/* 新增卷轴：同日可多卷，顺延上一卷未完成任务，新增后自动展开 */
+function addNewScroll(){
+  const list=getDailyScrolls();
+  const now=new Date();
+  let carry=[];
+  if(list.length){
+    const last=list[list.length-1];
+    carry=last.tasks.filter(t=>!t.completed&&t.title.trim()!=="").map(t=>({title:t.title,completed:false,completeTime:"",delayDays:t.delayDays+1}));
+  }
+  while(carry.length<10)carry.push({title:"",completed:false,completeTime:"",delayDays:0});
+  list.push({date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),tasks:carry.slice(0,10)});
+  saveDailyScrolls(list);
+  currentScrollIndex=list.length-1;   // 自动展开新卷
+  renderDailyShelf();
+  toast(carry.filter(t=>t.title).length?`已新增卷轴，顺延 ${carry.filter(t=>t.title).length} 个任务`:"已新增卷轴");
+}
+function delScroll(idx){
+  const list=getDailyScrolls();
+  if(!list[idx])return;
+  const n=getDayScrollIndex(idx);
+  showConfirm("删除卷轴",`确定删除 ${list[idx].date} · 第 ${n} 卷？此操作不可撤销。`,true,()=>{
+    list.splice(idx,1);saveDailyScrolls(list);currentScrollIndex=-1;renderDailyShelf();toast("已删除");
+  });
+}
+
+/* ================= 物品行囊（P1-8/9） ================= */
+let bagSelectMode=false, bagSel=new Set();
+function renderBag(){
+  const list=getBagData();
+  const wrap=document.getElementById("bagContainer");
+  wrap.innerHTML="";
+  document.getElementById("bagEmpty").style.display=list.length?"none":"block";
+  document.getElementById("bagContainer").classList.toggle("bag-selecting",bagSelectMode);
+  document.getElementById("bagSelectBtn").innerText=bagSelectMode?"取消":"选择";
+  document.getElementById("selectionBar").classList.toggle("show",bagSelectMode);
+  list.forEach((it,i)=>{
+    const d=document.createElement("div");
+    d.className="item-slot"+(bagSel.has(i)?" sel":"");
+    const ic = it.img?`<img src="${esc(it.img)}">`:(it.name.charAt(0)||"◇");
+    d.innerHTML=`
+      <input type="checkbox" class="item-cb" ${bagSel.has(i)?"checked":""}>
+      <div class="item-thumb">${ic}</div>
+      <div style="font-size:13px;color:var(--ink);margin-top:6px;line-height:1.3">${esc(it.name||"无名")}</div>
+      <div class="item-badge">×${esc(String(it.count||1))}</div>`;
+    d.addEventListener("click",e=>{
+      if(bagSelectMode){toggleSel(i);return}
+      openBagDetail(i);
+    });
+    wrap.appendChild(d);
+  });
+  updateSelCount();
+}
+function toggleBagSelectMode(force){
+  bagSelectMode = (force===undefined)? !bagSelectMode : force;
+  if(!bagSelectMode)bagSel.clear();
+  renderBag();
+}
+function toggleSel(i){
+  if(bagSel.has(i))bagSel.delete(i);else bagSel.add(i);
+  renderBag();
+}
+function toggleBagSelectAll(){
+  const list=getBagData();
+  if(bagSel.size===list.length)bagSel.clear();else list.forEach((_,i)=>bagSel.add(i));
+  renderBag();
+}
+function updateSelCount(){const el=document.getElementById("selCount");if(el)el.innerText=`已选 ${bagSel.size} 项`}
+function confirmDeleteBagSelected(){
+  if(bagSel.size===0){toast("未选择任何物品","warn");return}
+  showConfirm("删除物品",`确定删除选中的 ${bagSel.size} 件物品？`,true,()=>{
+    const arr=getBagData().filter((_,i)=>!bagSel.has(i));
+    saveBag(arr);bagSel.clear();bagSelectMode=false;renderBag();toast("已删除");
+  });
+}
+function openAddItem(){
+  showModal("新增行囊物品",`
+    <label>物品名称</label><input id="iname" placeholder="输入名称">
+    <label>数量</label><input id="icount" type="number" value="1">
+    <label>图片链接</label><input id="iimg" placeholder="粘贴图片url">
+    <label>备注</label><textarea id="inote" rows="4"></textarea>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveNewBagItem()">保存</button>`);
+}
+function saveNewBagItem(){
+  const arr=getBagData();
+  arr.push({name:document.getElementById("iname").value,count:Number(document.getElementById("icount").value)||1,img:document.getElementById("iimg").value,note:document.getElementById("inote").value});
+  saveBag(arr);closeAllModal();renderBag();toast("已添加");
+}
+function openBagDetail(i){
+  const it=getBagData()[i];
+  showModal(`物品详情 · ${esc(it.name)}`,
+    `<div style="color:var(--ink-2)">数量：${esc(String(it.count))}</div>
+     <div style="margin:10px 0;color:var(--muted);font-size:13px">备注</div>
+     <div class="note-area">${esc(it.note||"暂无备注")}</div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">关闭</button>
+     <button class="btn-primary" onclick="openBagEdit(${i})">编辑</button>
+     <button class="btn-danger" onclick="confirmDelBag(${i})">删除</button>`);
+}
+function openBagEdit(i){
+  const it=getBagData()[i];
+  showModal("编辑物品",
+    `<label>物品名称</label><input id="einame" value="${esc(it.name)}">
+     <label>数量</label><input id="eicount" type="number" value="${esc(String(it.count))}">
+     <label>图片链接</label><input id="eiimg" value="${esc(it.img)}">
+     <label>备注</label><textarea id="einote" rows="4">${esc(it.note)}</textarea>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditBag(${i})">保存修改</button>`);
+}
+function saveEditBag(i){
+  const arr=getBagData();
+  arr[i]={name:document.getElementById("einame").value,count:Number(document.getElementById("eicount").value)||1,img:document.getElementById("eiimg").value,note:document.getElementById("einote").value};
+  saveBag(arr);closeAllModal();renderBag();toast("已保存");
+}
+function confirmDelBag(i){
+  const it=getBagData()[i];
+  showConfirm("删除物品",`确定删除「${esc(it.name)}」？`,true,()=>{
+    const arr=getBagData();arr.splice(i,1);saveBag(arr);closeAllModal();renderBag();toast("已删除");
+  });
+}
+
+/* ================= 被动功法（P1-10 已掌握） ================= */
+function renderPassive(){
+  const wrap=document.getElementById("passiveContainer");
+  wrap.innerHTML="";
+  const list=getPassive();
+  document.getElementById("passiveEmpty").style.display=list.length?"none":"block";
+  list.forEach((it,i)=>{
+    const d=document.createElement("div");d.className="li-card";
+    d.innerHTML=`<div class="li-ic">☯</div>
+      <div class="li-main">
+        <div class="li-t">${esc(it.title)} ${it.mastered?'<span class="tag">已掌握</span>':''}</div>
+        <div class="li-sum">${esc(it.desc||"")}</div>
+      </div>
+      <div class="li-arrow">›</div>`;
+    d.addEventListener("click",()=>openPassiveEdit(i));
+    wrap.appendChild(d);
+  });
+}
+function openAddPassive(){
+  showModal("新增被动功法",`<label>功法名称</label><input id="ptitle"><label>描述备注</label><textarea id="pdesc" rows="4"></textarea>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveAddPassive()">保存</button>`);
+}
+function saveAddPassive(){
+  const arr=getPassive();
+  arr.push({title:document.getElementById("ptitle").value,desc:document.getElementById("pdesc").value,mastered:false});
+  savePassive(arr);closeAllModal();renderPassive();toast("已添加");
+}
+function openPassiveEdit(i){
+  const it=getPassive()[i];
+  showModal("编辑功法",
+    `<label>功法名称</label><input id="eptitle" value="${esc(it.title)}">
+     <label>描述备注</label><textarea id="epdesc" rows="4">${esc(it.desc)}</textarea>
+     <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="emastered" style="width:auto;min-height:auto" ${it.mastered?"checked":""}> 已掌握</label>`,
+    `<button class="btn-danger" onclick="confirmDelPassive(${i})">删除</button><button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditPassive(${i})">保存</button>`);
+}
+function saveEditPassive(i){
+  const arr=getPassive();
+  arr[i]={title:document.getElementById("eptitle").value,desc:document.getElementById("epdesc").value,mastered:document.getElementById("emastered").checked};
+  savePassive(arr);closeAllModal();renderPassive();toast("已保存");
+}
+function confirmDelPassive(i){
+  const it=getPassive()[i];
+  showConfirm("删除功法",`确定删除「${esc(it.title)}」？`,true,()=>{
+    const arr=getPassive();arr.splice(i,1);savePassive(arr);closeAllModal();renderPassive();toast("已删除");
+  });
+}
+
+/* ================= 走火入魔录（P1-11 摘要） ================= */
+function renderFail(){
+  const wrap=document.getElementById("failContainer");
+  wrap.innerHTML="";
+  const list=getFail();
+  document.getElementById("failEmpty").style.display=list.length?"none":"block";
+  list.forEach((it,i)=>{
+    const d=document.createElement("div");d.className="li-card";
+    d.innerHTML=`<div class="li-ic">⚠</div>
+      <div class="li-main">
+        <div class="li-t">${esc(it.title)}</div>
+        <div class="li-sum">${esc((it.reason||"").slice(0,60))}${(it.reason||"").length>60?"…":""}</div>
+      </div>
+      <div class="li-arrow">›</div>`;
+    d.addEventListener("click",()=>openFailDetail(i));
+    wrap.appendChild(d);
+  });
+}
+function openAddFail(){
+  showModal("新增失败记录",`<label>尝试事项名称</label><input id="ftitle"><label>失败原因</label><textarea id="freason" rows="6"></textarea>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveAddFail()">保存</button>`);
+}
+function saveAddFail(){
+  const arr=getFail();
+  arr.push({title:document.getElementById("ftitle").value,reason:document.getElementById("freason").value});
+  saveFail(arr);closeAllModal();renderFail();toast("已记录");
+}
+function openFailDetail(i){
+  const it=getFail()[i];
+  showModal(`失败尝试 · ${esc(it.title)}`,
+    `<div class="note-area">${esc(it.reason||"无记录")}</div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">关闭</button><button class="btn-primary" onclick="openEditFail(${i})">编辑</button><button class="btn-danger" onclick="confirmDelFail(${i})">删除</button>`);
+}
+function openEditFail(i){
+  const it=getFail()[i];
+  showModal("编辑失败卷宗",
+    `<label>尝试事项名称</label><input id="eft" value="${esc(it.title)}"><label>失败原因</label><textarea id="efr" rows="6">${esc(it.reason)}</textarea>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditFail(${i})">保存修改</button>`);
+}
+function saveEditFail(i){
+  const arr=getFail();
+  arr[i]={title:document.getElementById("eft").value,reason:document.getElementById("efr").value};
+  saveFail(arr);closeAllModal();renderFail();toast("已保存");
+}
+function confirmDelFail(i){
+  const it=getFail()[i];
+  showConfirm("删除卷宗",`确定删除「${esc(it.title)}」？`,true,()=>{
+    const arr=getFail();arr.splice(i,1);saveFail(arr);closeAllModal();renderFail();toast("已删除");
+  });
+}
+
+/* ================= 悟道札记（P1-12 摘要） ================= */
+function renderInsight(){
+  const wrap=document.getElementById("insightContainer");
+  wrap.innerHTML="";
+  const list=getInsight();
+  document.getElementById("insightEmpty").style.display=list.length?"none":"block";
+  list.forEach((it,i)=>{
+    const d=document.createElement("div");d.className="li-card";
+    d.innerHTML=`<div class="li-ic">☼</div>
+      <div class="li-main">
+        <div class="li-t">${esc(it.title)}</div>
+        <div class="li-sum">${esc((it.content||"").slice(0,60))}${(it.content||"").length>60?"…":""}</div>
+      </div>
+      <div class="li-arrow">›</div>`;
+    d.addEventListener("click",()=>openInsightDetail(i));
+    wrap.appendChild(d);
+  });
+}
+function openAddInsight(){
+  showModal("新增悟道札记",`<label>心得标题</label><input id="ititle"><label>感悟内容</label><textarea id="icontent" rows="6"></textarea>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveAddInsight()">保存</button>`);
+}
+function saveAddInsight(){
+  const arr=getInsight();
+  arr.push({title:document.getElementById("ititle").value,content:document.getElementById("icontent").value});
+  saveInsight(arr);closeAllModal();renderInsight();toast("已记录");
+}
+function openInsightDetail(i){
+  const it=getInsight()[i];
+  showModal(`悟道心得 · ${esc(it.title)}`,
+    `<div class="note-area">${esc(it.content||"无记录")}</div>`,
+    `<button class="btn-gray" onclick="closeAllModal()">关闭</button><button class="btn-primary" onclick="openEditInsight(${i})">编辑</button><button class="btn-danger" onclick="confirmDelInsight(${i})">删除</button>`);
+}
+function openEditInsight(i){
+  const it=getInsight()[i];
+  showModal("编辑悟道札记",
+    `<label>心得标题</label><input id="eit" value="${esc(it.title)}"><label>感悟内容</label><textarea id="eic" rows="6">${esc(it.content)}</textarea>`,
+    `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditInsight(${i})">保存修改</button>`);
+}
+function saveEditInsight(i){
+  const arr=getInsight();
+  arr[i]={title:document.getElementById("eit").value,content:document.getElementById("eic").value};
+  saveInsight(arr);closeAllModal();renderInsight();toast("已保存");
+}
+function confirmDelInsight(i){
+  const it=getInsight()[i];
+  showConfirm("删除札记",`确定删除「${esc(it.title)}」？`,true,()=>{
+    const arr=getInsight();arr.splice(i,1);saveInsight(arr);closeAllModal();renderInsight();toast("已删除");
+  });
+}
+
+/* ================= 全局同步状态（P0-3） ================= */
+let syncState={status:"off",time:""};
+function markSync(status,time){
+  syncState.status=status;if(time!==undefined)syncState.time=time;
+  renderSyncBar();
+}
+function anyCloudAuthed(){return !!(fbUser||cloudUser)}
+function anyCloudConfigured(){return !!getFbConfig().config||!!cloudCfg().url||!!getNotionConfig().token}
+function renderSyncBar(){
+  const el=document.getElementById("syncBar");
+  if(!el)return;
+  let txt="",cls="";
+  const s=syncState;
+  if(s.status==="syncing"){txt="☁ 同步中…";cls="sync-syncing"}
+  else if(s.status==="synced"){txt="✓ 已同步 · "+s.time;cls="sync-ok"}
+  else if(s.status==="failed"){txt="✕ 同步失败";cls="sync-err"}
+  else if(anyCloudAuthed()){txt="✓ 已同步";cls="sync-ok"}
+  else if(anyCloudConfigured()){txt="☁ 尚未登录";cls="sync-off"}
+  else{txt="☁ 未连接云端";cls="sync-off"}
+  el.className="sync-bar "+cls;
+  el.innerHTML=txt;
+}
+function renderSetSync(){
+  const el=document.getElementById("setSyncStatus");
+  const acc=document.getElementById("setAccount");
+  if(fbUser){acc.innerText=fbUser.isAnonymous?("Firebase · 匿名 "+fbUser.uid.slice(0,6)):(fbUser.email||"Firebase 账户")}
+  else if(cloudUser){acc.innerText="Supabase · "+(cloudUser.email||"账户")}
+  else if(anyCloudConfigured()){acc.innerText="已配置，未登录"}
+  else{acc.innerText="未登录"}
+  el.innerText=document.getElementById("syncBar").innerText;
+}
+function syncNow(){
+  if(fbUser){fbUploadAll();return}
+  if(cloudUser){cloudSyncNow();return}
+  if(getNotionConfig().token){uploadAllToNotion();return}
+  toast("尚未配置云端","warn");
+}
+function logoutAll(){
+  if(cloudClient)cloudClient.auth.signOut();
+  if(fbAuth)fbAuth.signOut();
+  fbUser=null;cloudUser=null;
+  renderSyncBar();renderSetSync();toast("已退出所有云端账户");
+}
+
+/* ================= Firebase 云同步 ================= */
+let fbApp=null,fbAuth=null,fbDb=null,fbUser=null,fbSyncOn=false,fbSuppress=false,fbUnsubs=[];
+function getFbConfig(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_FB))||{config:""}}catch(e){return {config:""}}}
+function saveFbConfig(c){localStorage.setItem(STORAGE_KEY_FB,JSON.stringify(c))}
+function renderFbConfig(){
+  const c=getFbConfig();
+  const el=document.getElementById("fbConfigInput");if(el)el.value=c.config;
+  const sw=document.getElementById("fbAutoSync");if(sw)sw.checked=fbSyncOn;
+}
+function saveFbConfigBtn(){
+  let cfg=document.getElementById("fbConfigInput").value.trim();
+  if(!cfg){toast("请粘贴 Firebase 配置","warn");return}
+  const s=cfg.indexOf("{"),e=cfg.lastIndexOf("}");
+  if(s>=0&&e>s){
+    let ex=cfg.slice(s,e+1);
+    try{JSON.parse(ex);cfg=ex}catch(_){
+      try{const f=ex.replace(/([{,]\s*)([A-Za-z_$][A-Za-z0-9_$]*)\s*:/g,'$1"$2":');JSON.parse(f);cfg=f}catch(_2){}
+    }
+  }
+  try{JSON.parse(cfg)}catch(err){toast("配置不是合法 JSON，请只粘贴 { } 内内容","error");return}
+  saveFbConfig({config:cfg});fbApp=null;fbAuth=null;fbDb=null;fbUser=null;fbStopListeners();
+  toast("Firebase 配置已保存");
+}
+function initFirebase(){
+  if(fbApp)return true;
+  if(typeof firebase==="undefined"){setFbStatus("Firebase SDK 未加载：网络无法访问 Google（gstatic.com）。请改用 Supabase 或 Notion。");return false}
+  const c=getFbConfig();if(!c.config){setFbStatus("请先在上方粘贴并保存 Firebase 配置。");return false}
+  try{
+    fbApp=firebase.initializeApp(JSON.parse(c.config));fbAuth=firebase.auth();fbDb=firebase.firestore();
+    return true;
+  }catch(e){setFbStatus("Firebase 初始化失败："+e.message);return false}
+}
+function setFbStatus(t){const el=document.getElementById("fbStatus");if(el)el.innerText=t}
+async function fbAnonymousLogin(){
+  if(!initFirebase()){if(typeof firebase==="undefined")toast("Firebase SDK 未加载：网络无法访问 Google，建议改用 Supabase","warn");else toast("请先保存 Firebase 配置","warn");return}
+  try{
+    const cr=await fbAuth.signInAnonymously();fbUser=cr.user;
+    setFbStatus("已登录（匿名 "+fbUser.uid.slice(0,6)+"）");toast("登录成功");fbAfterLogin();
+  }catch(e){setFbStatus("登录失败："+e.message);toast("登录失败："+e.message,"error")}
+}
+async function fbEmailLogin(mode){
+  if(!initFirebase()){if(typeof firebase==="undefined")toast("Firebase SDK 未加载：建议改用 Supabase","warn");else toast("请先保存 Firebase 配置","warn");return}
+  const email=document.getElementById("fbEmail").value.trim(),pass=document.getElementById("fbPass").value;
+  if(!email||!pass){toast("请输入邮箱和密码","warn");return}
+  try{
+    let cr;
+    if(mode==='login')cr=await fbAuth.signInWithEmailAndPassword(email,pass);
+    else cr=await fbAuth.createUserWithEmailAndPassword(email,pass);
+    fbUser=cr.user;setFbStatus("已登录："+email);toast(mode==='login'?"登录成功":"注册并登录成功");fbAfterLogin();
+  }catch(e){setFbStatus((mode==='login'?"登录":"注册")+"失败："+e.message);toast((mode==='login'?"登录":"注册")+"失败："+e.message,"error")}
+}
+function fbAfterLogin(){fbPullAll();setFbAutoSync(true)}
+function getMods(){return["bag","passive","daily","fail","insight"]}
+function getModuleData(m){switch(m){case"bag":return getBagData();case"passive":return getPassive();case"daily":return getDailyScrolls();case"fail":return getFail();case"insight":return getInsight()}}
+function applyModuleData(m,d){fbSuppress=true;try{switch(m){case"bag":saveBag(d);break;case"passive":savePassive(d);break;case"daily":saveDailyScrolls(d);break;case"fail":saveFail(d);break;case"insight":saveInsight(d);break}}finally{fbSuppress=false}}
+async function fbUploadModule(m){
+  markSync("syncing");
+  await fbDb.collection("xiantu").doc(m).set({data:JSON.stringify(getModuleData(m)),updated:firebase.firestore.FieldValue.serverTimestamp()});
+}
+async function fbUploadAll(){
+  if(!fbUser){toast("请先登录 Firebase","warn");return}
+  markSync("syncing");
+  try{for(const m of getMods())await fbUploadModule(m);markSync("synced",fmtTime(new Date()));toast("已上传到 Firebase")}
+  catch(e){markSync("failed");toast("上传失败："+e.message,"error")}
+}
+async function fbPullAll(){
+  if(!fbUser){toast("请先登录 Firebase","warn");return}
+  try{
+    let found=0;
+    for(const m of getMods()){
+      const d=await fbDb.collection("xiantu").doc(m).get();
+      if(d.exists&&d.data().data){try{applyModuleData(m,JSON.parse(d.data().data));found++}catch(e){}}
+    }
+    renderHomeDashboardAll();markSync("synced",fmtTime(new Date()));
+    toast(found?("已拉取 "+found+" 个模块"):"云端暂无数据");
+  }catch(e){markSync("failed");toast("拉取失败："+e.message,"error")}
+}
+function fbAutoUpload(m){if(fbSuppress)return;if(fbSyncOn&&fbUser&&fbDb)fbUploadModule(m).then(()=>markSync("synced",fmtTime(new Date()))).catch(()=>markSync("failed"))}
+function setFbAutoSync(on){
+  fbSyncOn=on;localStorage.setItem("xiantu_fb_sync_on",on?"1":"0");
+  const sw=document.getElementById("fbAutoSync");if(sw)sw.checked=on;
+  if(on)fbStartListeners();else fbStopListeners();
+}
+function fbToggleAutoSync(el){setFbAutoSync(el.checked)}
+function fbStartListeners(){
+  if(fbUnsubs.length)return;
+  fbUnsubs=getMods().map(m=>fbDb.collection("xiantu").doc(m).onSnapshot(doc=>{
+    if(doc.exists&&doc.data().data){try{const d=JSON.parse(doc.data().data);if(!fbSuppress){applyModuleData(m,d);renderHomeDashboardAll();markSync("synced",fmtTime(new Date()))}}catch(e){}}
+  },()=>{}));
+}
+function fbStopListeners(){fbUnsubs.forEach(u=>u());fbUnsubs=[]}
+function fbInit(){
+  if(typeof firebase==="undefined"){renderSyncBar();return}
+  const c=getFbConfig();if(!c.config){renderSyncBar();return}
+  try{
+    if(!fbApp){fbApp=firebase.initializeApp(JSON.parse(c.config));fbAuth=firebase.auth();fbDb=firebase.firestore()}
+    fbAuth.onAuthStateChanged(user=>{
+      if(user){fbUser=user;setFbStatus("已登录："+(user.isAnonymous?"匿名 "+user.uid.slice(0,6):user.email));if(localStorage.getItem("xiantu_fb_sync_on")==="1"&&!fbSyncOn)setFbAutoSync(true)}
+      else fbUser=null;
+      renderSyncBar();renderSetSync();
+    });
+  }catch(e){}
+}
+
+/* ================= Supabase 云同步 ================= */
+let cloudClient=null,cloudUser=null,cloudSyncTimer=null,cloudBusy=false;
+const CLOUD_SQL=`create table if not exists public.xiantu_data (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  bag jsonb not null default '[]'::jsonb,
+  passive jsonb not null default '[]'::jsonb,
+  daily jsonb not null default '[]'::jsonb,
+  fail jsonb not null default '[]'::jsonb,
+  insight jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.xiantu_data enable row level security;
+drop policy if exists "xiantu_select_own" on public.xiantu_data;
+drop policy if exists "xiantu_insert_own" on public.xiantu_data;
+drop policy if exists "xiantu_update_own" on public.xiantu_data;
+create policy "xiantu_select_own" on public.xiantu_data for select using (auth.uid() = user_id);
+create policy "xiantu_insert_own" on public.xiantu_data for insert with check (auth.uid() = user_id);
+create policy "xiantu_update_own" on public.xiantu_data for update using (auth.uid() = user_id) with check (auth.uid() = user_id);`;
+function cloudCfg(){try{return JSON.parse(localStorage.getItem(CLOUD_CFG_KEY))||{}}catch(e){return {}}}
+function cloudMeta(){try{return JSON.parse(localStorage.getItem(CLOUD_META_KEY))||{}}catch(e){return {}}}
+function setCloudMeta(x){localStorage.setItem(CLOUD_META_KEY,JSON.stringify(x));renderCloudStatus()}
+function cloudSnapshot(){return{bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight()}}
+function setLocalSnapshot(d){
+  localStorage.setItem(STORAGE_KEY_BAG,JSON.stringify(d.bag||[]));
+  localStorage.setItem(STORAGE_KEY_PASSIVE,JSON.stringify(d.passive||[]));
+  localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify(d.daily||[]));
+  localStorage.setItem(STORAGE_KEY_FAIL,JSON.stringify(d.fail||[]));
+  localStorage.setItem(STORAGE_KEY_INSIGHT,JSON.stringify(d.insight||[]));
+}
+function renderCloudStatus(){
+  const el=document.getElementById("cloudStatus");if(!el)return;
+  const m=cloudMeta();
+  if(cloudUser)el.innerText=`☁ 已连接：${cloudUser.email||"当前账户"}${m.time?" · "+m.time:""}`;
+  else if(cloudCfg().url)el.innerText="已配置，尚未登录";
+  else el.innerText="未配置云端";
+}
+function openCloudSetup(){
+  const c=cloudCfg();
+  showModal("☁ Supabase 云同步",`<p style="font-size:12px;color:var(--muted);line-height:1.7">填写你自己的 Supabase Project URL 和 Publishable Key，用邮箱密码登录。不要填 service_role / secret key。</p>
+  <label>Supabase Project URL</label><input id="cloudUrl" value="${esc(c.url||"")}" placeholder="https://xxxx.supabase.co">
+  <label>Publishable Key</label><input id="cloudKey" value="${esc(c.key||"")}" placeholder="sb_publishable_...">
+  <label>邮箱</label><input id="cloudEmail" type="email" value="${esc(c.email||"")}" placeholder="your@email.com">
+  <label>密码</label><input id="cloudPass" type="password" placeholder="••••••••">
+  <details style="margin-top:10px"><summary>首次使用：数据库 SQL</summary><textarea id="cloudSql" rows="10" readonly style="font-family:monospace;font-size:11px">${esc(CLOUD_SQL)}</textarea><button class="btn-gray" style="margin-top:6px" onclick="navigator.clipboard.writeText(document.getElementById('cloudSql').value);toast('SQL已复制')">复制 SQL</button></details>`,
+  `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-gray" onclick="signUpCloud()">注册账号</button><button class="btn-primary" onclick="saveCloudConfigAndLogin()">保存并登录</button>`);
+}
+async function signUpCloud(){
+  const url=document.getElementById("cloudUrl").value.trim().replace(/\/$/,""),key=document.getElementById("cloudKey").value.trim(),email=document.getElementById("cloudEmail").value.trim(),pass=document.getElementById("cloudPass").value;
+  if(!url||!key||!email||!pass){toast("请填写 URL、Key、邮箱和密码","warn");return}
+  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({url,key,email}));
+  try{
+    cloudClient=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    const {data,error}=await cloudClient.auth.signUp({email,password:pass});
+    if(error)throw error;
+    if(data.session){cloudUser=data.user;closeAllModal();renderCloudStatus();renderSetSync();await cloudInitialSync()}
+    else toast("注册成功，请检查邮箱完成验证","warn");
+  }catch(e){toast("注册失败："+(e.message||""),"error")}
+}
+async function saveCloudConfigAndLogin(){
+  const url=document.getElementById("cloudUrl").value.trim().replace(/\/$/,""),key=document.getElementById("cloudKey").value.trim(),email=document.getElementById("cloudEmail").value.trim(),pass=document.getElementById("cloudPass").value;
+  if(!url||!key||!email||!pass){toast("请填写完整信息","warn");return}
+  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({url,key,email}));
+  try{
+    cloudClient=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    const {data,error}=await cloudClient.auth.signInWithPassword({email,password:pass});
+    if(error)throw error;
+    cloudUser=data.user;closeAllModal();renderCloudStatus();renderSetSync();await cloudInitialSync();
+  }catch(e){toast("登录失败："+(e.message||"请检查配置"),"error")}
+}
+async function initCloud(){
+  if(typeof supabase==="undefined"){renderSyncBar();return}
+  const c=cloudCfg();if(!c.url||!c.key){renderSyncBar();return}
+  try{
+    cloudClient=supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    const {data}=await cloudClient.auth.getSession();
+    cloudUser=data.session?.user||null;
+    if(cloudUser)await cloudInitialSync();
+  }catch(e){console.warn("cloud init",e)}
+  renderCloudStatus();renderSyncBar();renderSetSync();
+}
+async function cloudInitialSync(){
+  if(!cloudClient||!cloudUser)return;
+  try{
+    const {data,error}=await cloudClient.from("xiantu_data").select("*").eq("user_id",cloudUser.id).maybeSingle();
+    if(error)throw error;
+    if(!data){await cloudUpload(true);setCloudMeta({time:new Date().toLocaleString()});toast("云端已建立，本机数据已上传");return}
+    const dirty=!!localStorage.getItem("xiantu_cloud_dirty_v1");
+    if(dirty){
+      const useCloud=confirm("检测到本机有尚未同步的修改。\n\n确定：以云端版本覆盖本机\n取消：把本机版本上传到云端");
+      if(useCloud){setLocalSnapshot(data);localStorage.removeItem("xiantu_cloud_dirty_v1");renderHomeDashboardAll();setCloudMeta({time:new Date().toLocaleString()});toast("云端数据已恢复")}
+      else{await cloudUpload(true);toast("本机数据已上传")}
+    }else{setLocalSnapshot(data);renderHomeDashboardAll();setCloudMeta({time:new Date().toLocaleString()});toast("云端数据已同步")}
+    markSync("synced",fmtTime(new Date()));
+  }catch(e){markSync("failed");toast("读取云端失败："+(e.message||"请先执行数据库SQL"),"error")}
+}
+async function cloudUpload(force){
+  if(!cloudClient||!cloudUser||cloudBusy)return;
+  cloudBusy=true;markSync("syncing");
+  try{
+    const d=cloudSnapshot();
+    const {error}=await cloudClient.from("xiantu_data").upsert({user_id:cloudUser.id,...d,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+    if(error)throw error;
+    localStorage.removeItem("xiantu_cloud_dirty_v1");
+    setCloudMeta({time:new Date().toLocaleString()});
+    markSync("synced",fmtTime(new Date()));
+  }catch(e){markSync("failed")}finally{cloudBusy=false}
+}
+function cloudQueueSync(){
+  localStorage.setItem("xiantu_cloud_dirty_v1",String(Date.now()));
+  if(!cloudUser)return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer=setTimeout(()=>cloudUpload(false),600);
+}
+async function cloudSyncNow(){
+  if(!cloudUser){openCloudSetup();return}
+  try{await cloudUpload(true);toast("云端同步完成")}catch(e){toast("同步失败："+(e.message||""),"error")}
+}
+async function cloudLogout(){
+  if(cloudClient)await cloudClient.auth.signOut();
+  cloudUser=null;renderCloudStatus();renderSyncBar();renderSetSync();toast("已退出 Supabase");
+}
+
+/* ================= Notion 云同步 ================= */
+function getNotionConfig(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_NOTION))||{token:"",dbId:""}}catch(e){return{token:"",dbId:""}}}
+function saveNotionConfig(c){localStorage.setItem(STORAGE_KEY_NOTION,JSON.stringify(c))}
+function renderNotionConfig(){
+  const c=getNotionConfig();
+  const t=document.getElementById("notionToken"),d=document.getElementById("notionDbId");
+  if(t)t.value=c.token;if(d)d.value=c.dbId;
+}
+function saveNotionConfigBtn(){
+  const c={token:document.getElementById("notionToken").value.trim(),dbId:document.getElementById("notionDbId").value.trim()};
+  if(!c.token||!c.dbId){toast("Token 和数据库 ID 不能为空","warn");return}
+  saveNotionConfig(c);toast("Notion 配置已保存");
+}
+async function notionFetch(path,options){
+  options=options||{};const cfg=getNotionConfig();
+  if(!cfg.token||!cfg.dbId){toast("请先保存 Notion 配置","warn");throw new Error("no-config")}
+  let res;
+  try{res=await fetch("/notion-proxy"+path,{method:options.method||"GET",headers:{"Authorization":"Bearer "+cfg.token,"Notion-Version":"2022-06-28","Content-Type":"application/json"},body:options.body?JSON.stringify(options.body):undefined})}
+  catch(e){toast("网络错误：请通过 start_notion_sync.py 打开页面","error");throw e}
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok){toast("Notion 请求失败："+(data.message||("HTTP "+res.status)),"error");throw new Error("notion-err")}
+  return data;
+}
+function setNotionStatus(t){const el=document.getElementById("notionStatus");if(el)el.innerText=t}
+async function uploadAllToNotion(){
+  markSync("syncing");const cfg=getNotionConfig();
+  const modules={bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight()};
+  try{
+    const q=await notionFetch("/databases/"+cfg.dbId+"/query",{method:"POST",body:{}});
+    const existing={};(q.results||[]).forEach(r=>{const n=r.properties&&r.properties["模块"]&&r.properties["模块"].title&&r.properties["模块"].title[0]?r.properties["模块"].title[0].text.content:"";if(n)existing[n]=r.id});
+    for(const[m,d]of Object.entries(modules)){
+      const props={"模块":{title:[{text:{content:m}}]},"数据":{rich_text:[{text:{content:JSON.stringify(d)}}]},"更新时间":{rich_text:[{text:{content:new Date().toLocaleString()}}]}};
+      if(existing[m])await notionFetch("/pages/"+existing[m],{method:"PATCH",body:{properties:props}});
+      else await notionFetch("/pages",{method:"POST",body:{parent:{database_id:cfg.dbId},properties:props}});
+    }
+    markSync("synced",fmtTime(new Date()));setNotionStatus("上传成功");toast("已上传到 Notion");
+  }catch(e){markSync("failed");setNotionStatus("");}
+}
+async function pullFromNotion(){
+  const cfg=getNotionConfig();
+  try{
+    const q=await notionFetch("/databases/"+cfg.dbId+"/query",{method:"POST",body:{}});
+    let found=0;
+    (q.results||[]).forEach(r=>{
+      const n=r.properties&&r.properties["模块"]&&r.properties["模块"].title&&r.properties["模块"].title[0]?r.properties["模块"].title[0].text.content:"";
+      const rt=r.properties&&r.properties["数据"]&&r.properties["数据"].rich_text&&r.properties["数据"].rich_text[0]?r.properties["数据"].rich_text[0].text.content:"";
+      if(n&&rt){try{const d=JSON.parse(rt);if(n==="bag")saveBag(d);else if(n==="passive")savePassive(d);else if(n==="daily")saveDailyScrolls(d);else if(n==="fail")saveFail(d);else if(n==="insight")saveInsight(d);found++}catch(e){}}
+    });
+    renderHomeDashboardAll();markSync("synced",fmtTime(new Date()));toast(found?("已拉取 "+found+" 个模块"):"Notion 中暂无数据");
+  }catch(e){markSync("failed")}
+}
+
+/* ================= 数据导出/导入/重置 ================= */
+function exportAllData(){
+  const all={version:2,exportTime:new Date().toLocaleString(),bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight()};
+  const b=new Blob([JSON.stringify(all,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`仙途行囊备份_${Date.now()}.json`;a.click();toast("已导出全部数据");
+}
+function importAllData(){
+  const inp=document.createElement("input");inp.type="file";inp.accept=".json";
+  inp.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{
+    const d=JSON.parse(ev.target.result);
+    if(d.bag!==undefined&&d.daily!==undefined){
+      saveBag(d.bag||[]);savePassive(d.passive||[]);saveDailyScrolls(d.daily||[]);saveFail(d.fail||[]);saveInsight(d.insight||[]);
+      renderHomeDashboardAll();toast("导入成功");
+    }else toast("备份文件格式不正确","error");
+  }catch(err){toast("文件解析失败","error")}};r.readAsText(e.target.files[0])};
+  inp.click();
+}
+function exportSingle(t){let d,n;switch(t){case"bag":d=getBagData();n="物品行囊";break;case"passive":d=getPassive();n="被动功法";break;case"daily":d=getDailyScrolls();n="每日十课";break;case"fail":d=getFail();n="走火入魔录";break;case"insight":d=getInsight();n="悟道札记";break;default:return}
+  const b=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`${n}备份_${Date.now()}.json`;a.click();toast(n+"已导出");
+}
+function confirmResetAll(){
+  showConfirm("重置全部数据","确定清空所有自定义数据，恢复默认示例？此操作不可撤销！",true,()=>{
+    localStorage.removeItem(STORAGE_KEY_BAG);localStorage.removeItem(STORAGE_KEY_PASSIVE);localStorage.removeItem(STORAGE_KEY_DAILY);localStorage.removeItem(STORAGE_KEY_FAIL);localStorage.removeItem(STORAGE_KEY_INSIGHT);
+    initDefaultData();renderHomeDashboardAll();toast("已重置为默认数据");
+  });
+}
+function renderHomeDashboardAll(){renderHome();renderDailyShelf()}
+
+/* ================= 初始化 ================= */
+initDefaultData();
+renderHome();
+fbInit();
+initCloud();
+</script>
+<script>
+/* PWA：注册 Service Worker（需 https 或 localhost 才生效） */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js')
+      .then(function (reg) { console.log('仙途行囊 SW 已注册：', reg.scope); })
+      .catch(function (err) { console.warn('SW 注册失败（本地 file:// 打开时属正常）：', err); });
+  });
+}
+</script>
+</body>
+</html>
