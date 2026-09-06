@@ -626,6 +626,7 @@ function normalizeDaily(){
       if(t.note===undefined){t.note="";changed=true}
       if(t.chainId===undefined){t.chainId="";changed=true}
       if(t.chainOrder===undefined){t.chainOrder=0;changed=true}
+      if(t.chainId&&!t.chainOrder){t.chainOrder=nextChainNo(t.chainId,list);changed=true}   // 补正：有链但编号为 0 → 取最小空缺（基于内存 list，避免同卷重复取号）
     });
     // 每卷固定 10 个任务位：不足补空位，超出截断
     const mkEmpty=()=>({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:"",chainOrder:0});
@@ -1177,17 +1178,44 @@ function delTaskInScroll(si,ti){
     }
     t2.title="";t2.note="";t2.tags=[];t2.completed=false;t2.completeTime="";
     t2.chainId="";t2.chainOrder=0;
+    compactScroll(s2);                              // 未完成任务自动向前补位
     s2.updatedAt=fmtDateTime(new Date());
-    saveDailyScrolls(l2);renderScrollOpen(si);renderDailyTagBar();renderHome();toast("已清空该任务，栏位保留");
+    saveDailyScrolls(l2);renderScrollOpen(si);renderDailyTagBar();renderHome();toast("已清空该任务，未完成任务已自动补位");
   });
 }
 /* ================= 任务链（后续任务） ================= */
 function toCircled(n){const a=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];return a[(+n||1)-1]||"◇"+(+n||1)}
-/* 收集某条链的全部任务（可跨卷跨日期），按链内顺序排列 */
+/* 删除/清空任务后的补位：未完成任务（有内容）自动向前补入空位；已完成任务保持原位（避免改变已完成记录位置）；不改变任务 ID、链关系、完成记录 */
+function compactScroll(s){
+  if(!s||!Array.isArray(s.tasks))return;
+  const tasks=s.tasks;
+  const doneIdx=new Set();
+  tasks.forEach((t,i)=>{if(t.completed)doneIdx.add(i)});
+  const undone=tasks.filter(t=>!t.completed&&t.title.trim()!=="");
+  const out=new Array(tasks.length).fill(null);
+  doneIdx.forEach(i=>{out[i]=tasks[i]});
+  let ui=0;
+  for(let i=0;i<out.length;i++){
+    if(!doneIdx.has(i)&&ui<undone.length){out[i]=undone[ui];ui++}
+  }
+  for(let i=0;i<out.length;i++)if(!out[i])out[i]={id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:"",chainOrder:0};
+  s.tasks=out;
+}
+/* 计算某条链下一个可用编号：编号对应任务、不对应创建次数，删除后编号可复用（取最小空缺）。list 传入可基于内存数据计算（未保存前也能正确取号） */
+function nextChainNo(cid,list){
+  const used=new Set();
+  (list||getDailyScrolls()).forEach(sc=>(sc.tasks||[]).forEach(x=>{if(x.chainId===cid&&x.chainOrder)used.add(x.chainOrder)}));
+  let no=1;while(used.has(no))no++;return no;
+}
+/* 收集某条链的全部任务（可跨卷跨日期），按链内顺序排列；同一逻辑任务（同 chainId+chainOrder 的顺延副本）只保留最初创建的一条 */
 function getChainTasks(cid){
-  const out=[];
-  getDailyScrolls().forEach(sc=>(sc.tasks||[]).forEach(t=>{if(t.chainId===cid)out.push({t,sc})}));
-  return out.sort((a,b)=>(a.t.chainOrder||0)-(b.t.chainOrder||0));
+  const map=new Map();
+  const list=getDailyScrolls();
+  for(let i=list.length-1;i>=0;i--){      // 从最旧卷开始，先遇到的最早记录优先保留
+    const sc=list[i];
+    (sc.tasks||[]).forEach(t=>{if(t.chainId===cid&&!map.has(t.chainOrder))map.set(t.chainOrder,{t,sc})});
+  }
+  return [...map.entries()].sort((a,b)=>a[0]-b[0]).map(e=>e[1]);
 }
 /* 创建后续任务：自动与当前任务建立关联（同一 chainId）；遵循每卷固定 10 位——有空位放空位，卷满自动新建下一卷放第 1 位 */
 function addNextTask(si,ti){
@@ -1196,9 +1224,7 @@ function addNextTask(si,ti){
   if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能修改","warn");return}
   let cid=t.chainId;
   if(!cid){cid=uid();t.chainId=cid;t.chainOrder=1;}   // 当前任务成为链首
-  let max=1;
-  list.forEach(sc=>(sc.tasks||[]).forEach(x=>{if(x.chainId===cid&&(x.chainOrder||0)>max)max=x.chainOrder||0}));
-  const no=max+1;
+  const no=nextChainNo(cid,list);                     // 取最小空缺编号（基于内存 list，链首未保存前也能正确取号）
   const nt={id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:cid,chainOrder:no};
   const emptyTask=()=>({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:"",chainOrder:0});
   // 当前卷找空位
