@@ -2044,41 +2044,45 @@ function mkCarried(t,todayIso,scrollId,scrollNo,slot){
 function rebuildTodayAuto(list){
   const today=getTodayStr();
   const now=new Date();
-  // 1) 保留：今天直接创建的任务（originalRecord.iso === 今天）；自动卷识别统一走 isAutoScroll（含 v3 autoVer 遗留卷）
-  const precious=[];
-  list.filter(s=>s.date===today&&isAutoScroll(s)).forEach(s=>(s.tasks||[]).forEach(t=>{
-    if(t&&(t.title||"").trim()&&!t.completed&&t.originalRecord&&t.originalRecord.iso===today)precious.push({t,from:s});
-  }));
-  // 2) 删除今天「确认属于当前承接机制产物」的自动卷（isAutoScroll 且带 sourceDate；手动卷、无 sourceDate 的 v3 遗留卷绝不动，无法安全区分则不删除）
+  const todayAutos=list.filter(s=>s.date===today&&isAutoScroll(s));
+  // 1) 保留：今天在自动卷中直接创建的任务（originalRecord.iso===今天；含已完成——重建不得丢完成历史）
+  const keep=todayAutos.flatMap(s=>(s.tasks||[])).filter(t=>t&&(t.title||"").trim()&&t.originalRecord&&t.originalRecord.iso===today);
+  // 2) 删除今天「当前承接机制产物」自动卷（isAutoScroll 且带 sourceDate；手动卷、无 sourceDate 的 v3 遗留卷绝不动）
   const rest=list.filter(s=>!(s.date===today&&isAutoScroll(s)&&s.sourceDate));
-  // 3) 重新从昨日继承（同一 taskId），排除与珍贵任务重复的
-  const carry=collectCarryFromYesterday(rest).filter(x=>!precious.some(p=>(p.t.taskId||p.t.id)===(x.t.taskId||x.t.id)));
   const y=yesterdayStr();
   const srcs=rest.filter(s=>s.date===y);
   const srcUpdated=srcs.length?srcs.map(s=>s.updatedAt||"").sort().pop():"";
-  const items=[...carry.map(x=>x.t),...precious.map(p=>p.t)];
-  const seen=new Set(),uniq=items.filter(t=>{const k=t.taskId||t.id;if(seen.has(k))return false;seen.add(k);return true});
-  const mkScroll=()=>({id:uid(),date:today,createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,type:"auto",auto:true,sourceDate:y,sourceUpdatedAt:srcUpdated,tasks:[]});
-  if(!uniq.length){
-    const sc=mkScroll();
+  // 3) 昨天未完成任务（同一 taskId 承接；排除今天已保留的同 taskId，同日不重复承接）
+  const carry=collectCarryFromYesterday(rest).filter(x=>!keep.some(p=>(p.taskId||p.id)===(x.t.taskId||x.t.id)));
+  // 4) 目标卷：复用当天已有 Auto Scroll（v3 遗留卷亦复用）；当天没有任何 Auto Scroll 才新建承接卷
+  let target=rest.find(s=>s.date===today&&isAutoScroll(s));
+  if(!target){
+    target={id:uid(),date:today,createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,type:"auto",auto:true,sourceDate:y,sourceUpdatedAt:srcUpdated,tasks:[]};
+    rest.push(target);
+  }
+  // 5) 重建目标卷：既有有标题任务全部保留（含完成），今天直接创建任务并入，空位填入昨天承接任务（容量上限 10）
+  const existing=target.tasks.filter(t=>t&&(t.title||"").trim());
+  const seen=new Set(existing.map(t=>t.taskId||t.id));
+  const items=[
+    ...existing,
+    ...keep.filter(p=>{const k=p.taskId||p.id;if(seen.has(k))return false;seen.add(k);return true}),
+    ...carry.map(x=>x.t).filter(t=>{const k=t.taskId||t.id;if(seen.has(k))return false;seen.add(k);return true})
+  ];
+  target.tasks=items.slice(0,10).map((t,idx)=>syncTaskCompat(t));
+  target.updatedAt=fmtDateTime(now);
+  target.tasks.forEach((t,idx)=>{
+    if(!t||!(t.title||"").trim())return;
+    t.currentRecord={date:fmtShortDate(today),iso:today,scrollId:target.id,scrollNo:getDayScrollIndexForList(rest,target.id),slot:idx+1};
+  });
+  while(target.tasks.length<10)target.tasks.push(mkEmptyTask());
+  // 6) 目标卷容量已满仍有多余承接任务 → 按 10 格规则拆后续自动卷（容量上限后才进入后续卷轴逻辑，规则二十一/五）
+  for(let i=10;i<items.length;i+=10){
+    const ch=items.slice(i,i+10);
+    const sc={id:uid(),date:today,createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,type:"auto",auto:true,sourceDate:y,sourceUpdatedAt:srcUpdated,tasks:[]};
+    const scrollNo=Math.floor(i/10)+1;
+    sc.tasks=ch.map((t,idx)=>mkCarried(t,today,sc.id,scrollNo,idx+1));
     while(sc.tasks.length<10)sc.tasks.push(mkEmptyTask());
     rest.push(sc);
-  }else{
-    for(let i=0;i<uniq.length;i+=10){
-      const chunk=uniq.slice(i,i+10);
-      const sc=mkScroll();
-      const scrollNo=(i/10)+1;
-      sc.tasks=chunk.map(t=>{
-        const srcItem=carry.find(x=>(x.t.taskId||x.t.id)===(t.taskId||t.id))||precious.find(p=>(p.t.taskId||p.t.id)===(t.taskId||t.id));
-        let e;
-        if(srcItem&&precious.includes(srcItem)){e=t}   // 珍贵任务：保留原条目（引用），不重建
-        else{e=mkCarried(t,today,sc.id,scrollNo,chunk.indexOf(t)+1)}
-        e.currentRecord={date:fmtShortDate(today),iso:today,scrollId:sc.id,scrollNo:scrollNo,slot:chunk.indexOf(t)+1};
-        return syncTaskCompat(e);
-      });
-      while(sc.tasks.length<10)sc.tasks.push(mkEmptyTask());
-      rest.push(sc);
-    }
   }
   list.length=0;list.push(...rest);
   saveDailyScrolls(list);
