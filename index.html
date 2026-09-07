@@ -2298,10 +2298,12 @@ fbInit();
 initCloud();
 </script>
 <script>
-/* PWA：注册 Service Worker（需 https 或 localhost 才生效） */
+/* PWA：注册 Service Worker（需 https 或 localhost 才生效）
+ * sw.js 注册 URL 带版本号，升级版本时换 URL，绕过浏览器对 sw.js 的 HTTP 缓存检查，确保新缓存策略立即下发 */
 if ('serviceWorker' in navigator) {
+  const SW_VER = 'v5';
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js', {updateViaCache: 'none'})
+    navigator.serviceWorker.register('sw.js?' + SW_VER, {updateViaCache: 'none'})
       .then(function (reg) { console.log('仙途行囊 SW 已注册：', reg.scope); })
       .catch(function (err) { console.warn('SW 注册失败（本地 file:// 打开时属正常）：', err); });
   });
