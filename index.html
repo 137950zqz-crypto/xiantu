@@ -781,7 +781,18 @@ function mkEmptyTask(){
   return {taskId:id(taskId),title:"",completed:false,completeTime:"",delayDays:0,tags:[],ownTags:[],inheritedTags:[],note:"",
     chain:{rootTaskId:"",parentTaskId:"",branchId:"",nodeNumber:0,isRoot:false},
     parentId:"",chainId:"",chainOrder:0,isRoot:false,origNo:"",
-    originalRecord:null,currentRecord:null};
+    originalRecord:null,currentRecord:null,
+    historyStatus:""};   // ""=空位/未定义；"tracked"=有可靠来源；"untracked"=历史遗留但无法可靠追溯（方案A：绝不伪造位置）
+}
+/* 自动卷兼容识别（规则七/十七/十八）：v3 遗留 autoVer:3 卷与 v4 type=auto 卷统一识别。
+   兼容识别 ≠ 删除依据：删除/重建必须另行满足「确认属于当前承接机制产物（含 sourceDate）」条件 */
+function isAutoScroll(s){
+  if(!s)return false;
+  if(s.type==="manual")return false;   // 显式手动卷优先排除（防 auto/autoVer 残留字段误判）
+  if(s.type==="auto")return true;
+  if(s.auto===true)return true;
+  const av=parseInt(s.autoVer,10);
+  return av>=3;
 }
 function id(x){return x}
 /* 同一逻辑任务判定：taskId 优先（顺延副本共享 taskId；旧数据 id 即唯一） */
@@ -928,14 +939,13 @@ function migrateScrollsV4(){
     if(!Array.isArray(s.tasks)){s.tasks=[];changed=true}
     s.tasks.forEach((t,i)=>{
       if(!t||typeof t!=="object"){t=mkEmptyTask();changed=true}
-      if(t.id===undefined){t.id=uid();changed=true}
+      if(t.id===undefined){t.id=t.taskId||uid();changed=true}
       if(!Array.isArray(t.tags)){t.tags=[];changed=true}
       if(t.note===undefined){t.note="";changed=true}
       if(t.chainId===undefined){t.chainId="";changed=true}
       if(t.chainOrder===undefined){t.chainOrder=0;changed=true}
       if(t.parentId===undefined){t.parentId="";changed=true}
       if(t.isRoot===undefined){t.isRoot=false;changed=true}
-      if(t.origNo===undefined&&(t.title||"").trim()){t.origNo=fmtScrollNo(s.date,getScrollNoById(s.id))+"-"+(i+1);changed=true}
       if(t.chainId&&!t.chainOrder){t.chainOrder=nextChainNo(t.chainId,list);changed=true}
     });
   });
@@ -957,12 +967,8 @@ function migrateScrollsV4(){
     }
     changed=true;
   }
-  const parents=new Set();
-  list.forEach(s=>(s.tasks||[]).forEach(t=>{if(t.parentId)parents.add(t.parentId)}));
-  list.forEach(s=>(s.tasks||[]).forEach(t=>{
-    if(t.isRoot===undefined){t.isRoot=(parents.has(t.id)&&!t.chainId)?true:false;changed=true}
-  }));
-  // 顺延副本统一 taskId（规则七）：同一 origNo 的副本共享同一永久身份，取最早（最旧卷）条目为 canonical
+  // 方案A：不推断父子关系、不自动把任务变成 root（"这是一个任务" ≠ "这是一个任务链节点"）
+  // 顺延副本统一 taskId（规则七）：同一任务的副本共享同一永久身份；taskId 缺失用已有稳定 id 补充（不重新生成已存在的 taskId）
   const byOrigNo=new Map();
   for(let i=list.length-1;i>=0;i--){
     const sc=list[i];
@@ -975,25 +981,34 @@ function migrateScrollsV4(){
   list.forEach(s=>(s.tasks||[]).forEach(t=>{
     const ono=(t.origNo||"").trim();
     const canon=ono?byOrigNo.get(ono):null;
-    if(canon&&!t.taskId){t.taskId=canon.id||canon.taskId;changed=true}
+    if(!t.taskId){t.taskId=(canon&&(canon.id||canon.taskId))||t.id||uid();changed=true}
   }));
-  // 建立 chain / originalRecord / currentRecord / ownTags / inheritedTags
+  // 建立 chain（空即空，不推断关系）/ 来源语义标记 / 可追溯时补 origNo、currentRecord
   list.forEach(s=>{
     const scrollNo=getDayScrollIndexForList(list,s.id);
     s.tasks.forEach((t,i)=>{
       if(!t.chain){t.chain={rootTaskId:"",parentTaskId:t.parentId||"",branchId:t.chainId||"",nodeNumber:t.chainOrder||0,isRoot:!!t.isRoot};changed=true}
       if(!t.originalRecord){
-        const rec=parseOrigNo(t.origNo);
-        t.originalRecord=rec?{date:rec.date,iso:shortToIso(rec.date,s.date),scrollId:s.id,scrollNo:rec.scrollNo,slot:rec.slot}:{date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:scrollNo,slot:i+1};
-        changed=true;
+        const rec=parseOrigNo(t.origNo);          // v3 真实原编号（历史真实数据，非推测）→ 可可靠恢复来源
+        if(rec){
+          t.originalRecord={date:rec.date,iso:shortToIso(rec.date,s.date),scrollId:s.id,scrollNo:rec.scrollNo,slot:rec.slot};
+          if(!t.historyStatus){t.historyStatus="tracked";changed=true}
+        }else if((t.title||"").trim()){
+          // 方案A：无任何可靠来源的历史任务 → 保持 originalRecord 为空，标记 untracked（绝不伪造位置）
+          if(!t.historyStatus){t.historyStatus="untracked";changed=true}
+        }
+      }else{
+        if(!t.historyStatus){t.historyStatus="tracked";changed=true}
+        if(!t.origNo&&(t.title||"").trim()){
+          t.origNo=fmtScrollNo(t.originalRecord.date,t.originalRecord.scrollNo)+"-"+t.originalRecord.slot;changed=true;
+        }
       }
-      if(!t.currentRecord){t.currentRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:scrollNo,slot:i+1};changed=true}
+      if(t.originalRecord&&!t.currentRecord){t.currentRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:scrollNo,slot:i+1};changed=true}
       if(!Array.isArray(t.ownTags)){t.ownTags=(t.tags||[]).slice();changed=true}
       if(!Array.isArray(t.inheritedTags)){t.inheritedTags=[];changed=true}
       syncTaskCompat(t);
     });
   });
-  recomputeChainRoots(list);
   recomputeInheritedTags(list);
   splitOverflowScrolls(list);
   if(changed)saveDailyScrolls(list);
@@ -1061,7 +1076,7 @@ function normalizeDaily(){
     if(!Array.isArray(s.tasks)){s.tasks=[];changed=true}
     s.tasks.forEach((t,i)=>{
       if(!t||typeof t!=="object"){t=mkEmptyTask();changed=true}
-      if(t.id===undefined){t.id=uid();changed=true}
+      if(t.id===undefined){t.id=t.taskId||uid();changed=true}
       if(t.taskId===undefined){t.taskId=t.id;changed=true}
       if(!Array.isArray(t.tags)){t.tags=[];changed=true}
       if(t.note===undefined){t.note="";changed=true}
@@ -1069,15 +1084,24 @@ function normalizeDaily(){
       if(t.chainOrder===undefined){t.chainOrder=0;changed=true}
       if(t.parentId===undefined){t.parentId="";changed=true}
       if(t.isRoot===undefined){t.isRoot=false;changed=true}
-      if(t.origNo===undefined&&(t.title||"").trim()){t.origNo=fmtScrollNo(s.date,getScrollNoById(s.id))+"-"+(i+1);changed=true}
       if(t.chainId&&!t.chainOrder){t.chainOrder=nextChainNo(t.chainId,list);changed=true}
       if(!t.chain){t.chain={rootTaskId:"",parentTaskId:t.parentId||"",branchId:t.chainId||"",nodeNumber:t.chainOrder||0,isRoot:!!t.isRoot};changed=true}
       if(!t.originalRecord){
-        const rec=parseOrigNo(t.origNo);
-        t.originalRecord=rec?{date:rec.date,iso:shortToIso(rec.date,s.date),scrollId:s.id,scrollNo:rec.scrollNo,slot:rec.slot}:{date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:i+1};
-        changed=true;
+        const rec=parseOrigNo(t.origNo);          // v3 真实原编号（历史真实数据，非推测）→ 可可靠恢复来源
+        if(rec){
+          t.originalRecord={date:rec.date,iso:shortToIso(rec.date,s.date),scrollId:s.id,scrollNo:rec.scrollNo,slot:rec.slot};
+          if(!t.historyStatus){t.historyStatus="tracked";changed=true}
+        }else if((t.title||"").trim()){
+          // 方案A：无任何可靠来源的历史任务 → 保持 originalRecord 为空，标记 untracked（绝不伪造位置；幂等：已有标记不重写）
+          if(!t.historyStatus){t.historyStatus="untracked";changed=true}
+        }
+      }else{
+        if(!t.historyStatus){t.historyStatus="tracked";changed=true}
+        if(!t.origNo&&(t.title||"").trim()){
+          t.origNo=fmtScrollNo(t.originalRecord.date,t.originalRecord.scrollNo)+"-"+t.originalRecord.slot;changed=true;
+        }
       }
-      if(!t.currentRecord){t.currentRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:i+1};changed=true}
+      if(t.originalRecord&&!t.currentRecord){t.currentRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:i+1};changed=true}
       if(!Array.isArray(t.ownTags)){t.ownTags=(t.tags||[]).slice();changed=true}
       if(!Array.isArray(t.inheritedTags)){t.inheritedTags=[];changed=true}
       syncTaskCompat(t);
@@ -1103,12 +1127,7 @@ function normalizeDaily(){
     }
     changed=true;
   }
-  const parents=new Set();
-  list.forEach(s=>(s.tasks||[]).forEach(t=>{if(t.parentId)parents.add(t.parentId)}));
-  list.forEach(s=>(s.tasks||[]).forEach(t=>{
-    if(t.isRoot===undefined){t.isRoot=(parents.has(t.id)&&!t.chainId)?true:false;changed=true}
-  }));
-  recomputeChainRoots(list);
+  // 方案A：不推断父子关系、不自动把任务变成 root（chain 空就是空）
   recomputeInheritedTags(list);
   if(splitOverflowScrolls(list))changed=true;
   if(changed)saveDailyScrolls(list);
@@ -1477,7 +1496,6 @@ function addCompletion(scroll, task, completionId, completedAt, seq){
   const t=getTrail();
   const root=getRootOfTask(task);
   const taskId=task.taskId||task.id;
-  const slot=(task.currentRecord&&task.currentRecord.slot)||(scroll.tasks.findIndex(x=>(x.taskId||x.id)===taskId)+1)||1;
   t.push({
     completionId:completionId,
     id:completionId,
@@ -1486,7 +1504,8 @@ function addCompletion(scroll, task, completionId, completedAt, seq){
     scrollDate:scroll.date,
     scrollNo:getScrollNoById(scroll.id),
     order:nextTrailOrder(scroll.id),                       // 本卷实际完成顺序（展示用）
-    originalTaskPosition:task.origNo||(task.originalRecord?fmtScrollNo(shortToIso(task.originalRecord.date,scroll.date),task.originalRecord.scrollNo)+"-"+task.originalRecord.slot:(fmtScrollNo(scroll.date,getScrollNoById(scroll.id))+"-"+slot)),   // 任务最初来源编号（规则八：顺延不改变）
+    originalTaskPosition:task.origNo||(task.originalRecord?fmtScrollNo(shortToIso(task.originalRecord.date,scroll.date),task.originalRecord.scrollNo)+"-"+task.originalRecord.slot:""),   // 任务最初来源编号（规则八：顺延不改变）；历史未追溯任务（untracked）保持空，绝不伪造来源
+    historyStatus:task.historyStatus||(task.originalRecord?"tracked":"untracked"),   // 来源语义：tracked=可靠来源 / untracked=历史遗留无法追溯
     originalTitle:(task.title||"").trim(),                 // 完成时原始任务名称（永久）
     displayTitle:(task.title||"").trim(),                  // 展示名称（行迹可改，不破坏历史）
     completedAt:completedAt,                               // 实际完成时间（永久）
@@ -1759,12 +1778,13 @@ function saveEditTask(si,ti){
     if((x.taskId||x.id)===tk&&tk){x.title=newTitle;x.note=newNote;x.ownTags=newOwn.slice()}
   }));
   if(wasEmpty&&newTitle&&!t.origNo){
-    // 最初创始编号 + originalRecord：首次填写名称时永久记录（顺延/补位不重写）
+    // 最初创始编号 + originalRecord：首次填写名称时永久记录（顺延/补位不重写）——新任务真实创建位置，非推测
     const ono=fmtScrollNo(s.date,getScrollNoById(s.id))+"-"+(ti+1);
     list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
       if((x.taskId||x.id)===tk&&tk){
         if(!x.origNo)x.origNo=ono;
         if(!x.originalRecord)x.originalRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:ti+1};
+        if(!x.historyStatus)x.historyStatus="tracked";   // 真实来源已记录
       }
     }));
   }
@@ -1790,7 +1810,7 @@ function delTaskInScroll(si,ti){
         x.completed=false;x.completeTime="";x.delayDays=0;
         x.chain={rootTaskId:"",parentTaskId:"",branchId:"",nodeNumber:0,isRoot:false};
         x.parentId="";x.chainId="";x.chainOrder=0;x.isRoot=false;x.origNo="";
-        x.originalRecord=null;x.currentRecord=null;
+        x.originalRecord=null;x.currentRecord=null;x.historyStatus="";   // 已清空任务：非历史任务、非空位标记
       }
     }));
     const s2=l2[si];
@@ -1829,11 +1849,29 @@ function nextChainNo(cid,list){
   (list||getDailyScrolls()).forEach(sc=>(sc.tasks||[]).forEach(x=>{if(x.chainId===cid&&x.chainOrder)used.add(x.chainOrder)}));
   let no=1;while(used.has(no))no++;return no;
 }
-/* 按任务 taskId（或旧 id）查找任务（跨全部卷） */
+/* 按任务 taskId（或旧 id）查找任务（跨全部卷）。
+   返回策略（方案A，明确语义）：getDailyScrolls 按日期倒序 → 返回「最新日期」的实例（当前副本），用于「当前任务」场景。
+   需要「最初创建」实例（原始任务/链根回溯）请用 findOriginalTaskById()。 */
 function findTaskById(tid){
   if(!tid)return null;
   for(const sc of getDailyScrolls()){for(const t of sc.tasks||[]){if((t.taskId||t.id)===tid)return t}}
   return null;
+}
+/* 按 taskId 返回「最初创建」的实例：优先 originalRecord.iso 最早者；无 originalRecord（untracked）时退化为最新实例。
+   仅只读选择，不修改任何数据。 */
+function findOriginalTaskById(tid){
+  if(!tid)return null;
+  let best=null;
+  for(const sc of getDailyScrolls()){
+    for(const t of sc.tasks||[]){
+      if((t.taskId||t.id)!==tid)continue;
+      if(!best){best=t;continue}
+      const a=t.originalRecord&&t.originalRecord.iso;
+      const b=best.originalRecord&&best.originalRecord.iso;
+      if(a&&(!b||a<b))best=t;
+    }
+  }
+  return best;
 }
 /* 收集某条分支的全部任务（可跨卷跨日期），按分支内顺序排列；同编号的顺延副本只保留最初创建的一条 */
 function getBranchTasks(cid){
@@ -1995,7 +2033,8 @@ function mkCarried(t,todayIso,scrollId,scrollNo,slot){
     chain:JSON.parse(JSON.stringify(t.chain||{rootTaskId:"",parentTaskId:"",branchId:"",nodeNumber:0,isRoot:false})),
     parentId:t.parentId||"",chainId:t.chainId||"",chainOrder:t.chainOrder||0,isRoot:!!t.isRoot,origNo:t.origNo||"",
     originalRecord:JSON.parse(JSON.stringify(t.originalRecord||null)),
-    currentRecord:{date:fmtShortDate(todayIso),iso:todayIso,scrollId:scrollId,scrollNo:scrollNo,slot:slot}
+    currentRecord:{date:fmtShortDate(todayIso),iso:todayIso,scrollId:scrollId,scrollNo:scrollNo,slot:slot},
+    historyStatus:t.historyStatus||"untracked"   // 身份与位置分离：originalRecord 保持源任务真实来源（null 即 null，绝不反推）；currentRecord 更新为当天真实位置
   };
   return syncTaskCompat(nt);
 }
@@ -2005,13 +2044,13 @@ function mkCarried(t,todayIso,scrollId,scrollNo,slot){
 function rebuildTodayAuto(list){
   const today=getTodayStr();
   const now=new Date();
-  // 1) 保留：今天直接创建的任务（originalRecord.iso === 今天）
+  // 1) 保留：今天直接创建的任务（originalRecord.iso === 今天）；自动卷识别统一走 isAutoScroll（含 v3 autoVer 遗留卷）
   const precious=[];
-  list.filter(s=>s.date===today&&s.type==="auto").forEach(s=>(s.tasks||[]).forEach(t=>{
+  list.filter(s=>s.date===today&&isAutoScroll(s)).forEach(s=>(s.tasks||[]).forEach(t=>{
     if(t&&(t.title||"").trim()&&!t.completed&&t.originalRecord&&t.originalRecord.iso===today)precious.push({t,from:s});
   }));
-  // 2) 删除今天全部自动卷（手动卷不受影响）
-  const rest=list.filter(s=>!(s.date===today&&s.type==="auto"));
+  // 2) 删除今天「确认属于当前承接机制产物」的自动卷（isAutoScroll 且带 sourceDate；手动卷、无 sourceDate 的 v3 遗留卷绝不动，无法安全区分则不删除）
+  const rest=list.filter(s=>!(s.date===today&&isAutoScroll(s)&&s.sourceDate));
   // 3) 重新从昨日继承（同一 taskId），排除与珍贵任务重复的
   const carry=collectCarryFromYesterday(rest).filter(x=>!precious.some(p=>(p.t.taskId||p.t.id)===(x.t.taskId||x.t.id)));
   const y=yesterdayStr();
@@ -2048,7 +2087,7 @@ function rebuildTodayAuto(list){
 /* 检查并重建过期自动卷：9.7.sourceUpdatedAt < 9.6 最新 updatedAt → 9.7 过期（规则二十三） */
 function rebuildStaleAutoScrolls(list){
   const today=getTodayStr();
-  const autos=list.filter(s=>s.date===today&&s.type==="auto");
+  const autos=list.filter(s=>s.date===today&&isAutoScroll(s));
   if(!autos.length)return false;
   let stale=false;
   autos.forEach(s=>{
@@ -2065,7 +2104,7 @@ function rebuildStaleAutoScrolls(list){
 function ensureTodayScroll(){
   const list=getDailyScrolls();
   const today=getTodayStr();
-  const hasAuto=list.some(s=>s.date===today&&s.type==="auto");
+  const hasAuto=list.some(s=>s.date===today&&isAutoScroll(s));   // 统一识别：v3 autoVer 遗留卷与 v4 type=auto 卷均视为自动卷
   const now=new Date();
   if(!hasAuto){
     const carry=collectCarryFromYesterday(list);
