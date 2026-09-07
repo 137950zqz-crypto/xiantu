@@ -456,6 +456,11 @@ details.adv label{color:var(--muted)}
     <div class="page" id="page-setting">
       <div class="page-head"><h2>修行设置</h2></div>
       <div class="set-section">
+        <h4>版本信息</h4>
+        <div class="set-row"><span class="k">当前版本</span><span class="v" id="versionCurrent">v20260907-11</span></div>
+        <div class="set-row"><span class="k">更新状态</span><span class="v" id="versionStatus">正在检查更新……</span></div>
+      </div>
+      <div class="set-section">
         <h4>☁ 数据同步</h4>
         <div class="set-row"><span class="k">同步状态</span><span class="v" id="setSyncStatus">未连接云端</span></div>
         <div class="set-row"><span class="k">当前账户</span><span class="v" id="setAccount">未登录</span></div>
@@ -558,64 +563,116 @@ details.adv label{color:var(--muted)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-/* ================= 版本检测（彻底解决缓存导致的旧版本问题） =================
- * APP_VERSION 为当前前端版本号，发布新版时同步递增，并更新线上 version.txt 为同一值。
- * 启动时以「时间戳参数」请求 version.txt（绕开 CDN / 浏览器缓存；SW 对 version.txt 及带参请求网络优先），
- * 与本地版本比较：不一致 → 提示「发现新版本，正在更新……」→ 更新 SW → 清理全部旧 Cache → 自动重载最新页面。
- * 只清理「应用代码缓存」，绝不触碰 localStorage 中的用户业务数据（每日十课/行迹/任务链/标签/行囊/晶核/商品/设置/云同步）。
+/* ================= 版本检测 + 版本信息 UI（v1.1） =================
+ * APP_VERSION 为当前前端版本号（正式版本 20260907-11），发布新版时同步递增并更新线上 version.txt 为同一值；
+ * SW_CACHE 为 Service Worker 静态缓存名（与 sw.js 的 const CACHE 保持一致：xiantu-v7）。
+ * 启动流程：读取本地 APP_VERSION → 设置页显示当前版本 → 以「时间戳参数 + cache:no-store」请求 version.txt（绕开缓存）→ 比较版本：
+ *   相同 → 已是最新版本；不同 → 发现新版本，正在更新…… → registration.update() → 等待新 SW install/activate/controllerchange
+ *   → 确认新 SW 已接管页面 → 清理全部旧 Cache（仅应用代码缓存，绝不触碰 localStorage 业务数据）→ 自动重载 → 重新读取版本 → 已是最新版本。
+ * 禁止使用固定 setTimeout 延迟作为主要更新机制；version.txt 只做「版本检测」，与「SW 更新」明确分离，防止无限循环。
  */
 var APP_VERSION = '20260907-11';
+var SW_CACHE = 'xiantu-v7';
 (function(){
-  /* 版本更新流程（规则50）：检测新版本 → 更新 SW → 等待新 SW activated → 清理旧 Cache（仅应用代码缓存，绝不触碰 localStorage 业务数据）→ 重新加载。
-   * 禁止使用固定 setTimeout 延迟作为主要更新机制。 */
+  var _state='checking';                 // checking | latest | updating | updated | error（统一状态机）
+  var _reloadStarted=false;              // 更新完成后只允许刷新一次（防重复 reload）
+  var _cleanup=null;                     // 清理监听器，防止重复注册
+  function setVersionUI(state){
+    _state=state;
+    var cur=document.getElementById('versionCurrent');
+    if(cur)cur.textContent='v'+APP_VERSION;
+    var st=document.getElementById('versionStatus');
+    var text={checking:'正在检查更新……',latest:'已是最新版本',updating:'发现新版本，正在更新……',updated:'已更新至 v'+APP_VERSION,error:'暂时无法检查更新'}[state]||'';
+    if(st)st.textContent=text;
+    var banner=document.getElementById('updateBanner');
+    if(banner){
+      if(state==='updating'){banner.style.display='block';banner.textContent='发现新版本，正在更新……';}
+      else banner.style.display='none';
+    }
+    // 更新完成提示约 3 秒后自动转为「已是最新版本」
+    if(state==='updated'){setTimeout(function(){setVersionUI('latest')},3000)}
+  }
+  function updateVersionUI(){if(document.getElementById('versionStatus'))setVersionUI(_state)}   // 进入设置页时同步显示当前状态（不重复请求）
   function clearOldCaches(){
-    var CACHE_NOW='xiantu-'+APP_VERSION;
     if('caches' in window){
       return window.caches.keys().then(function(ks){
-        return Promise.all(ks.filter(function(k){return k!==CACHE_NOW}).map(function(k){return window.caches.delete(k)}));
+        return Promise.all(ks.filter(function(k){return k!==SW_CACHE}).map(function(k){return window.caches.delete(k)}));
       });
     }
     return Promise.resolve();
   }
-  function doReload(){
+  /* 核心更新链路（规则六、七）：update() → 新 SW install → activate → controllerchange（确认已接管）→ 清理旧缓存 → reload。
+   * reloadStarted 防重复刷新；监听器在完成后统一移除。15 秒兜底超时仅为异常兜底，非主要更新机制。 */
+  function doUpdate(){
+    if(_reloadStarted)return;
+    _reloadStarted=true;
+    setVersionUI('updating');
+    var sw=navigator.serviceWorker;
+    if(!sw){finishReload();return}
+    var done=false, timer=null, ctrlHandler=null, installing=null, waiting=null, stHandler=null, waitHandler=null;
+    function cleanup(){
+      if(timer)clearTimeout(timer);
+      if(ctrlHandler&&sw.removeEventListener)sw.removeEventListener('controllerchange',ctrlHandler);
+      if(installing&&installing.removeEventListener)installing.removeEventListener('statechange',stHandler);
+      if(waiting&&waiting.removeEventListener)waiting.removeEventListener('statechange',waitHandler);
+    }
+    function finish(){
+      if(done)return;done=true;cleanup();
+      try{sessionStorage.setItem('xiantu_updated_to',APP_VERSION)}catch(e){}
+      clearOldCaches().then(function(){location.reload()}).catch(function(){location.reload()});
+    }
+    ctrlHandler=function(){finish()};
+    sw.addEventListener('controllerchange',ctrlHandler);
+    sw.getRegistration().then(function(reg){
+      if(!reg){finish();return}
+      installing=reg.installing; waiting=reg.waiting;
+      stHandler=function(){
+        if(installing&&installing.state==='activated'){finish();return}
+        if(installing&&installing.state==='installed'&&reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'})}
+      };
+      waitHandler=function(){
+        if(waiting&&waiting.state==='activated'){finish();return}
+        if(waiting&&waiting.state==='installed'){waiting.postMessage({type:'SKIP_WAITING'})}
+      };
+      if(installing)installing.addEventListener('statechange',stHandler);
+      if(waiting)waiting.addEventListener('statechange',waitHandler);
+      if(waiting)waiting.postMessage({type:'SKIP_WAITING'});
+      reg.update().catch(function(){});
+      timer=setTimeout(finish,15000);    // 兜底：15 秒内未能完成 SW 接管也重载（非主要机制）
+    }).catch(function(){finish()});
+  }
+  function finishReload(){
+    try{sessionStorage.setItem('xiantu_updated_to',APP_VERSION)}catch(e){}
     clearOldCaches().then(function(){location.reload()}).catch(function(){location.reload()});
   }
-  function waitForNewSW(reg,cb){
-    var done=false,timer=null;
-    function finish(){if(done)return;done=true;if(timer)clearTimeout(timer);cb();}
-    timer=setTimeout(finish,5000);                       // 兜底：5 秒内未能完成 SW 接管也重载（非主要机制）
-    var ctrlHandler=function(){finish()};
-    navigator.serviceWorker.addEventListener('controllerchange',ctrlHandler);
-    if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'})}
-    if(reg.installing){
-      reg.installing.addEventListener('statechange',function(){
-        if(reg.installing&&reg.installing.state==='activated')finish();
-        if(reg.installing&&reg.installing.state==='installed'&&reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'})}
-      });
-    }
-    reg.update().catch(function(){});
-    setTimeout(function(){navigator.serviceWorker.removeEventListener('controllerchange',ctrlHandler)},6000);
-  }
+  /* 版本检测（规则八）：只负责「判断是否需要更新」，与 SW 更新分离。
+   * 防循环：APP_VERSION===remote 时绝不触发更新；连续多次不一致（部署中间态）时停止自动更新并显示错误，避免无限刷新。 */
   function versionCheck(){
+    setVersionUI('checking');
     fetch('version.txt?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(txt){
       var v=(txt||'').trim();
-      if(!v||v===APP_VERSION)return;
-      var banner=document.getElementById('updateBanner');
-      if(banner){banner.style.display='block';banner.textContent='发现新版本，正在更新……';}
-      var run=function(){
-        if('serviceWorker' in navigator){
-          navigator.serviceWorker.getRegistration().then(function(reg){
-            if(reg){waitForNewSW(reg,doReload)}else{doReload()}
-          }).catch(function(){doReload()});
-        }else{doReload()}
-      };
-      if(navigator.serviceWorker&&navigator.serviceWorker.controller){run()}
-      else if('serviceWorker' in navigator){
-        navigator.serviceWorker.ready.then(function(){run()}).catch(function(){doReload()});
-      }else{doReload()}
-    }).catch(function(){});
+      if(!v){setVersionUI('error');return}
+      var justUpdated=false;
+      try{justUpdated=!!sessionStorage.getItem('xiantu_updated_to')}catch(e){}
+      if(v===APP_VERSION){
+        try{sessionStorage.removeItem('xiantu_updated_to');sessionStorage.removeItem('xiantu_update_attempt')}catch(e){}
+        if(justUpdated)setVersionUI('updated');          // 刚完成更新：显示「已更新至 v…」约 3 秒后转「已是最新版本」
+        else setVersionUI('latest');
+        return;
+      }
+      // 版本不一致 → 需要更新；但最多自动尝试 2 次，防止 version.txt/HTML 部署不同步造成无限循环
+      var attempt=0;
+      try{attempt=parseInt(sessionStorage.getItem('xiantu_update_attempt')||'0',10)}catch(e){}
+      if(attempt>=2){setVersionUI('error');return}
+      try{sessionStorage.setItem('xiantu_update_attempt',String(attempt+1))}catch(e){}
+      doUpdate();
+    }).catch(function(){setVersionUI('error')});        // 断网等失败：显示「暂时无法检查更新」，网站正常使用
   }
-  window.__versionCheck=versionCheck;   // 测试钩子（不影响正常运行）
+  window.__versionCheck=versionCheck;    // 测试钩子（不影响正常运行）
+  window.__setVersionUI=setVersionUI;    // 测试钩子
+  window.__setAppVersion=function(v){APP_VERSION=v;};   // 测试钩子（模拟旧版本场景）
+  window.__resetVersionState=function(){_reloadStarted=false;};   // 测试钩子（重置单会话防重，供自动化测试）
+  window.updateVersionUI=updateVersionUI;
   if(document.readyState==='complete')versionCheck();
   else window.addEventListener('load',versionCheck);
 })();
@@ -1121,6 +1178,7 @@ function openPage(p){
     b.classList.toggle("active", b.dataset.page===p);
   });
   if(p==="home") renderHome();
+  if(p==="setting") updateVersionUI();   // 进入设置页时同步显示当前版本状态（不重复请求 version.txt）
   if(p==="bag") renderBag();
   if(p==="passiveSkill") renderPassive();
   if(p==="dailyLesson") renderDailyShelf();

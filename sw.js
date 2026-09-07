@@ -1,8 +1,9 @@
 /* 仙途行囊 Service Worker
- * 版本 v7（20260907-11）：核心页面离线缓存 + 网络优先策略；version.txt 与带版本参数请求一律走网络，保证「更新立即生效」
- * 更新流程：页面检测到新版本 → 向本 SW 发送 SKIP_WAITING → 新 SW 立即接管（activated）→ 清理旧 Cache → 重新加载
+ * 版本 v7（正式版本 20260907-11）：核心页面离线缓存 + 网络优先策略；version.txt 与带版本参数请求一律走网络，保证「更新立即生效」
+ * 更新流程：页面检测到新版本 → 向本 SW 发送 SKIP_WAITING → 新 SW 立即接管（activated + clients.claim → controllerchange）→ 页面清理旧 Cache → 重新加载
+ * 缓存名 xiantu-v7 与 index.html 顶部 SW_CACHE 常量一致；activate 只清理 Service Worker 静态缓存，绝不触碰 localStorage 用户业务数据
  */
-const CACHE = 'xiantu-20260907-11';
+const CACHE = 'xiantu-v7';
 const CORE = [
   './',
   './index.html',
