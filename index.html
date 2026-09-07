@@ -564,21 +564,58 @@ details.adv label{color:var(--muted)}
  * 与本地版本比较：不一致 → 提示「发现新版本，正在更新……」→ 更新 SW → 清理全部旧 Cache → 自动重载最新页面。
  * 只清理「应用代码缓存」，绝不触碰 localStorage 中的用户业务数据（每日十课/行迹/任务链/标签/行囊/晶核/商品/设置/云同步）。
  */
-var APP_VERSION = '20260907-10';
+var APP_VERSION = '20260907-11';
 (function(){
+  /* 版本更新流程（规则50）：检测新版本 → 更新 SW → 等待新 SW activated → 清理旧 Cache（仅应用代码缓存，绝不触碰 localStorage 业务数据）→ 重新加载。
+   * 禁止使用固定 setTimeout 延迟作为主要更新机制。 */
+  function clearOldCaches(){
+    var CACHE_NOW='xiantu-'+APP_VERSION;
+    if('caches' in window){
+      return window.caches.keys().then(function(ks){
+        return Promise.all(ks.filter(function(k){return k!==CACHE_NOW}).map(function(k){return window.caches.delete(k)}));
+      });
+    }
+    return Promise.resolve();
+  }
+  function doReload(){
+    clearOldCaches().then(function(){location.reload()}).catch(function(){location.reload()});
+  }
+  function waitForNewSW(reg,cb){
+    var done=false,timer=null;
+    function finish(){if(done)return;done=true;if(timer)clearTimeout(timer);cb();}
+    timer=setTimeout(finish,5000);                       // 兜底：5 秒内未能完成 SW 接管也重载（非主要机制）
+    var ctrlHandler=function(){finish()};
+    navigator.serviceWorker.addEventListener('controllerchange',ctrlHandler);
+    if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'})}
+    if(reg.installing){
+      reg.installing.addEventListener('statechange',function(){
+        if(reg.installing&&reg.installing.state==='activated')finish();
+        if(reg.installing&&reg.installing.state==='installed'&&reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'})}
+      });
+    }
+    reg.update().catch(function(){});
+    setTimeout(function(){navigator.serviceWorker.removeEventListener('controllerchange',ctrlHandler)},6000);
+  }
   function versionCheck(){
     fetch('version.txt?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(txt){
       var v=(txt||'').trim();
       if(!v||v===APP_VERSION)return;
       var banner=document.getElementById('updateBanner');
       if(banner){banner.style.display='block';banner.textContent='发现新版本，正在更新……';}
-      try{
-        if('caches' in window)caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))});
-        if('serviceWorker' in navigator)navigator.serviceWorker.getRegistrations().then(function(regs){regs.forEach(function(r){r.update()})});
-      }catch(e){}
-      setTimeout(function(){location.reload()},400);
+      var run=function(){
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.getRegistration().then(function(reg){
+            if(reg){waitForNewSW(reg,doReload)}else{doReload()}
+          }).catch(function(){doReload()});
+        }else{doReload()}
+      };
+      if(navigator.serviceWorker&&navigator.serviceWorker.controller){run()}
+      else if('serviceWorker' in navigator){
+        navigator.serviceWorker.ready.then(function(){run()}).catch(function(){doReload()});
+      }else{doReload()}
     }).catch(function(){});
   }
+  window.__versionCheck=versionCheck;   // 测试钩子（不影响正常运行）
   if(document.readyState==='complete')versionCheck();
   else window.addEventListener('load',versionCheck);
 })();
@@ -588,7 +625,15 @@ function pad(n){return String(n).padStart(2,'0')}
 function fmtDate(d){return d.getFullYear()+"·"+pad(d.getMonth()+1)+"·"+pad(d.getDate())}
 function fmtTime(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
 function fmtDateTime(d){return fmtDate(d)+" "+fmtTime(d)}
-function getTodayStr(){const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function getTodayStr(){if(__DATE_OVERRIDE)return __DATE_OVERRIDE;const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+/* 严格「昨天」（规则22：禁止跨多天追溯顺延；仅用于测试时通过 __DATE_OVERRIDE 覆盖） */
+var __DATE_OVERRIDE="";
+function yesterdayStr(){
+  const d=new Date();
+  if(__DATE_OVERRIDE){const p=__DATE_OVERRIDE.split("-");d.setFullYear(+p[0],+p[1]-1,+p[2])}
+  d.setDate(d.getDate()-1);
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
 /* 卷轴编号展示：2026-09-02 → "9.2" */
 function fmtShortDate(date){const p=String(date||"").split("-");if(p.length<3)return date||"";return Number(p[1])+"."+Number(p[2])}
@@ -629,7 +674,8 @@ const STORAGE_KEY_BAG="xiantu_bag_data", STORAGE_KEY_PASSIVE="xiantu_passive",
       STORAGE_KEY_INSIGHT="xiantu_insight", STORAGE_KEY_NOTION="xiantu_notion_config",
       STORAGE_KEY_FB="xiantu_firebase_config", CLOUD_CFG_KEY="xiantu_cloud_config_v1", CLOUD_META_KEY="xiantu_cloud_meta_v1",
       STORAGE_KEY_CRYSTAL="xiantu_crystal", STORAGE_KEY_AURA="xiantu_aura", STORAGE_KEY_SHOP="xiantu_shop_items", STORAGE_KEY_LEDGER="xiantu_ledger",
-      STORAGE_KEY_TRAIL="xiantu_trail";
+      STORAGE_KEY_TRAIL="xiantu_trail",
+      STORAGE_KEY_SCHEMA="xiantu_data_schema_version", STORAGE_KEY_REWARDS="xiantu_rewards", STORAGE_KEY_BACKUP="xiantu_backup_v4";
 
 /* ================= 数据层 ================= */
 function getBagData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_BAG))||[]}catch(e){return []}}
@@ -655,29 +701,188 @@ function saveShopItems(a){localStorage.setItem(STORAGE_KEY_SHOP,JSON.stringify(a
 function getLedger(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_LEDGER))||[]}catch(e){return []}}
 function addLedger(entry){const l=getLedger();l.unshift(Object.assign({ts:fmtDateTime(new Date())},entry||{}));localStorage.setItem(STORAGE_KEY_LEDGER,JSON.stringify(l.slice(0,300)));}
 
-/* 数据迁移：为旧数据补齐 id / tags / unlocked / parentId / isRoot；旧单链迁移为「◇首 + 多分支」模型 */
-function normalizeDaily(){
+/* ================= 数据模型 v4：Task 永久身份 + originalRecord/currentRecord + TaskChain + CompletionRecord =================
+ * 核心概念（规则三~六）：
+ *   Task             —— 永久任务身份（taskId，创建后不变）
+ *   originalRecord   —— 任务最初在哪里创建（一旦创建永久保存，不因顺延改变）
+ *   currentRecord    —— 任务现在在哪里（随顺延/补位更新）
+ *   chain            —— 任务链 {rootTaskId, parentTaskId, branchId, nodeNumber, isRoot}
+ *   CompletionRecord —— 行迹（completionId + originalTaskPosition + completedAt + completionSequence，永久历史）
+ * 兼容策略：所有新字段与旧字段（id/chainId/chainOrder/parentId/isRoot/origNo/tags）双写同步，旧版本与云端数据不破坏。
+ */
+const DATA_SCHEMA_VERSION=4;
+function getSchemaVersion(){try{return parseInt(localStorage.getItem(STORAGE_KEY_SCHEMA),10)||0}catch(e){return 0}}
+function setSchemaVersion(v){localStorage.setItem(STORAGE_KEY_SCHEMA,String(v))}
+function getRewards(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY_REWARDS))||[]}catch(e){return []}}
+function saveRewards(a){localStorage.setItem(STORAGE_KEY_REWARDS,JSON.stringify(a))}
+function hasReward(completionId){return getRewards().some(r=>r.completionId===completionId)}
+function addReward(r){const l=getRewards();l.push(r);saveRewards(l)}
+
+/* —— 模型 helpers —— */
+function mkEmptyTask(){
+  const taskId=uid();
+  return {taskId:id(taskId),title:"",completed:false,completeTime:"",delayDays:0,tags:[],ownTags:[],inheritedTags:[],note:"",
+    chain:{rootTaskId:"",parentTaskId:"",branchId:"",nodeNumber:0,isRoot:false},
+    parentId:"",chainId:"",chainOrder:0,isRoot:false,origNo:"",
+    originalRecord:null,currentRecord:null};
+}
+function id(x){return x}
+/* 同一逻辑任务判定：taskId 优先（顺延副本共享 taskId；旧数据 id 即唯一） */
+function sameTask(a,b){const ka=a&&(a.taskId||a.id),kb=b&&(b.taskId||b.id);return !!ka&&ka===kb}
+function effectiveTags(t){const s=new Set([...(t.inheritedTags||[]),...(t.ownTags||[])]);return Array.from(s)}
+/* legacy 字段与新模型双写同步 */
+function syncTaskCompat(t){
+  t.taskId=t.taskId||t.id||uid();
+  if(t.id===undefined||t.id===null||t.id==="")t.id=t.taskId;
+  if(t.chain){
+    t.parentId=t.chain.parentTaskId||"";
+    t.chainId=t.chain.branchId||"";
+    t.chainOrder=t.chain.nodeNumber||0;
+    t.isRoot=!!t.chain.isRoot;
+  }
+  if(!Array.isArray(t.ownTags))t.ownTags=(Array.isArray(t.tags)?t.tags:[]).slice();
+  if(!Array.isArray(t.inheritedTags))t.inheritedTags=[];
+  if(!Array.isArray(t.tags))t.tags=[];
+  t.tags=effectiveTags(t);
+  return t;
+}
+/* 解析创始编号 "9.3 卷2-1" → {date:"9.3",scrollNo:2,slot:1}；失败返回 null */
+function parseOrigNo(str){
+  const m=String(str||"").trim().match(/^(\d+)\.(\d+)\s*卷(\d+)-(\d+)$/);
+  if(!m)return null;
+  return {date:m[1]+"."+m[2],scrollNo:+m[3],slot:+m[4]};
+}
+/* 短日期 "9.3" → ISO "2026-09-03"（年份取 fallbackIso） */
+function shortToIso(short,fallbackIso){
+  const p=String(short||"").split(".");
+  const fb=String(fallbackIso||"").split("-");
+  if(p.length<2||fb.length<3)return fallbackIso||"";
+  return fb[0]+"-"+pad(+p[0])+"-"+pad(+p[1]);
+}
+/* 在（已排序）list 中计算某卷在同日期的第几卷 */
+function getDayScrollIndexForList(list,scrollId){
+  const idx=list.findIndex(s=>s.id===scrollId);
+  if(idx<0)return 1;
+  let n=0;for(let i=0;i<=idx;i++){if(list[i].date===list[idx].date)n++}
+  return n;
+}
+/* 任务落位：originalRecord 首次创建时永久保存；currentRecord 始终为当前位置 */
+function fillTaskPosition(t,s,slot,list){
+  if(t.originalRecord===null||t.originalRecord===undefined){
+    t.originalRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:slot};
+  }
+  t.currentRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:slot};
+  return t;
+}
+/* 标签继承（规则33~36）：inheritedTags = 所有祖先 ownTags 的并集（沿 parentTaskId 上溯，跨分支互不干扰）；ownTags 只由任务自身编辑 */
+function recomputeInheritedTags(list){
+  const byId=new Map();
+  list.forEach(s=>(s.tasks||[]).forEach(t=>{if(t.taskId||t.id)byId.set(t.taskId||t.id,t)}));
+  const done=new Set();
+  function compute(t){
+    if(!t)return[];
+    const k=t.taskId||t.id;
+    if(!k||done.has(k))return(t.inheritedTags||[]).slice();
+    done.add(k);
+    const set=new Set();
+    const pid=t.chain&&t.chain.parentTaskId;
+    const p=pid?byId.get(pid):null;
+    if(p&&!sameTask(p,t)){(p.ownTags||[]).forEach(x=>{if(x)set.add(x)});compute(p).forEach(x=>{if(x)set.add(x)})}
+    t.inheritedTags=Array.from(set);
+    return t.inheritedTags;
+  }
+  list.forEach(s=>(s.tasks||[]).forEach(t=>{compute(t);syncTaskCompat(t)}));
+}
+/* 任务链根任务计算：沿 parentTaskId 上溯；无链/断链返回 "" */
+function recomputeChainRoots(list){
+  const byId=new Map();
+  list.forEach(s=>(s.tasks||[]).forEach(t=>{if(t.taskId||t.id)byId.set(t.taskId||t.id,t)}));
+  list.forEach(s=>(s.tasks||[]).forEach(t=>{
+    const c=t.chain||(t.chain={rootTaskId:"",parentTaskId:"",branchId:"",nodeNumber:0,isRoot:false});
+    if(c.isRoot){c.rootTaskId=t.taskId||t.id}
+    else if(c.parentTaskId){
+      let cur=t,top=t,seen=new Set();
+      while(cur&&cur.chain&&cur.chain.parentTaskId&&!seen.has(cur.taskId||cur.id)){
+        seen.add(cur.taskId||cur.id);
+        cur=byId.get(cur.chain.parentTaskId);
+        if(!cur)break;
+        top=cur;
+      }
+      c.rootTaskId=(top&&!sameTask(top,t)&&(top.chain&&(top.chain.isRoot||!top.chain.parentTaskId)))?(top.taskId||top.id):"";
+    }else{c.rootTaskId=""}
+    syncTaskCompat(t);
+  }));
+}
+/* 超出 10 格的卷拆分到新卷（规则21：禁止 slice(0,10) 丢弃第 11 个以后的任务） */
+function splitOverflowScrolls(list){
+  let changed=false;
+  for(let i=0;i<list.length;i++){
+    const s=list[i];
+    if(!Array.isArray(s.tasks)||s.tasks.length<=10)continue;
+    const extra=s.tasks.slice(10);
+    s.tasks=s.tasks.slice(0,10);
+    while(extra.length){
+      const chunk=extra.splice(0,10);
+      while(chunk.length<10)chunk.push(mkEmptyTask());
+      const ns={id:uid(),date:s.date,createdAt:s.createdAt||fmtDateTime(new Date()),updatedAt:s.updatedAt||fmtDateTime(new Date()),unlocked:!!s.unlocked,type:s.type||(s.auto||s.autoVer?"auto":"manual"),auto:!!(s.auto||s.autoVer),tasks:chunk};
+      if(ns.type==="auto"){ns.sourceDate=s.sourceDate;ns.sourceUpdatedAt=s.sourceUpdatedAt}
+      list.splice(i+1,0,ns);i++;
+    }
+    changed=true;
+  }
+  return changed;
+}
+/* —— 迁移：备份 → 迁移 → 校验 → 保存（失败回滚，绝不覆盖原始数据）—— */
+function backupAllData(){
+  const keys=[STORAGE_KEY_BAG,STORAGE_KEY_PASSIVE,STORAGE_KEY_DAILY,STORAGE_KEY_FAIL,STORAGE_KEY_INSIGHT,STORAGE_KEY_TRAIL,STORAGE_KEY_CRYSTAL,STORAGE_KEY_AURA,STORAGE_KEY_SHOP,STORAGE_KEY_LEDGER,STORAGE_KEY_REWARDS];
+  const snap={};
+  keys.forEach(k=>{const raw=localStorage.getItem(k);if(raw!==null)snap[k]=raw});
+  snap.__schema=getSchemaVersion();
+  localStorage.setItem(STORAGE_KEY_BACKUP,JSON.stringify(snap));
+}
+function restoreBackup(){
+  try{
+    const snap=JSON.parse(localStorage.getItem(STORAGE_KEY_BACKUP)||"null");
+    if(!snap)return false;
+    Object.keys(snap).forEach(k=>{
+      if(k==="__schema")setSchemaVersion(snap[k]);
+      else localStorage.setItem(k,snap[k]);
+    });
+    return true;
+  }catch(e){return false}
+}
+function countNamedTasks(list){let n=0;list.forEach(s=>(s.tasks||[]).forEach(t=>{if((t.title||"").trim())n++}));return n}
+function validateMigration(before){
+  try{
+    const after=getDailyScrolls(),afterTrail=getTrail();
+    return countNamedTasks(JSON.parse(before[STORAGE_KEY_DAILY]||"[]"))===countNamedTasks(after)
+      && (JSON.parse(before[STORAGE_KEY_TRAIL]||"[]")||[]).length===afterTrail.length
+      && (parseInt(before[STORAGE_KEY_CRYSTAL]||"0",10)||0)===getCrystal();
+  }catch(e){return false}
+}
+/* 迁移 v1~v3 → v4：卷轴/任务 */
+function migrateScrollsV4(){
   const list=getDailyScrolls();let changed=false;
   list.forEach(s=>{
     if(!s.id){s.id=uid();changed=true}
     if(s.unlocked===undefined){s.unlocked=false;changed=true}
+    if(s.type===undefined){s.type=(s.auto||s.autoVer)?"auto":"manual";changed=true}
+    if(s.auto===undefined){s.auto=(s.type==="auto");changed=true}
     if(!Array.isArray(s.tasks)){s.tasks=[];changed=true}
     s.tasks.forEach((t,i)=>{
+      if(!t||typeof t!=="object"){t=mkEmptyTask();changed=true}
       if(t.id===undefined){t.id=uid();changed=true}
       if(!Array.isArray(t.tags)){t.tags=[];changed=true}
       if(t.note===undefined){t.note="";changed=true}
       if(t.chainId===undefined){t.chainId="";changed=true}
       if(t.chainOrder===undefined){t.chainOrder=0;changed=true}
       if(t.parentId===undefined){t.parentId="";changed=true}
-      if(t.origNo===undefined&&(t.title||"").trim()){t.origNo=fmtScrollNo(s.date,getScrollNoById(s.id))+"-"+(i+1);changed=true}   // 最初创始编号（仅对有内容任务回填当前槽位；顺延/补位不重写；空任务留待填写名称时记录）
-      if(t.chainId&&!t.chainOrder){t.chainOrder=nextChainNo(t.chainId,list);changed=true}   // 补正：有链但编号为 0 → 取最小空缺
+      if(t.isRoot===undefined){t.isRoot=false;changed=true}
+      if(t.origNo===undefined&&(t.title||"").trim()){t.origNo=fmtScrollNo(s.date,getScrollNoById(s.id))+"-"+(i+1);changed=true}
+      if(t.chainId&&!t.chainOrder){t.chainOrder=nextChainNo(t.chainId,list);changed=true}
     });
-    // 每卷固定 10 个任务位：不足补空位，超出截断
-    const mkEmpty=()=>({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:"",chainOrder:0,parentId:"",isRoot:false,origNo:""});
-    if(s.tasks.length>10){s.tasks=s.tasks.slice(0,10);changed=true}
-    while(s.tasks.length<10){s.tasks.push(mkEmpty());changed=true}
   });
-  // 旧单链（chainId 非空且 parentId 为空）迁移为根+分支：order 最小组 → ◇首根（无编号）；其余顺序连成一条分支（编号 1,2,3…）；顺延副本共享同一关系
+  // 旧单链（chainId 非空且 parentId 为空）迁移为 ◇首 + 多分支（规则九~十二）
   const groups={};
   list.forEach(s=>(s.tasks||[]).forEach(t=>{if(t.chainId&&!t.parentId)(groups[t.chainId]=groups[t.chainId]||[]).push(t)}));
   for(const cid in groups){
@@ -686,24 +891,169 @@ function normalizeDaily(){
     const orders=[...byOrder.keys()].sort((a,b)=>a-b);
     if(!orders.length)continue;
     const rootGroup=byOrder.get(orders[0]);
-    rootGroup.forEach(t=>{t.parentId="";t.chainId="";t.chainOrder=0});   // 根：无分支、无编号
+    rootGroup.forEach(t=>{t.parentId="";t.chainId="";t.chainOrder=0});
     let prevId=rootGroup[0].id;
     for(let i=1;i<orders.length;i++){
       const g=byOrder.get(orders[i]);
-      g.forEach(t=>{t.parentId=prevId;t.chainId=cid;t.chainOrder=i});    // 分支任务：编号从 1 起
+      g.forEach(t=>{t.parentId=prevId;t.chainId=cid;t.chainOrder=i});
       prevId=g[0].id;
     }
     changed=true;
   }
-  // isRoot 迁移：被其他任务引用且自身无分支（chainId 为空）的任务才标记为 ◇首 根；分支任务（有 chainId）即使被引用也不是根；幂等
   const parents=new Set();
   list.forEach(s=>(s.tasks||[]).forEach(t=>{if(t.parentId)parents.add(t.parentId)}));
   list.forEach(s=>(s.tasks||[]).forEach(t=>{
-    if(t.isRoot===undefined){
-      t.isRoot=(parents.has(t.id)&&!t.chainId)?true:false;
-      if(parents.has(t.id)&&!t.chainId)changed=true;
-    }
+    if(t.isRoot===undefined){t.isRoot=(parents.has(t.id)&&!t.chainId)?true:false;changed=true}
   }));
+  // 顺延副本统一 taskId（规则七）：同一 origNo 的副本共享同一永久身份，取最早（最旧卷）条目为 canonical
+  const byOrigNo=new Map();
+  for(let i=list.length-1;i>=0;i--){
+    const sc=list[i];
+    (sc.tasks||[]).forEach(t=>{
+      const ono=(t.origNo||"").trim();
+      if(!ono)return;
+      if(!byOrigNo.has(ono))byOrigNo.set(ono,t);
+    });
+  }
+  list.forEach(s=>(s.tasks||[]).forEach(t=>{
+    const ono=(t.origNo||"").trim();
+    const canon=ono?byOrigNo.get(ono):null;
+    if(canon&&!t.taskId){t.taskId=canon.id||canon.taskId;changed=true}
+  }));
+  // 建立 chain / originalRecord / currentRecord / ownTags / inheritedTags
+  list.forEach(s=>{
+    const scrollNo=getDayScrollIndexForList(list,s.id);
+    s.tasks.forEach((t,i)=>{
+      if(!t.chain){t.chain={rootTaskId:"",parentTaskId:t.parentId||"",branchId:t.chainId||"",nodeNumber:t.chainOrder||0,isRoot:!!t.isRoot};changed=true}
+      if(!t.originalRecord){
+        const rec=parseOrigNo(t.origNo);
+        t.originalRecord=rec?{date:rec.date,iso:shortToIso(rec.date,s.date),scrollId:s.id,scrollNo:rec.scrollNo,slot:rec.slot}:{date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:scrollNo,slot:i+1};
+        changed=true;
+      }
+      if(!t.currentRecord){t.currentRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:scrollNo,slot:i+1};changed=true}
+      if(!Array.isArray(t.ownTags)){t.ownTags=(t.tags||[]).slice();changed=true}
+      if(!Array.isArray(t.inheritedTags)){t.inheritedTags=[];changed=true}
+      syncTaskCompat(t);
+    });
+  });
+  recomputeChainRoots(list);
+  recomputeInheritedTags(list);
+  splitOverflowScrolls(list);
+  if(changed)saveDailyScrolls(list);
+  return list;
+}
+/* 迁移 v1~v3 → v4：行迹 → CompletionRecord（规则二十六~三十一） */
+function migrateTrailV4(){
+  const list=getTrail();let changed=false;
+  list.forEach(e=>{
+    if(e.completionId===undefined){e.completionId=e.id||uid();changed=true}
+    if(e.id===undefined){e.id=e.completionId;changed=true}
+    if(e.originalTaskPosition===undefined||e.originalTaskPosition===""){e.originalTaskPosition=e.origNo||(fmtScrollNo(e.scrollDate,e.scrollNo)+"-"+e.order);changed=true}
+    if(e.completedAt===undefined){e.completedAt=e.completeDateTime||"";changed=true}
+    if(e.completeDateTime===undefined){e.completeDateTime=e.completedAt;changed=true}
+    if(e.originalTitle===undefined){e.originalTitle=e.title||"";changed=true}
+    if(e.displayTitle===undefined){e.displayTitle=e.title||"";changed=true}
+    if(!Array.isArray(e.ownTags)){e.ownTags=(e.tags||[]).slice();changed=true}
+    if(!Array.isArray(e.inheritedTags)){e.inheritedTags=[];changed=true}
+    if(!Array.isArray(e.tags)){e.tags=[];changed=true}
+    e.tags=effectiveTags(e);
+  });
+  // 全局完成序号：按数组现有顺序（=完成先后）编号，之后永不变更
+  list.forEach((e,i)=>{if(!e.completionSequence)e.completionSequence=i+1});
+  if(changed)saveTrail(list);
+  return list;
+}
+/* 迁移 v1~v3 → v4：奖励账本（防重复奖励；既有完成记录补登 reward 条目，晶核余额不动） */
+function migrateRewardsV4(){
+  const trail=getTrail(),existing=getRewards();
+  const have=new Set(existing.map(r=>r.completionId));
+  const add=[];
+  trail.forEach(e=>{if(!have.has(e.completionId))add.push({rewardId:uid(),completionId:e.completionId,amount:1,at:e.completedAt||fmtDateTime(new Date())})});
+  if(add.length){existing.push(...add);saveRewards(existing)}
+}
+/* 总迁移入口：旧数据 → 备份 → 迁移 → 校验 → 保存；失败回滚（规则四十五~四十八） */
+function migrateAllData(){
+  const cur=getSchemaVersion();
+  if(cur>=DATA_SCHEMA_VERSION)return;
+  backupAllData();
+  try{
+    migrateScrollsV4();
+    migrateTrailV4();
+    migrateRewardsV4();
+    if(!validateMigration(JSON.parse(localStorage.getItem(STORAGE_KEY_BACKUP)||"{}"))){
+      restoreBackup();
+      console.warn("xiantu: 数据迁移校验未通过，已回滚备份");
+      return;
+    }
+    setSchemaVersion(DATA_SCHEMA_VERSION);
+    console.log("xiantu: 数据已升级到 schema v"+DATA_SCHEMA_VERSION);
+  }catch(e){
+    restoreBackup();
+    console.error("xiantu: 数据迁移失败，已恢复备份",e);
+  }
+}
+
+/* 幂等数据补全（每次启动执行）：补齐新模型字段、双写 legacy、10 格不变量、继承重算 */
+function normalizeDaily(){
+  const list=getDailyScrolls();let changed=false;
+  list.forEach(s=>{
+    if(!s.id){s.id=uid();changed=true}
+    if(s.unlocked===undefined){s.unlocked=false;changed=true}
+    if(s.type===undefined){s.type=(s.auto||s.autoVer)?"auto":"manual";changed=true}
+    if(s.auto===undefined){s.auto=(s.type==="auto");changed=true}
+    if(!Array.isArray(s.tasks)){s.tasks=[];changed=true}
+    s.tasks.forEach((t,i)=>{
+      if(!t||typeof t!=="object"){t=mkEmptyTask();changed=true}
+      if(t.id===undefined){t.id=uid();changed=true}
+      if(t.taskId===undefined){t.taskId=t.id;changed=true}
+      if(!Array.isArray(t.tags)){t.tags=[];changed=true}
+      if(t.note===undefined){t.note="";changed=true}
+      if(t.chainId===undefined){t.chainId="";changed=true}
+      if(t.chainOrder===undefined){t.chainOrder=0;changed=true}
+      if(t.parentId===undefined){t.parentId="";changed=true}
+      if(t.isRoot===undefined){t.isRoot=false;changed=true}
+      if(t.origNo===undefined&&(t.title||"").trim()){t.origNo=fmtScrollNo(s.date,getScrollNoById(s.id))+"-"+(i+1);changed=true}
+      if(t.chainId&&!t.chainOrder){t.chainOrder=nextChainNo(t.chainId,list);changed=true}
+      if(!t.chain){t.chain={rootTaskId:"",parentTaskId:t.parentId||"",branchId:t.chainId||"",nodeNumber:t.chainOrder||0,isRoot:!!t.isRoot};changed=true}
+      if(!t.originalRecord){
+        const rec=parseOrigNo(t.origNo);
+        t.originalRecord=rec?{date:rec.date,iso:shortToIso(rec.date,s.date),scrollId:s.id,scrollNo:rec.scrollNo,slot:rec.slot}:{date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:i+1};
+        changed=true;
+      }
+      if(!t.currentRecord){t.currentRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:i+1};changed=true}
+      if(!Array.isArray(t.ownTags)){t.ownTags=(t.tags||[]).slice();changed=true}
+      if(!Array.isArray(t.inheritedTags)){t.inheritedTags=[];changed=true}
+      syncTaskCompat(t);
+    });
+    // 每卷固定 10 格：不足补空位；超出由 splitOverflowScrolls 拆卷（禁止直接截断丢弃）
+    while(s.tasks.length<10){s.tasks.push(mkEmptyTask());changed=true}
+  });
+  // 旧单链迁移（幂等；已迁移数据 root 的 chainId 为空，不会重复处理）
+  const groups={};
+  list.forEach(s=>(s.tasks||[]).forEach(t=>{if(t.chainId&&!t.parentId&&t.chain&&!t.chain.branchId)(groups[t.chainId]=groups[t.chainId]||[]).push(t)}));
+  for(const cid in groups){
+    const byOrder=new Map();
+    groups[cid].forEach(t=>{const k=t.chainOrder||0;if(!byOrder.has(k))byOrder.set(k,[]);byOrder.get(k).push(t)});
+    const orders=[...byOrder.keys()].sort((a,b)=>a-b);
+    if(!orders.length)continue;
+    const rootGroup=byOrder.get(orders[0]);
+    rootGroup.forEach(t=>{t.parentId="";t.chainId="";t.chainOrder=0;if(t.chain){t.chain.parentTaskId="";t.chain.branchId="";t.chain.nodeNumber=0;t.chain.isRoot=true}});
+    let prevId=rootGroup[0].id;
+    for(let i=1;i<orders.length;i++){
+      const g=byOrder.get(orders[i]);
+      g.forEach(t=>{t.parentId=prevId;t.chainId=cid;t.chainOrder=i;if(t.chain){t.chain.parentTaskId=prevId;t.chain.branchId=cid;t.chain.nodeNumber=i}});
+      prevId=g[0].id;
+    }
+    changed=true;
+  }
+  const parents=new Set();
+  list.forEach(s=>(s.tasks||[]).forEach(t=>{if(t.parentId)parents.add(t.parentId)}));
+  list.forEach(s=>(s.tasks||[]).forEach(t=>{
+    if(t.isRoot===undefined){t.isRoot=(parents.has(t.id)&&!t.chainId)?true:false;changed=true}
+  }));
+  recomputeChainRoots(list);
+  recomputeInheritedTags(list);
+  if(splitOverflowScrolls(list))changed=true;
   if(changed)saveDailyScrolls(list);
 }
 
@@ -727,7 +1077,7 @@ function initDefaultData(){
   }
   if(!localStorage.getItem(STORAGE_KEY_DAILY)){
     const now=new Date();
-    const mk=()=>({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:""});
+    const mk=()=>mkEmptyTask();
     localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify([{
       id:uid(),date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,auto:true,autoVer:3,
       tasks:[
@@ -1029,15 +1379,24 @@ function doCompleteTask(si,ti){
   const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
   if(!s||!t)return;
   if(isScrollLocked(s)){toast("🔒 该卷轴已封卷，解封后方可修行","warn");return}
-  if(t.completed)return;                                  // 防重复：同一任务只完成一次
+  if(t.completed)return;                                  // 防重复：同一任务只完成一次（规则四十二）
   if(!t.title.trim()){toast("先为任务填写名称","warn");return}
-  t.completed=true;t.completeTime=fmtTime(new Date());
-  s.updatedAt=fmtDateTime(new Date());
-  const order=getTrail().filter(x=>x.scrollId===s.id).length+1;   // 本卷实际完成顺序
+  const now=new Date();
+  const completedAt=fmtDateTime(now);
+  const completionId=uid();
+  const taskId=t.taskId||t.id;
+  // 同任务全部顺延副本同步完成状态（规则七：同一 Task 同一次完成）
+  list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+    if((x.taskId||x.id)===taskId&&taskId){x.completed=true;x.completeTime=fmtTime(now);x.completionId=completionId}
+  }));
+  s.updatedAt=fmtDateTime(now);
   saveDailyScrolls(list);
-  addToTrail(s,t,order);
-  setCrystal(getCrystal()+1);
-  addLedger({type:"earn",amount:1,note:"完成一课 · "+(t.title||"")});
+  addCompletion(s,t,completionId,completedAt,getTrail().length+1);   // 写行迹（CompletionRecord）
+  if(!hasReward(completionId)){                                    // 奖励唯一关联 rewardId-completionId（规则四十三~四十四）
+    addReward({rewardId:uid(),completionId:completionId,amount:1,at:completedAt});
+    setCrystal(getCrystal()+1);
+    addLedger({type:"earn",amount:1,note:"完成一课 · "+(t.title||"")});
+  }
   renderScrollOpen(si);renderHome();
   showCompletionToast(t.title||"无名任务");   // 轻量推送：◇ 修行完成 / 任务名称 / 获得晶核 ×1（约 2 秒自动消失，不阻塞）
 }
@@ -1055,35 +1414,40 @@ function showCompletionToast(taskTitle){
   const timer=setTimeout(function(){t.classList.remove("show");setTimeout(function(){t.remove()},300)},2000);
 }
 
-/* ================= 行迹（永久完成记录，可编辑链/标签，不可修改完成历史） ================= */
-function addToTrail(scroll, task, order){
+/* ================= 行迹 = CompletionRecord（永久完成历史，可整理链/标签，不可修改完成事件） ================= */
+function addCompletion(scroll, task, completionId, completedAt, seq){
   const t=getTrail();
   const root=getRootOfTask(task);
+  const taskId=task.taskId||task.id;
+  const slot=(task.currentRecord&&task.currentRecord.slot)||(scroll.tasks.findIndex(x=>(x.taskId||x.id)===taskId)+1)||1;
   t.push({
-    id:uid(),
+    completionId:completionId,
+    id:completionId,
+    taskId:taskId,
     scrollId:scroll.id,
-    taskId:task.id,
     scrollDate:scroll.date,
     scrollNo:getScrollNoById(scroll.id),
-    order:order,
-    title:(task.title||"").trim(),
+    order:nextTrailOrder(scroll.id),                       // 本卷实际完成顺序（展示用）
+    originalTaskPosition:task.origNo||(task.originalRecord?fmtScrollNo(shortToIso(task.originalRecord.date,scroll.date),task.originalRecord.scrollNo)+"-"+task.originalRecord.slot:(fmtScrollNo(scroll.date,getScrollNoById(scroll.id))+"-"+slot)),   // 任务最初来源编号（规则八：顺延不改变）
+    originalTitle:(task.title||"").trim(),                 // 完成时原始任务名称（永久）
+    displayTitle:(task.title||"").trim(),                  // 展示名称（行迹可改，不破坏历史）
+    completedAt:completedAt,                               // 实际完成时间（永久）
+    completionSequence:seq,                                // 全局完成序号（永久）
+    completeDateTime:completedAt,                          // legacy 同步
     tags:(task.tags||[]).slice(),
-    chainId:task.chainId||"",
-    chainOrder:task.chainOrder||0,
-    isRoot:task.isRoot||false,
-    origNo:task.origNo||(fmtScrollNo(scroll.date,getScrollNoById(scroll.id))+"-"+(order)),   // 最初创始编号（顺延不重写）
-    chainRootId:root?root.id:"",                       // 链根任务 id（◇首 快照；用于任务链排序与关系展示）
+    ownTags:(task.ownTags||[]).slice(),
+    inheritedTags:(task.inheritedTags||[]).slice(),
+    chainId:task.chainId||"", chainOrder:task.chainOrder||0, isRoot:task.isRoot||false, origNo:task.origNo||"",
+    chainRootId:root?root.taskId||root.id:"",              // 链根任务 id（◇首 快照）
     chainRootTitle:root?root.title:"",
-    completeTime:task.completeTime||"",
-    completeDateTime:fmtDateTime(new Date())
+    completeTime:fmtTime(new Date())
   });
   saveTrail(t);
 }
-/* 移除某任务的完成记录并重排行迹编号（保持连续） */
+/* 移除某任务的完成记录并重排行迹编号（保持连续）——仅历史兼容保留，新流程不调用（行迹不可撤销） */
 function removeTrailForTask(scrollId, taskId){
-  const t=getTrail().filter(x=>!(x.scrollId===scrollId&&x.taskId===taskId));
+  const t=getTrail().filter(x=>!(x.scrollId===scrollId&&(x.taskId||"")===taskId));
   if(t.length===getTrail().length)return;
-  // 重排该卷剩余条目的 order
   let k=1;
   t.filter(x=>x.scrollId===scrollId).sort((a,b)=>a.order-b.order).forEach(x=>{x.order=k++});
   saveTrail(t);
@@ -1118,10 +1482,11 @@ function renderTrail(){
   let filtered=list.slice();
   if(trailTagFilter)filtered=filtered.filter(e=>(e.tags||[]).includes(trailTagFilter));
   const q=(trailSearch||"").trim().toLowerCase();
-  if(q)filtered=filtered.filter(e=>(e.title||"").toLowerCase().includes(q));
-  /* 排序仅为显示层：不改动原始完成顺序/完成时间数据 */
+  if(q)filtered=filtered.filter(e=>((e.displayTitle||e.originalTitle||e.title)||"").toLowerCase().includes(q));
+  /* 排序仅为显示层：不改动 completedAt / completionSequence / originalTaskPosition（规则二十八） */
+  const dt=e=>String(e.completedAt||e.completeDateTime||"");
   if(trailSort==="asc"){
-    filtered.sort((a,b)=>String(a.completeDateTime||"").localeCompare(String(b.completeDateTime||"")));
+    filtered.sort((a,b)=>dt(a).localeCompare(dt(b)));
   }else if(trailSort==="chain"){
     // 按任务链分组：◇首 → 其分支（◇①◇②…）→ 其余链（按各自根）→ 无链任务；组间按组内最早完成时间
     const grp={}, lone=[];
@@ -1134,28 +1499,30 @@ function renderTrail(){
     Object.keys(grp).forEach(k=>{
       const g=grp[k];
       g.sort((a,b)=>(a.isRoot?-1:(a.chainOrder||99))-((b.isRoot?-1:(b.chainOrder||99))));
-      g.earliest=String(g[0].completeDateTime||"");
+      g.earliest=dt(g[0]);
     });
-    Object.keys(grp).sort((a,b)=>String(grp[a].earliest).localeCompare(String(grp[b].earliest)))
+    Object.keys(grp).sort((a,b)=>dt(grp[a][0]).localeCompare(dt(grp[b][0])))
       .forEach(k=>sorted.push(...grp[k]));
-    lone.sort((a,b)=>String(b.completeDateTime||"").localeCompare(String(a.completeDateTime||"")));
+    lone.sort((a,b)=>dt(b).localeCompare(dt(a)));
     sorted.push(...lone);
     filtered=sorted;
   }else{
-    filtered.sort((a,b)=>String(b.completeDateTime||"").localeCompare(String(a.completeDateTime||"")));
+    filtered.sort((a,b)=>dt(b).localeCompare(dt(a)));
   }
   filtered.forEach(e=>{
     const d=document.createElement("div");d.className="li-card trail-card";
     const tags=(e.tags||[]).filter(Boolean);
+    const title=e.displayTitle||e.originalTitle||e.title||"无名";
+    const pos=e.originalTaskPosition||e.origNo||(fmtScrollNo(e.scrollDate,e.scrollNo)+"-"+e.order);
     let chainHtml="";
     if(e.isRoot){chainHtml=`<span class="chain-badge" onclick="event.stopPropagation();openChainDetail('${esc(e.taskId)}')">◇ 首</span>`}
     else if(e.chainId){chainHtml=`<span class="chain-badge" onclick="event.stopPropagation();openChainDetail('${esc(e.taskId)}')">◇${toCircled(e.chainOrder)}</span>`}
-    else if(e.chainRootId&&e.chainRootId!==e.taskId){const rt=findTaskById(e.chainRootId);if(rt&&rt.isRoot&&getBranches(rt.id).length)chainHtml=`<span class="chain-badge" onclick="event.stopPropagation();openChainDetail('${esc(e.taskId)}')">◇ 首</span>`}
+    else if(e.chainRootId&&e.chainRootId!==e.taskId){const rt=findTaskById(e.chainRootId);if(rt&&rt.isRoot&&getBranches(rt.id||rt.taskId).length)chainHtml=`<span class="chain-badge" onclick="event.stopPropagation();openChainDetail('${esc(e.taskId)}')">◇ 首</span>`}
     d.innerHTML=`<div class="li-ic">🧭</div>
       <div class="li-main">
-        <div class="li-t"><span class="trail-no">${esc(e.origNo||(fmtScrollNo(e.scrollDate,e.scrollNo)+"-"+e.order))}</span>${chainHtml}${esc(e.title||"无名")}</div>
+        <div class="li-t"><span class="trail-no">${esc(pos)}</span>${chainHtml}${esc(title)}</div>
         ${tags.length?`<div class="task-tags" style="margin-top:4px">${tags.map(x=>`<span class="task-tag">${esc(x)}</span>`).join("")}</div>`:""}
-        <div class="li-meta">✓ 完成于 ${esc(e.completeDateTime||"--")}</div>
+        <div class="li-meta">✓ 完成于 ${esc(dt(e)||"--")}</div>
       </div>
       <div class="li-ops"><button class="btn-gray" onclick="event.stopPropagation();openTrailEdit('${esc(e.id)}')">✎ 编辑</button><span class="li-arrow">›</span></div>`;
     d.addEventListener("click",()=>openTrailDetail(e));
@@ -1165,54 +1532,66 @@ function renderTrail(){
 function setTrailTagFilter(tg){trailTagFilter=tg;renderTrail()}
 function openTrailDetail(e){
   const tags=(e.tags||[]).filter(Boolean);
-  showModal(`行迹 · ${esc(e.origNo||(fmtScrollNo(e.scrollDate,e.scrollNo)+"-"+e.order))}`,
+  const pos=e.originalTaskPosition||e.origNo||(fmtScrollNo(e.scrollDate,e.scrollNo)+"-"+e.order);
+  const title=e.displayTitle||e.originalTitle||e.title||"无名";
+  showModal(`行迹 · ${esc(pos)}`,
     `<div class="note-area">
-      <div style="font-size:16px;font-weight:bold;color:var(--ink);margin-bottom:8px">${esc(e.title||"无名")}</div>
+      <div style="font-size:16px;font-weight:bold;color:var(--ink);margin-bottom:8px">${esc(title)}</div>
       <div style="font-size:13px;color:var(--muted);line-height:2">
-        最初创建：${esc(e.origNo||"--")}（创始编号，顺延不改变）<br>
+        最初创建：${esc(pos)}（创始编号，顺延不改变）<br>
         原卷轴：${esc(fmtScrollNo(e.scrollDate,e.scrollNo))} · 完成顺序：本卷第 ${esc(String(e.order))} 个完成<br>
-        完成时间：✓ ${esc(e.completeDateTime||"--")}（完成记录为永久历史，不可修改）
+        完成时间：✓ ${esc(e.completedAt||e.completeDateTime||"--")}（完成记录为永久历史，不可修改）<br>
+        ${e.originalTitle&&e.originalTitle!==title?`原始名称：${esc(e.originalTitle)}（完成时快照，永久保留）<br>`:""}
+        ${e.completionSequence?`全局完成序号：#${esc(String(e.completionSequence))}<br>`:""}
       </div>
       ${tags.length?`<div style="margin-top:8px"><div class="task-tags">${tags.map(x=>`<span class="task-tag">${esc(x)}</span>`).join("")}</div></div>`:""}
     </div>`,
     `<button class="btn-gray" onclick="closeAllModal()">关闭</button>`);
 }
-/* 行迹编辑：仅允许修改「任务名称 / 标签 / 任务链关系（设为/取消 ◇首、新增后续）」这类元数据；
-   原始创始编号、完成时间、完成顺序、完成记录本身一律只读、不可修改，行迹不可删除 */
+/* 行迹编辑：仅允许修改「展示名称 / 标签 / 任务链关系（设为/取消 ◇首、新增后续）」这类元数据（规则三十~三十一）；
+   原始名称快照、创始编号、完成时间、完成顺序、完成记录本身一律只读、不可修改，行迹不可删除 */
 function openTrailEdit(trailId){
   const list=getTrail();
   const idx=list.findIndex(x=>x.id===trailId);
   const e=idx<0?null:list[idx];
   if(!e)return;
-  editingTags=(e.tags||[]).slice();
+  editingTags=(e.ownTags||[]).slice();
   const all=collectAllTags();
   const chainLine=e.isRoot?"◇ 首（根任务）":(e.chainId?("◇"+toCircled(e.chainOrder)+" · 链内任务"):"独立任务");
   const task=findTaskById(e.taskId);
-  showModal(`✎ 编辑行迹 · ${esc(e.origNo||"")}`,
-    `<label>任务名称</label><input id="trailEditInput" value="${esc(e.title)}" placeholder="输入任务名称">
+  const title=e.displayTitle||e.originalTitle||e.title||"";
+  showModal(`✎ 编辑行迹 · ${esc(e.originalTaskPosition||e.origNo||"")}`,
+    `<label>展示名称（修改不改变完成时的原始名称）</label><input id="trailEditInput" value="${esc(title)}" placeholder="输入任务名称">
      <div class="td-row" style="margin-top:8px">🗝 任务链：${chainLine}${task?`<br><span style="font-size:12px;color:var(--muted)">（当前任务仍存在，链关系修改将同步到任务本身）</span>`:""}</div>
-     <label>🏷 标签（可多选 / 输入后回车新建）</label>
+     <label>🏷 自有标签（可多选 / 输入后回车新建；继承标签自动来自父任务）</label>
      <div class="tag-edit-wrap" id="tagEditWrap"></div>
      <input id="taskTagInput" placeholder="输入新标签后回车" onkeydown="if(event.key==='Enter'){event.preventDefault();addEditingTagFromInput()}">
+     ${(e.inheritedTags||[]).length?`<div class="tag-common"><div class="tc-title">继承标签（来自父任务，只读）</div><div class="tc-list">${(e.inheritedTags||[]).map(x=>`<span class="tag-chip">${esc(x)}</span>`).join("")}</div></div>`:""}
      ${all.length?`<div class="tag-common"><div class="tc-title">常用标签（点击切换）</div><div class="tc-list" id="tagCommonList">${all.map(tg=>`<span class="tag-chip ${editingTags.includes(tg)?'on':''}" data-tg="${esc(tg)}" onclick="toggleCommonTag('${esc(tg)}')">${esc(tg)}</span>`).join("")}</div></div>`:""}
-     <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.8">🔒 完成记录为永久历史：创始编号 / 完成时间 / 完成顺序 不可修改，行迹不可删除。<br>此处仅修改名称、标签与任务链归属（属于对历史的整理与分类）。</div>`,
+     <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.8">🔒 完成记录为永久历史：创始编号 / 完成时间 / 完成顺序 / 完成时原始名称 不可修改，行迹不可删除。<br>此处仅修改展示名称、自有标签与任务链归属（属于对历史的整理与分类）。</div>`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button>
      ${task?(task.isRoot?`<button class="btn" onclick="unsetRootOfTrail('${esc(e.taskId)}','${esc(e.id)}')">取消 ◇首</button>`:`<button class="btn" onclick="setRootOfTrail('${esc(e.taskId)}','${esc(e.id)}')">设为 ◇首</button>`):""}
      ${task?`<button class="btn" onclick="addNextOfTrail('${esc(e.taskId)}','${esc(e.id)}')">＋ 后续任务</button>`:""}
      <button class="btn-primary" onclick="saveTrailEdit('${esc(e.id)}')">保存</button>`);
   renderTagEditUI();
 }
-/* 行迹保存：更新名称/标签，同步到仍在任务（任务链关系在任务侧保存，行迹快照同步） */
+/* 行迹保存：更新展示名称/自有标签，同步到仍在任务（originalTitle / completedAt / completionSequence 冻结） */
 function saveTrailEdit(trailId){
   const list=getTrail();
   const e=list.find(x=>x.id===trailId);
   if(!e)return;
-  e.title=document.getElementById("trailEditInput").value.trim();
-  e.tags=editingTags.slice();
+  e.displayTitle=document.getElementById("trailEditInput").value.trim();
+  e.ownTags=editingTags.slice();
+  e.tags=effectiveTags(e);
   const task=findTaskById(e.taskId);
-  if(task){                                    // 任务仍存在：同步名称/标签（链关系由 ◇首/后续 按钮直接作用于任务）
-    task.title=e.title;task.tags=e.tags.slice();
-    const s2=scrollOfTask(task);if(s2){s2.updatedAt=fmtDateTime(new Date());saveDailyScrolls(getDailyScrolls())}
+  if(task){                                    // 任务仍存在：同步展示名称/自有标签（链关系由 ◇首/后续 按钮直接作用于任务）
+    const daily=getDailyScrolls();
+    daily.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+      if((x.taskId||x.id)===(e.taskId||"")){x.title=e.displayTitle;x.ownTags=e.ownTags.slice()}
+    }));
+    recomputeInheritedTags(daily);
+    const s2=scrollOfTask(task);if(s2){s2.updatedAt=fmtDateTime(new Date())}
+    saveDailyScrolls(daily);
   }
   saveTrail(list);
   closeAllModal();renderTrail();toast("已保存（完成记录保持不变）");
@@ -1226,31 +1605,34 @@ function refreshTrailSnapshot(trailId){
   if(!task)return;
   e.chainId=task.chainId||"";e.chainOrder=task.chainOrder||0;e.isRoot=task.isRoot||false;
   const root=getRootOfTask(task);
-  e.chainRootId=root?root.id:"";e.chainRootTitle=root?root.title:"";
+  e.chainRootId=root?(root.taskId||root.id):"";e.chainRootTitle=root?root.title:"";
   saveTrail(list);
+}
+function findTaskSlotByKey(taskId){
+  const list=getDailyScrolls();
+  for(let si=0;si<list.length;si++){
+    const s=list[si];
+    const ti=(s.tasks||[]).findIndex(x=>(x.taskId||x.id)===taskId);
+    if(ti>=0)return{si,ti};
+  }
+  return null;
 }
 function setRootOfTrail(taskId,trailId){
   const task=findTaskById(taskId);if(!task)return;
-  const si=getDailyScrolls().findIndex(s=>(s.tasks||[]).some(x=>x.id===taskId));
-  const ti=si>=0?getDailyScrolls()[si].tasks.findIndex(x=>x.id===taskId):-1;
-  if(si<0||ti<0)return;
-  setTaskAsRoot(si,ti);
+  const p=findTaskSlotByKey(taskId);if(!p)return;
+  setTaskAsRoot(p.si,p.ti);
   refreshTrailSnapshot(trailId);renderTrail();
 }
 function unsetRootOfTrail(taskId,trailId){
   const task=findTaskById(taskId);if(!task)return;
-  const si=getDailyScrolls().findIndex(s=>(s.tasks||[]).some(x=>x.id===taskId));
-  const ti=si>=0?getDailyScrolls()[si].tasks.findIndex(x=>x.id===taskId):-1;
-  if(si<0||ti<0)return;
-  unsetRoot(si,ti);
+  const p=findTaskSlotByKey(taskId);if(!p)return;
+  unsetRoot(p.si,p.ti);
   refreshTrailSnapshot(trailId);renderTrail();
 }
 function addNextOfTrail(taskId,trailId){
   const task=findTaskById(taskId);if(!task)return;
-  const si=getDailyScrolls().findIndex(s=>(s.tasks||[]).some(x=>x.id===taskId));
-  const ti=si>=0?getDailyScrolls()[si].tasks.findIndex(x=>x.id===taskId):-1;
-  if(si<0||ti<0)return;
-  addNextTask(si,ti);
+  const p=findTaskSlotByKey(taskId);if(!p)return;
+  addNextTask(p.si,p.ti);
   refreshTrailSnapshot(trailId);renderTrail();
 }
 
@@ -1278,13 +1660,14 @@ function openEditTask(si,ti){
   const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
   if(!s||!t)return;
   if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能编辑","warn");return}
-  editingTags=(t.tags||[]).slice();
+  editingTags=(t.ownTags||[]).slice();
   const all=collectAllTags();
+  const tk=t.taskId||t.id;
   // 任务链展示（前置/当前/后续/多分支；未完成任务同样可见，行迹不是唯一入口）
   let chainHtml=`<div class="td-row" style="margin-top:8px">🗝 任务链：暂无，点击下方「＋ 后续任务」创建</div>`;
-  const branches=t.chainId?[]:getBranches(t.id);
+  const branches=t.chainId?[]:getBranches(tk);
   if(t.chainId||branches.length){
-    const rows=chainRowsFor(t,t.id);
+    const rows=chainRowsFor(t,tk);
     chainHtml=`<div class="td-row" style="margin-top:8px"><div style="font-weight:bold;color:var(--primary);margin-bottom:6px">🗝 任务链</div>${rows.join('')}</div>`;
   }
   showModal(`✎ 第 ${ti+1} 课`,
@@ -1292,9 +1675,10 @@ function openEditTask(si,ti){
      ${t.origNo?`<div style="font-size:12px;color:var(--muted);margin:-4px 0 6px">🏷 最初创始编号：${esc(t.origNo)}（顺延不改变）</div>`:""}
      ${chainHtml}
      <label>📋 执行说明 / 备注（怎么做）</label><textarea id="taskNoteInput" rows="2" placeholder="例：先背 20 个单词，再做一套题">${esc(t.note||"")}</textarea>
-     <label>🏷 标签（可多选 / 输入后回车新建）</label>
+     <label>🏷 自有标签（可多选 / 输入后回车新建；继承标签自动来自父任务）</label>
      <div class="tag-edit-wrap" id="tagEditWrap"></div>
      <input id="taskTagInput" placeholder="输入新标签后回车" onkeydown="if(event.key==='Enter'){event.preventDefault();addEditingTagFromInput()}">
+     ${(t.inheritedTags||[]).length?`<div class="tag-common"><div class="tc-title">继承标签（来自父任务，只读）</div><div class="tc-list">${(t.inheritedTags||[]).map(x=>`<span class="tag-chip">${esc(x)}</span>`).join("")}</div></div>`:""}
      ${all.length?`<div class="tag-common"><div class="tc-title">常用标签（点击切换）</div><div class="tc-list" id="tagCommonList">${all.map(tg=>`<span class="tag-chip ${editingTags.includes(tg)?'on':''}" data-tg="${esc(tg)}" onclick="toggleCommonTag('${esc(tg)}')">${esc(tg)}</span>`).join("")}</div></div>`:""}`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button>
      ${t.isRoot?`<button class="btn" onclick="unsetRoot(${si},${ti})">取消 ◇首</button>`:`<button class="btn" onclick="setTaskAsRoot(${si},${ti})">设为 ◇首</button>`}
@@ -1307,18 +1691,27 @@ function saveEditTask(si,ti){
   if(!s||!t)return;
   if(isScrollLocked(s)){toast("🔒 已封卷","warn");closeAllModal();return}
   const wasEmpty=!t.title.trim();
-  t.title=document.getElementById("taskEditInput").value.trim();
-  if(wasEmpty&&t.title&&!t.origNo){t.origNo=fmtScrollNo(s.date,getScrollNoById(s.id))+"-"+(ti+1)}   // 最初创始编号：首次填写名称时永久记录（顺延/补位不重写）
+  const newTitle=document.getElementById("taskEditInput").value.trim();
   const ni=document.getElementById("taskNoteInput");
-  t.note=ni?ni.value.trim():"";
-  t.tags=editingTags.slice();
-  // 母任务标签同步继承给直接子任务（只增不减子任务已有标签；子任务修改不反向影响母任务）
-  list.forEach(sc=>(sc.tasks||[]).forEach(c=>{
-    if(c.parentId===t.id){
-      const have=new Set(c.tags||[]);
-      (t.tags||[]).forEach(tg=>{if(!have.has(tg)){c.tags=c.tags||[];c.tags.push(tg)}});
-    }
+  const newNote=ni?ni.value.trim():"";
+  const newOwn=(editingTags||[]).slice();
+  const tk=t.taskId||t.id;
+  // 同任务全部顺延副本同步（规则七：同一 Task 共享名称/备注/自有标签）
+  list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+    if((x.taskId||x.id)===tk&&tk){x.title=newTitle;x.note=newNote;x.ownTags=newOwn.slice()}
   }));
+  if(wasEmpty&&newTitle&&!t.origNo){
+    // 最初创始编号 + originalRecord：首次填写名称时永久记录（顺延/补位不重写）
+    const ono=fmtScrollNo(s.date,getScrollNoById(s.id))+"-"+(ti+1);
+    list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+      if((x.taskId||x.id)===tk&&tk){
+        if(!x.origNo)x.origNo=ono;
+        if(!x.originalRecord)x.originalRecord={date:fmtShortDate(s.date),iso:s.date,scrollId:s.id,scrollNo:getDayScrollIndexForList(list,s.id),slot:ti+1};
+      }
+    }));
+  }
+  recomputeInheritedTags(list);
+  recomputeChainRoots(list);
   s.updatedAt=fmtDateTime(new Date());
   saveDailyScrolls(list);closeAllModal();renderScrollOpen(si);renderDailyTagBar();renderHome();toast("已保存");
 }
@@ -1326,13 +1719,23 @@ function delTaskInScroll(si,ti){
   const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
   if(!s||!t)return;
   if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能修改","warn");return}
-  if(!t.title.trim()&&!t.note&&!t.tags.length&&!t.completed&&!t.chainId){toast("该栏位已是空位");return}
+  if(!t.title.trim()&&!t.note&&!(t.tags||[]).length&&!t.completed&&!t.chainId){toast("该栏位已是空位");return}
   if(t.completed){toast("🔒 已完成任务属于行迹永久历史，不可清空（行迹不可删除）","warn");return}
   showConfirm("✕ 清空任务","确定清空任务「"+esc(t.title||"空任务")+"」？<br>仅清空内容，该栏位保留（每卷固定 10 个任务位）。",true,()=>{
-    const l2=getDailyScrolls();const s2=l2[si];const t2=s2&&s2.tasks[ti];
-    if(!t2)return;
-    t2.title="";t2.note="";t2.tags=[];t2.completed=false;t2.completeTime="";
-    t2.chainId="";t2.chainOrder=0;t2.parentId="";t2.isRoot=false;t2.origNo="";   // 清空即断开任务链关系与首任务身份，创始编号一并清空
+    const l2=getDailyScrolls();
+    const tk=t.taskId||t.id;
+    // 删除任务内容 = 清空该 Task 的全部顺延副本（规则十五/十六：删除内容而非 slot）
+    l2.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+      if((x.taskId||x.id)===tk&&tk&&!x.completed){
+        const n=mkEmptyTask();
+        x.taskId=n.taskId;x.id=n.id;x.title="";x.note="";x.tags=[];x.ownTags=[];x.inheritedTags=[];
+        x.completed=false;x.completeTime="";x.delayDays=0;
+        x.chain={rootTaskId:"",parentTaskId:"",branchId:"",nodeNumber:0,isRoot:false};
+        x.parentId="";x.chainId="";x.chainOrder=0;x.isRoot=false;x.origNo="";
+        x.originalRecord=null;x.currentRecord=null;
+      }
+    }));
+    const s2=l2[si];
     compactScroll(s2);                              // 未完成任务自动向前补位
     s2.updatedAt=fmtDateTime(new Date());
     saveDailyScrolls(l2);renderScrollOpen(si);renderDailyTagBar();renderHome();toast("已清空该任务，未完成任务已自动补位");
@@ -1342,9 +1745,10 @@ function delTaskInScroll(si,ti){
 function toCircled(n){const a=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];return a[(+n||1)-1]||"◇"+(+n||1)}
 /* 链徽章编号：◇首 根任务显示「◇ 首」（不参与分支编号），分支任务显示 ◇① 等（分支间编号独立） */
 function badgeNo(t){return t&&t.isRoot?("◇ 首"):(t&&t.chainId?("◇"+toCircled(t.chainOrder)):"")}
-/* 删除/清空任务后的补位：未完成任务（有内容）自动向前补入空位；已完成任务保持原位（避免改变已完成记录位置）；不改变任务 ID、链关系、完成记录 */
+/* 删除/清空任务后的补位：未完成任务（有内容）自动向前补入空位；已完成任务保持原位（避免改变已完成记录位置）；不改变 taskId、链关系、完成记录；补位后刷新 currentRecord.slot */
 function compactScroll(s){
   if(!s||!Array.isArray(s.tasks))return;
+  const list=getDailyScrolls();
   const tasks=s.tasks;
   const doneIdx=new Set();
   tasks.forEach((t,i)=>{if(t.completed)doneIdx.add(i)});
@@ -1355,7 +1759,10 @@ function compactScroll(s){
   for(let i=0;i<out.length;i++){
     if(!doneIdx.has(i)&&ui<undone.length){out[i]=undone[ui];ui++}
   }
-  for(let i=0;i<out.length;i++)if(!out[i])out[i]={id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:"",chainOrder:0,parentId:"",isRoot:false,origNo:""};
+  for(let i=0;i<out.length;i++){
+    if(!out[i])out[i]=mkEmptyTask();
+    else if(out[i].currentRecord)out[i].currentRecord.slot=i+1;
+  }
   s.tasks=out;
 }
 /* 计算某条分支内下一个可用编号：编号对应任务、不对应创建次数，删除后编号可复用（取最小空缺）。list 传入可基于内存数据计算 */
@@ -1364,9 +1771,10 @@ function nextChainNo(cid,list){
   (list||getDailyScrolls()).forEach(sc=>(sc.tasks||[]).forEach(x=>{if(x.chainId===cid&&x.chainOrder)used.add(x.chainOrder)}));
   let no=1;while(used.has(no))no++;return no;
 }
-/* 按任务 id 查找任务（跨全部卷） */
+/* 按任务 taskId（或旧 id）查找任务（跨全部卷） */
 function findTaskById(tid){
-  for(const sc of getDailyScrolls()){for(const t of sc.tasks||[]){if(t.id===tid)return t}}
+  if(!tid)return null;
+  for(const sc of getDailyScrolls()){for(const t of sc.tasks||[]){if((t.taskId||t.id)===tid)return t}}
   return null;
 }
 /* 收集某条分支的全部任务（可跨卷跨日期），按分支内顺序排列；同编号的顺延副本只保留最初创建的一条 */
@@ -1379,16 +1787,16 @@ function getBranchTasks(cid){
   }
   return [...map.entries()].sort((a,b)=>a[0]-b[0]).map(e=>e[1]);
 }
-/* 回溯某任务的根任务：沿 parentId 上溯；独立任务（无链）返回 null */
+/* 回溯某任务的根任务：沿 parentTaskId 上溯；独立任务（无链）返回 null */
 function getRootOfTask(t){
   if(!t)return null;
   if(t.isRoot)return t;                                  // 本身是 ◇首
   let cur=t;
   const seen=new Set();
-  while(cur&&cur.parentId&&!seen.has(cur.id)){
-    seen.add(cur.id);
+  while(cur&&cur.parentId&&!seen.has(cur.taskId||cur.id)){
+    seen.add(cur.taskId||cur.id);
     const p=findTaskById(cur.parentId);
-    if(!p||p.id===cur.id)break;
+    if(!p||(p.taskId||p.id)===(cur.taskId||cur.id))break;
     cur=p;
     if(cur.isRoot)return cur;                            // 回溯到 ◇首 根
   }
@@ -1400,7 +1808,7 @@ function getBranches(rootId){
   const list=getDailyScrolls();
   for(let i=list.length-1;i>=0;i--){
     const sc=list[i];
-    (sc.tasks||[]).forEach(t=>{if(t.parentId===rootId&&t.chainId&&!map.has(t.chainId))map.set(t.chainId,{t,sc})});
+    (sc.tasks||[]).forEach(t=>{if((t.parentId||"")===rootId&&t.chainId&&!map.has(t.chainId))map.set(t.chainId,{t,sc})});
   }
   return [...map.entries()].map(([chainId,v])=>({chainId,t:v.t,sc:v.sc}));
 }
@@ -1410,56 +1818,72 @@ function chainRowsFor(t,curId){
   const nodeRow=(x,isCur)=>`<div class="chain-node${isCur?" chain-cur":""}"><span class="chain-no">${badgeNo(x.t)}</span><span class="chain-title">${esc(x.t.title||"（未命名）")}</span><span class="chain-pos">${isCur?"当前":esc(x.t.origNo||fmtScrollNo(x.sc.date,getScrollNoById(x.sc.id)))}</span></div>`;
   const root=getRootOfTask(t);
   if(root){
-    rows.push(nodeRow({t:root,sc:scrollOfTask(root)},root.id===curId));
-    const branches=getBranches(root.id);
+    const rk=root.taskId||root.id;
+    rows.push(nodeRow({t:root,sc:scrollOfTask(root)},rk===curId));
+    const branches=getBranches(rk);
     branches.forEach((b,i)=>{
       if(i>0)rows.push('<div class="chain-arrow">┈┈ 新分支 ┈┈</div>');
       const items=getBranchTasks(b.chainId);
       items.forEach((x,j)=>{
         if(j>0)rows.push('<div class="chain-arrow">↓</div>');
-        rows.push(nodeRow(x,x.t.id===curId));
+        rows.push(nodeRow(x,(x.t.taskId||x.t.id)===curId));
       });
     });
   }else if(t&&t.chainId){
     const items=getBranchTasks(t.chainId);
     items.forEach((x,j)=>{
       if(j>0)rows.push('<div class="chain-arrow">↓</div>');
-      rows.push(nodeRow(x,x.t.id===curId));
+      rows.push(nodeRow(x,(x.t.taskId||x.t.id)===curId));
     });
-  }else if(t&&getBranches(t.id).length){    // 已取消 ◇首 但仍有分支：显示任务自身（无徽章）+ 全部分支
-    rows.push(nodeRow({t,sc:scrollOfTask(t)},t.id===curId));
-    const branches=getBranches(t.id);
+  }else if(t&&getBranches(t.taskId||t.id).length){    // 已取消 ◇首 但仍有分支：显示任务自身（无徽章）+ 全部分支
+    rows.push(nodeRow({t,sc:scrollOfTask(t)},(t.taskId||t.id)===curId));
+    const branches=getBranches(t.taskId||t.id);
     branches.forEach((b,i)=>{
       if(i>0)rows.push('<div class="chain-arrow">┈┈ 新分支 ┈┈</div>');
       const items=getBranchTasks(b.chainId);
       items.forEach((x,j)=>{
         if(j>0)rows.push('<div class="chain-arrow">↓</div>');
-        rows.push(nodeRow(x,x.t.id===curId));
+        rows.push(nodeRow(x,(x.t.taskId||x.t.id)===curId));
       });
     });
   }
   return rows;
 }
-function scrollOfTask(t){for(const sc of getDailyScrolls()){if((sc.tasks||[]).some(x=>x.id===t.id))return sc}return null}
-/* 创建后续任务：一个任务可拥有多条分支——根/独立任务点「后续」创建新分支（◇①），分支任务点「后续」延长当前分支；
-   标签继承母任务；遵循每卷固定 10 位——有空位放空位，卷满自动新建下一卷放第 1 位 */
+function scrollOfTask(t){const k=t.taskId||t.id;for(const sc of getDailyScrolls()){if((sc.tasks||[]).some(x=>(x.taskId||x.id)===k))return sc}return null}
+/* 按 taskId 更新同任务全部顺延副本（规则七：同一 Task 数据一致） */
+function updateTaskById(taskId,fn){
+  const list=getDailyScrolls();let changed=false;
+  list.forEach(sc=>(sc.tasks||[]).forEach(t=>{
+    if((t.taskId||t.id)===taskId&&taskId){fn(t);changed=true}
+  }));
+  if(changed){recomputeChainRoots(list);recomputeInheritedTags(list);saveDailyScrolls(list)}
+  return changed;
+}
+/* 创建后续任务（规则十四）：新 Task，通过 parentTaskId 关联；按 10 格规则找位置——当前卷有空位填空位，无空位新建卷放 01；
+   标签继承母任务（ownTags 继承，inheritedTags 由 recompute 自动计算）；绝不插入父任务下方、绝不推动其他任务位置 */
 function addNextTask(si,ti){
   const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
   if(!s||!t)return;
   if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能修改","warn");return}
+  const tk=t.taskId||t.id;
   let cid=t.chainId, no=1;
-  if(t.chainId){                       // 分支内任务：延长当前分支
+  if(t.chainId){                       // 分支内任务：延长当前分支（编号取最小空缺，删除后可复用）
     no=nextChainNo(t.chainId,list);
   }else{                               // 独立/◇首 任务：创建新分支（◇①，编号独立）；母任务自动成为 ◇首
-    t.isRoot=true;
+    list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+      if((x.taskId||x.id)===tk&&tk){x.isRoot=true;if(x.chain){x.chain.isRoot=true;x.chain.parentTaskId="";x.chain.branchId="";x.chain.nodeNumber=0}}
+    }));
     cid=uid();
   }
-  const nt={id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:(t.tags||[]).slice(),note:"",chainId:cid,chainOrder:no,parentId:t.id,isRoot:false,origNo:""};   // 标签继承母任务；origNo 待填写名称时记录
-  const emptyTask=()=>({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:"",chainOrder:0,parentId:"",isRoot:false,origNo:""});
+  const nt=mkEmptyTask();
+  nt.title="";
+  nt.ownTags=(t.ownTags||[]).slice();                       // 继承母任务自有标签（规则三十三：父→子）
+  nt.chain={rootTaskId:(t.chain&&t.chain.rootTaskId)||tk,parentTaskId:tk,branchId:cid,nodeNumber:no,isRoot:false};
+  syncTaskCompat(nt);
   // 当前卷找空位：真正的空白栏位（无标题、无链关系；未命名的后续任务也算已占位，不能被覆盖）
   const emptyTi=s.tasks.findIndex(x=>!x.title.trim()&&!x.chainId&&!x.parentId);
   if(emptyTi>=0){
-    s.tasks[emptyTi]=nt;
+    s.tasks[emptyTi]=fillTaskPosition(nt,s,emptyTi,list);
     s.updatedAt=fmtDateTime(new Date());
     saveDailyScrolls(list);closeAllModal();
     currentScrollIndex=getDailyScrolls().findIndex(x=>x.id===s.id);
@@ -1468,12 +1892,15 @@ function addNextTask(si,ti){
     openEditTask(currentScrollIndex,emptyTi);
     return;
   }
-  // 当前卷已满（10 位）：自动新建下一卷，后续任务放第 1 位
+  // 当前卷已满（10 位）：自动新建下一卷（手动卷，绝不继承），后续任务放第 1 位
   const now=new Date();
   const nsid=uid();
-  const tasks10=[nt];
-  for(let i=1;i<10;i++)tasks10.push(emptyTask());
-  list.push({id:nsid,date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,auto:false,tasks:tasks10});
+  const tasks10=[fillTaskPosition(nt,s,1,list)];
+  for(let i=1;i<10;i++)tasks10.push(mkEmptyTask());
+  const ns={id:nsid,date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,type:"manual",auto:false,tasks:tasks10};
+  tasks10[0].currentRecord.scrollId=nsid;tasks10[0].currentRecord.scrollNo=1;
+  if(tasks10[0].originalRecord&&tasks10[0].originalRecord.iso===s.date&&tasks10[0].originalRecord.scrollId===s.id){tasks10[0].originalRecord.scrollId=nsid;tasks10[0].originalRecord.scrollNo=1}
+  list.push(ns);
   saveDailyScrolls(list);closeAllModal();
   currentScrollIndex=getDailyScrolls().findIndex(x=>x.id===nsid);
   renderDailyShelf();renderHome();
@@ -1484,120 +1911,193 @@ function addNextTask(si,ti){
 function openChainDetail(taskId){
   const t=findTaskById(taskId);
   if(!t)return;
-  const branches=t.chainId?[]:getBranches(t.id);
+  const tk=t.taskId||t.id;
+  const branches=t.chainId?[]:getBranches(tk);
   if(!t.chainId&&!branches.length){toast("该任务链暂无内容");return}
   const rows=chainRowsFor(t,null);
   showModal("◇ 修行链",`<div class="note-area"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">同一任务链可跨越不同卷轴与日期；同一母任务可有多条分支，编号彼此独立</div>${rows.join('')}</div>`,`<button class="btn-gray" onclick="closeAllModal()">关闭</button>`);
 }
-/* 扫描「前一天」全部卷轴的所有未完成任务（跨全部卷，非仅卷1）；前一天无卷时回退到最近一个有卷的过去日期。
-   继承副本保留链关系/标签/isRoot，并把指向「同样被继承任务」的 parentId 重定向到继承后的新副本，保证继承后的链条完整联通 */
+/* 读取「严格昨天」全部卷轴的所有未完成任务（规则二十：跨全部卷，非仅卷1；规则二十二：绝不跨多天追溯）。
+   返回 [{t,from}] 引用原任务（同一 taskId，不创建新任务）；副本由 ensureTodayScroll 生成 */
 function collectCarryFromYesterday(list){
-  const today=getTodayStr();
-  const d=new Date();d.setDate(d.getDate()-1);
-  const y=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-  const dates=[...new Set(list.map(s=>s.date))].filter(x=>x<today).sort();
-  if(!dates.length)return [];
-  const src=dates.includes(y)?y:dates[dates.length-1];
-  const idMap={};
+  const y=yesterdayStr();
   const out=[];
-  list.filter(s=>s.date===src).forEach(s=>(s.tasks||[]).forEach(t=>{
-    if(!t.completed&&t.title.trim()!==""){
-      const nt={id:uid(),title:t.title,completed:false,completeTime:"",delayDays:(t.delayDays||0)+1,tags:(t.tags||[]).slice(),note:t.note||"",chainId:t.chainId||"",chainOrder:t.chainOrder||0,parentId:t.parentId||"",isRoot:t.isRoot||false,origNo:t.origNo||""};
-      idMap[t.id]=nt.id;
-      out.push(nt);
-    }
+  list.filter(s=>s.date===y).forEach(s=>(s.tasks||[]).forEach(t=>{
+    if(t&&!t.completed&&(t.title||"").trim()!==""&&(t.taskId||t.id))out.push({t,from:s});
   }));
-  out.forEach(nt=>{if(nt.parentId&&idMap[nt.parentId])nt.parentId=idMap[nt.parentId]});
   return out;
 }
-/* 每日 00:00 自动创建当日卷：今天还没有「自动卷」才建（手动卷可与自动卷并存，不被覆盖）；继承前一天全部卷的未完成任务；超过 10 个自动分多卷（每卷固定 10 位） */
-function ensureTodayScroll(){
-  const list=getDailyScrolls();
-  if(list.some(s=>s.date===getTodayStr()&&s.auto))return;
+/* 生成顺延副本：共享同一 taskId / originalRecord / chain / ownTags（规则七、十三：顺延不产生新任务、不产生新链节点） */
+function mkCarried(t,todayIso,scrollId,scrollNo,slot){
+  const nt={
+    taskId:t.taskId||t.id,id:t.taskId||t.id,
+    title:t.title,completed:false,completeTime:"",delayDays:(t.delayDays||0)+1,
+    note:t.note||"",
+    tags:[],ownTags:(t.ownTags||[]).slice(),inheritedTags:[],
+    chain:JSON.parse(JSON.stringify(t.chain||{rootTaskId:"",parentTaskId:"",branchId:"",nodeNumber:0,isRoot:false})),
+    parentId:t.parentId||"",chainId:t.chainId||"",chainOrder:t.chainOrder||0,isRoot:!!t.isRoot,origNo:t.origNo||"",
+    originalRecord:JSON.parse(JSON.stringify(t.originalRecord||null)),
+    currentRecord:{date:fmtShortDate(todayIso),iso:todayIso,scrollId:scrollId,scrollNo:scrollNo,slot:slot}
+  };
+  return syncTaskCompat(nt);
+}
+/* 重建今日自动卷（规则二十三~二十五）：仅删除今天 type=auto 的卷（手动卷绝不删除）；
+   读取昨日全部未完成任务（原 Task ID 复用，绝不 createNewTask）；
+   保留今天直接在自动卷中创建的任务（originalRecord 指向今天），防止重建丢失用户当天输入 */
+function rebuildTodayAuto(list){
+  const today=getTodayStr();
   const now=new Date();
-  const carry=collectCarryFromYesterday(list);
-  const mkEmpty=()=>({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:"",chainOrder:0,parentId:"",isRoot:false,origNo:""});
-  if(!carry.length){
-    list.push({id:uid(),date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,auto:true,autoVer:3,tasks:Array.from({length:10},mkEmpty)});
+  // 1) 保留：今天直接创建的任务（originalRecord.iso === 今天）
+  const precious=[];
+  list.filter(s=>s.date===today&&s.type==="auto").forEach(s=>(s.tasks||[]).forEach(t=>{
+    if(t&&(t.title||"").trim()&&!t.completed&&t.originalRecord&&t.originalRecord.iso===today)precious.push({t,from:s});
+  }));
+  // 2) 删除今天全部自动卷（手动卷不受影响）
+  const rest=list.filter(s=>!(s.date===today&&s.type==="auto"));
+  // 3) 重新从昨日继承（同一 taskId），排除与珍贵任务重复的
+  const carry=collectCarryFromYesterday(rest).filter(x=>!precious.some(p=>(p.t.taskId||p.t.id)===(x.t.taskId||x.t.id)));
+  const y=yesterdayStr();
+  const srcs=rest.filter(s=>s.date===y);
+  const srcUpdated=srcs.length?srcs.map(s=>s.updatedAt||"").sort().pop():"";
+  const items=[...carry.map(x=>x.t),...precious.map(p=>p.t)];
+  const seen=new Set(),uniq=items.filter(t=>{const k=t.taskId||t.id;if(seen.has(k))return false;seen.add(k);return true});
+  const mkScroll=()=>({id:uid(),date:today,createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,type:"auto",auto:true,sourceDate:y,sourceUpdatedAt:srcUpdated,tasks:[]});
+  if(!uniq.length){
+    const sc=mkScroll();
+    while(sc.tasks.length<10)sc.tasks.push(mkEmptyTask());
+    rest.push(sc);
   }else{
-    for(let i=0;i<carry.length;i+=10){
-      const chunk=carry.slice(i,i+10);
-      while(chunk.length<10)chunk.push(mkEmpty());
-      list.push({id:uid(),date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,auto:true,autoVer:3,tasks:chunk});
+    for(let i=0;i<uniq.length;i+=10){
+      const chunk=uniq.slice(i,i+10);
+      const sc=mkScroll();
+      const scrollNo=(i/10)+1;
+      sc.tasks=chunk.map(t=>{
+        const srcItem=carry.find(x=>(x.t.taskId||x.t.id)===(t.taskId||t.id))||precious.find(p=>(p.t.taskId||p.t.id)===(t.taskId||t.id));
+        let e;
+        if(srcItem&&precious.includes(srcItem)){e=t}   // 珍贵任务：保留原条目（引用），不重建
+        else{e=mkCarried(t,today,sc.id,scrollNo,chunk.indexOf(t)+1)}
+        e.currentRecord={date:fmtShortDate(today),iso:today,scrollId:sc.id,scrollNo:scrollNo,slot:chunk.indexOf(t)+1};
+        return syncTaskCompat(e);
+      });
+      while(sc.tasks.length<10)sc.tasks.push(mkEmptyTask());
+      rest.push(sc);
     }
   }
+  list.length=0;list.push(...rest);
   saveDailyScrolls(list);
+  return true;
 }
-/* 手动新增卷：当天新任务卷，绝不继承上一卷任务（空卷） */
+/* 检查并重建过期自动卷：9.7.sourceUpdatedAt < 9.6 最新 updatedAt → 9.7 过期（规则二十三） */
+function rebuildStaleAutoScrolls(list){
+  const today=getTodayStr();
+  const autos=list.filter(s=>s.date===today&&s.type==="auto");
+  if(!autos.length)return false;
+  let stale=false;
+  autos.forEach(s=>{
+    if(!s.sourceDate)return;
+    const srcs=list.filter(x=>x.date===s.sourceDate);
+    if(!srcs.length)return;
+    const maxU=srcs.map(x=>x.updatedAt||"").sort().pop()||"";
+    if(maxU>(s.sourceUpdatedAt||""))stale=true;
+  });
+  if(!stale)return false;
+  return rebuildTodayAuto(list);
+}
+/* 每日自动卷：今天没有自动卷 → 严格继承昨天全部未完成任务生成（超 10 自动拆卷，规则二十一）；已有自动卷 → 检查是否需要重建 */
+function ensureTodayScroll(){
+  const list=getDailyScrolls();
+  const today=getTodayStr();
+  const hasAuto=list.some(s=>s.date===today&&s.type==="auto");
+  const now=new Date();
+  if(!hasAuto){
+    const carry=collectCarryFromYesterday(list);
+    const y=yesterdayStr();
+    const srcs=list.filter(s=>s.date===y);
+    const srcUpdated=srcs.length?srcs.map(s=>s.updatedAt||"").sort().pop():"";
+    const mkScroll=()=>({id:uid(),date:today,createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,type:"auto",auto:true,sourceDate:y,sourceUpdatedAt:srcUpdated,tasks:[]});
+    const seen=new Set();
+    const items=carry.filter(x=>{const k=x.t.taskId||x.t.id;if(seen.has(k))return false;seen.add(k);return true});
+    if(!items.length){
+      const sc=mkScroll();
+      while(sc.tasks.length<10)sc.tasks.push(mkEmptyTask());
+      list.push(sc);
+    }else{
+      for(let i=0;i<items.length;i+=10){
+        const chunk=items.slice(i,i+10);
+        const sc=mkScroll();
+        const scrollNo=(i/10)+1;
+        sc.tasks=chunk.map(x=>mkCarried(x.t,today,sc.id,scrollNo,chunk.indexOf(x)+1));
+        while(sc.tasks.length<10)sc.tasks.push(mkEmptyTask());
+        list.push(sc);
+      }
+    }
+    saveDailyScrolls(list);
+    return;
+  }
+  rebuildStaleAutoScrolls(list);
+}
+/* 手动新增卷：当天新任务卷，绝不继承上一卷任务（空卷，规则十九）；type=manual 永不参与自动重建 */
 function addNewScroll(){
   const list=getDailyScrolls();
   const now=new Date();
   const sid=uid();
-  const tasks=Array.from({length:10},()=>({id:uid(),title:"",completed:false,completeTime:"",delayDays:0,tags:[],note:"",chainId:"",chainOrder:0,parentId:"",isRoot:false,origNo:""}));
-  list.push({id:sid,date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,auto:false,tasks});
+  const tasks=Array.from({length:10},()=>mkEmptyTask());
+  list.push({id:sid,date:getTodayStr(),createdAt:fmtDateTime(now),updatedAt:fmtDateTime(now),unlocked:false,type:"manual",auto:false,tasks});
   saveDailyScrolls(list);
   currentScrollIndex=getDailyScrolls().findIndex(s=>s.id===sid);   // 排序后新卷的真实索引
   renderDailyShelf();renderHome();
   toast("已新增空卷（手动卷不继承上一卷）");
 }
-/* 将任务设为 ◇首（根任务）：任意任务可成为根；分支任务提升为根时断开旧链，其直接子任务从 ◇① 重编号。
-   ◇首 本身可正常完成、顺延、进入行迹，不参与各分支 ◇①◇②◇③ 编号 */
+/* 将任务设为 ◇首（根任务，规则十）：任意任务可成为根；◇首 不占用 ◇① 编号；
+   分支任务提升为根时断开旧链，其直接子任务（同分支）从 ◇① 重编号；对同 taskId 全部副本生效 */
 function setTaskAsRoot(si,ti){
   const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
   if(!s||!t)return;
   if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能修改","warn");return}
   if(t.isRoot){toast("该任务已是 ◇首");return}
+  const tk=t.taskId||t.id;
   const cid=t.chainId;
-  t.chainId="";t.chainOrder=0;t.parentId="";t.isRoot=true;
+  list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+    if((x.taskId||x.id)===tk&&tk){
+      x.isRoot=true;
+      if(x.chain){x.chain.isRoot=true;x.chain.parentTaskId="";x.chain.branchId="";x.chain.nodeNumber=0}
+    }
+  }));
   if(cid){
-    // 原分支中它的直接子任务（同分支）按原顺序从 ◇① 重编号，保持 parentId 指向它
-    const kids=[];
-    list.forEach(sc=>(sc.tasks||[]).forEach(x=>{if(x.parentId===t.id&&x.chainId===cid)kids.push(x)}));
-    kids.sort((a,b)=>a.chainOrder-b.chainOrder);
-    kids.forEach((k,i)=>{k.chainOrder=i+1});
+    // 原分支中它的直接子任务（同分支）按原顺序从 ◇① 重编号，保持 parentTaskId 指向它
+    const kidMap=new Map();
+    list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+      if((x.parentId||"")===tk&&x.chainId===cid&&!kidMap.has(x.taskId||x.id))kidMap.set(x.taskId||x.id,x);
+    }));
+    const kids=[...kidMap.values()].sort((a,b)=>a.chainOrder-b.chainOrder);
+    kids.forEach((k,i)=>{
+      list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+        if((x.taskId||x.id)===(k.taskId||k.id)){if(x.chain)x.chain.nodeNumber=i+1;x.chainOrder=i+1}
+      }));
+    });
   }
   s.updatedAt=fmtDateTime(new Date());
+  recomputeChainRoots(list);recomputeInheritedTags(list);
   saveDailyScrolls(list);closeAllModal();renderScrollOpen(si);renderHome();
   toast("已设为 ◇首，可创建多个独立分支");
 }
-/* 取消 ◇首：只解除根任务身份，不删除任何任务——原根变回普通任务，其全部分支结构原样保留 */
+/* 取消 ◇首（规则：只解除根任务身份，不删除任何任务）——原根变回普通任务，其全部分支结构原样保留 */
 function unsetRoot(si,ti){
   const list=getDailyScrolls();const s=list[si];const t=s&&s.tasks[ti];
   if(!s||!t)return;
   if(isScrollLocked(s)){toast("🔒 已封卷，解封后才能修改","warn");return}
   if(!t.isRoot){toast("该任务不是 ◇首");return}
-  t.isRoot=false;
+  list.forEach(sc=>(sc.tasks||[]).forEach(x=>{
+    if((x.taskId||x.id)===(t.taskId||t.id)){x.isRoot=false;if(x.chain)x.chain.isRoot=false}
+  }));
   s.updatedAt=fmtDateTime(new Date());
+  recomputeChainRoots(list);recomputeInheritedTags(list);
   saveDailyScrolls(list);closeAllModal();renderScrollOpen(si);renderHome();
   toast("已取消 ◇首：任务及其全部分支均保留");
 }
-/* 迁移：重建今日自动卷——删除今天旧版本(autoVer<3)的自动卷，按昨日全部未完成重新生成；手动卷不受影响。
-   旧数据无 auto 标记时，仅当它可判定为旧自动卷（任务全部来自昨日继承）才重建，绝不误删手动卷 */
+/* 迁移入口（兼容旧调用）：新的每日自动卷机制（创建 + 过期重建） */
 function migrateAutoScroll(){
-  const list=getDailyScrolls();
-  const today=getTodayStr();
-  const todayScrolls=list.filter(s=>s.date===today);
-  if(!todayScrolls.length)return;
-  const autos=todayScrolls.filter(s=>s.auto);
-  if(autos.length&&autos.every(s=>s.autoVer===3))return;   // 已是新规则
-  if(autos.length){
-    const rest=list.filter(s=>!(s.date===today&&s.auto));
-    localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify(rest));
-    ensureTodayScroll();
-    toast("已重新生成今日自动卷（继承昨日全部未完成任务）");
-  }else{
-    // 旧数据（无 auto 标记）：旧版本规则下今天最多只有一卷。仅当它可判定为旧自动卷
-    // （其全部任务都来自昨日未完成任务的继承）时才删除重建；否则视为手动卷保留，绝不误删。
-    const yCarry=collectCarryFromYesterday(list);
-    const yTitles=new Set(yCarry.map(t=>t.title));
-    const allInherited=todayScrolls.every(s=>(s.tasks||[]).every(t=>!t.title.trim()||yTitles.has(t.title.trim())));
-    if(allInherited&&yCarry.length){
-      const rest=list.filter(s=>s.date!==today);
-      localStorage.setItem(STORAGE_KEY_DAILY,JSON.stringify(rest));
-      ensureTodayScroll();
-      toast("已按新规则重建今日自动卷（继承昨日全部未完成任务）");
-    }
-  }
+  ensureTodayScroll();
 }
 function delScroll(idx){
   const list=getDailyScrolls();
@@ -2376,7 +2876,7 @@ async function pullFromNotion(){
 
 /* ================= 数据导出/导入/重置（含行迹） ================= */
 function exportAllData(){
-  const all={version:4,exportTime:new Date().toLocaleString(),bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),trail:getTrail(),crystal:getCrystal(),aura:getAura(),shop:getShopItems(),ledger:getLedger()};
+  const all={schemaVersion:DATA_SCHEMA_VERSION,version:5,exportTime:new Date().toLocaleString(),bag:getBagData(),passive:getPassive(),daily:getDailyScrolls(),fail:getFail(),insight:getInsight(),trail:getTrail(),crystal:getCrystal(),aura:getAura(),shop:getShopItems(),ledger:getLedger(),rewards:getRewards()};
   const b=new Blob([JSON.stringify(all,null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`仙途行囊备份_${Date.now()}.json`;a.click();toast("已导出全部数据");
 }
@@ -2391,7 +2891,8 @@ function importAllData(){
       if(d.aura!==undefined)setAura(d.aura);
       if(d.shop!==undefined)saveShopItems(d.shop);
       if(d.ledger!==undefined)localStorage.setItem(STORAGE_KEY_LEDGER,JSON.stringify(d.ledger||[]));
-      normalizeDaily();renderHomeDashboardAll();toast("导入成功");
+      if(d.rewards!==undefined)saveRewards(d.rewards||[]);
+      migrateAllData();normalizeDaily();renderHomeDashboardAll();toast("导入成功");
     }else toast("备份文件格式不正确","error");
   }catch(err){toast("文件解析失败","error")}};r.readAsText(e.target.files[0])};
   inp.click();
@@ -2411,8 +2912,9 @@ function renderHomeDashboardAll(){renderHome();renderDailyShelf()}
 
 /* ================= 初始化 ================= */
 initDefaultData();
-normalizeDaily();
-migrateAutoScroll();   // 重建今日自动卷（新继承规则；不动手动卷）
+migrateAllData();      // 数据模型迁移：备份 → 迁移 → 校验 → 保存（失败回滚，绝不清空数据）
+normalizeDaily();      // 幂等补全新模型字段与 10 格不变量
+migrateAutoScroll();   // 每日自动卷（严格昨日继承 + 过期重建；不动手动卷）
 renderHome();
 fbInit();
 initCloud();
@@ -2421,7 +2923,7 @@ initCloud();
 /* PWA：注册 Service Worker（需 https 或 localhost 才生效）
  * sw.js 注册 URL 带版本号，升级版本时换 URL，绕过浏览器对 sw.js 的 HTTP 缓存检查，确保新缓存策略立即下发 */
 if ('serviceWorker' in navigator) {
-  const SW_VER = 'v5';
+  const SW_VER = 'v7';
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js?' + SW_VER, {updateViaCache: 'none'})
       .then(function (reg) { console.log('仙途行囊 SW 已注册：', reg.scope); })

@@ -1,7 +1,8 @@
 /* 仙途行囊 Service Worker
- * 版本 v6：核心页面离线缓存 + 网络优先策略；version.txt 与带版本参数请求一律走网络，保证「更新立即生效」
+ * 版本 v7（20260907-11）：核心页面离线缓存 + 网络优先策略；version.txt 与带版本参数请求一律走网络，保证「更新立即生效」
+ * 更新流程：页面检测到新版本 → 向本 SW 发送 SKIP_WAITING → 新 SW 立即接管（activated）→ 清理旧 Cache → 重新加载
  */
-const CACHE = 'xiantu-v6';
+const CACHE = 'xiantu-20260907-11';
 const CORE = [
   './',
   './index.html',
@@ -30,6 +31,11 @@ self.addEventListener('activate', (e) => {
       ))
       .then(() => self.clients.claim())
   );
+});
+
+/* 页面请求 SKIP_WAITING：跳过等待，立即接管（配合版本检测，禁止固定延迟 reload） */
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 /* 请求拦截 */

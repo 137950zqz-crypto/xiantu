@@ -92,7 +92,7 @@
 
 - **小改动**：仓库里点 `index.html` → 右上角铅笔图标编辑 → 页面底部 **Commit changes**
 - **大改动**：**Add file → Upload files** 上传同名文件自动覆盖 → 务必点「Commit changes」
-- **⚠️ 必做**：每次更新同步修改 `sw.js` 的版本号（`xiantu-v2` → `xiantu-v3` → `xiantu-v4` → v5…），否则手机端可能显示旧版
+- **⚠️ 必做**：每次更新同步修改 `sw.js` 的版本号（`xiantu-20260907-11`，与 `index.html` 顶部 `APP_VERSION`、`version.txt` 三者保持同一版本号），否则手机端可能显示旧版
 - 更新后等 1–3 分钟部署完成，重新打开即是新版
 
 ## 📁 文件说明
@@ -100,11 +100,20 @@
 ```
 ├── index.html    # 主页面（含书架/行迹/标签/晶核/万宝阁全部功能）
 ├── manifest.json # PWA 应用清单
-├── sw.js         # Service Worker（离线缓存，当前版本 v4）
+├── sw.js         # Service Worker（离线缓存，当前版本 v7 / xiantu-20260907-11）
 ├── favicon.ico   # 站点图标
 ├── README.md     # 本说明文档
 └── icons/        # 应用图标（192 / 512 / maskable）
 ```
+
+## 🧱 数据模型（v4 重构版）
+
+- v4 起建立稳定数据底座：任务拥有永久 `taskId`、`originalRecord`（最初位置，永不改变）与 `currentRecord`（当前位置）分离；任务链 `chain{rootTaskId,parentTaskId,branchId,nodeNumber}` 支持 ◇首多分支、编号可复用；完成事件写入独立 `CompletionRecord`（行迹，含 `completionId/originalTaskPosition/completedAt`），不可撤销、不可改完成时间，仅可整理任务链与标签
+- 顺延不创建新任务：同一 `taskId` 跨日移动，原始编号（如 `9.3 卷2-1`）永久不变
+- 自动卷 `type=auto` 严格继承昨日全部未完成任务，超 10 个自动拆卷（绝不丢任务）；手动卷 `type=manual` 永不参与自动重建；昨日修改后今日自动卷自动重建
+- 标签区分 `ownTags`（自有）与 `inheritedTags`（父→子继承，子→父不反向），分支之间互不干扰
+- 迁移：升级自动备份 → 迁移 → 校验（任务数/行迹数/晶核不变）→ 通过才写入，失败自动回滚，绝不清空数据
+- 更新机制：检测 `version.txt` → 更新 Service Worker → 清理旧缓存 → 自动重载；不再使用固定延迟
 
 ## ☁️ 数据同步说明
 
@@ -117,7 +126,7 @@
 
 **Q：手机上还是旧版？** 先检查 `sw.js` 版本号是否已 +1；仍旧就完全关闭页面再重新打开一次。
 
-**Q：上传文件后线上没变化？** 上传后一定要点页面底部的「Commit changes」，并确认仓库里 `index.html` 大小约 119KB（v4 新版）；上传成功后等 1–3 分钟 GitHub Pages 发布。
+**Q：上传文件后线上没变化？** 上传后一定要点页面底部的「Commit changes」，并确认仓库里 `index.html` 大小约 150KB（v4 数据模型重构版，20260907-11）；上传成功后等 1–3 分钟 GitHub Pages 发布。
 
 **Q：离线能用吗？** 可以。主页面与图标已做离线缓存；云端同步功能需联网。
 
