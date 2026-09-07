@@ -1,7 +1,7 @@
 /* 仙途行囊 Service Worker
- * 版本 v4：核心页面离线缓存 + CDN 网络优先回退缓存（v4 书架统一时间倒序 / 卷轴可重新封印）
+ * 版本 v5：核心页面离线缓存 + CDN 网络优先回退缓存（v5 清理 v4 及更早的全部旧缓存，强制加载第 9 轮新版）
  */
-const CACHE = 'xiantu-v4';
+const CACHE = 'xiantu-v5';
 const CORE = [
   './',
   './index.html',
