@@ -1,7 +1,7 @@
 /* 仙途行囊 Service Worker
- * 版本 v5：核心页面离线缓存 + CDN 网络优先回退缓存（v5 清理 v4 及更早的全部旧缓存，强制加载第 9 轮新版）
+ * 版本 v6：核心页面离线缓存 + 网络优先策略；version.txt 与带版本参数请求一律走网络，保证「更新立即生效」
  */
-const CACHE = 'xiantu-v5';
+const CACHE = 'xiantu-v6';
 const CORE = [
   './',
   './index.html',
@@ -40,10 +40,11 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (!/^https?:$/.test(url.protocol)) return;
 
-  // 同源资源：HTML 页面网络优先（保证每次打开拿到最新内容），静态资源缓存优先（离线可用）
+  // 同源资源：HTML、version.txt、以及带版本参数（?v=…）的请求一律网络优先——保证打开即最新、更新立即生效；其余静态资源缓存优先（离线可用）
   if (url.origin === self.location.origin) {
     const isDoc = req.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html');
-    if (isDoc) {
+    const isVer = url.pathname.endsWith('version.txt') || url.search.length > 0;
+    if (isDoc || isVer) {
       e.respondWith(
         fetch(req)
           .then((res) => {
