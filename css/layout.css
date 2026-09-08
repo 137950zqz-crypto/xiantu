@@ -1,0 +1,48 @@
+/* ===== 仙途行囊 · layout.css（布局层：页面骨架 / 导航 / 网格 / 响应式）（Phase 1-A 拆分）=====
+ * 本文件由 index.html <style>（原 16-294 行）按分类原样拆分，1:1 保留，未做任何优化。
+ * 加载顺序：base.css → layout.css → components.css
+ */
+
+/* ===== 布局 ===== */
+.app{display:flex;min-height:100vh}
+.sidebar{display:none}
+.content{flex:1;padding:64px 16px 96px;max-width:760px;margin:0 auto;width:100%}
+/* ===== 全局同步状态条（固定顶部）===== */
+.sync-bar{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line)}
+.sync-bar.sync-ok{background:var(--success-bg);color:var(--success)}
+.sync-bar.sync-syncing{background:#f0e9d2;color:var(--primary)}
+.sync-bar.sync-err{background:var(--danger-bg);color:var(--danger)}
+.sync-bar.sync-off{background:#ece8df;color:var(--muted)}
+/* ===== 导航 ===== */
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:#fffaf1;border-top:1px solid var(--line);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:env(safe-area-inset-bottom)}
+.mobile-nav::-webkit-scrollbar{display:none}
+.mobile-nav button{flex:0 0 auto;min-width:64px;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:6px 4px;min-height:50px}
+.mobile-nav button .nav-ic{font-size:17px;line-height:1}
+.mobile-nav button.active{color:var(--primary);font-weight:bold}
+/* ===== 更多菜单 ===== */
+/* ===== 首页 Dashboard ===== */
+.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.hd h1{font-size:26px;color:var(--primary);letter-spacing:4px}
+/* ===== 网格 / 页面容器 ===== */
+.asset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+/* ===== 页面通用 ===== */
+.page{display:none}
+.page.active{display:block}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.page-head h2{font-size:22px;color:var(--primary)}
+.top-op{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+/* ===== 桌面端 ===== */
+@media(min-width:900px){
+  .sidebar{display:flex;flex-direction:column;width:210px;background:#fdf6e8;border-right:1px solid var(--line);position:fixed;top:0;bottom:0;left:0;padding:20px 12px;z-index:50}
+  .sidebar .brand{font-size:20px;color:var(--primary);letter-spacing:3px;text-align:center;margin-bottom:24px;padding-top:44px}
+  .sidebar nav{display:flex;flex-direction:column;gap:4px}
+  .sidebar nav button{background:transparent;color:var(--ink-2);justify-content:flex-start;text-align:left;padding:11px 14px;border-radius:8px;min-height:44px;font-size:14px}
+  .sidebar nav button.active{background:var(--primary-bg);color:#4b331c;font-weight:bold}
+  .mobile-nav{display:none}
+  .content{padding:84px 24px 40px;max-width:900px;margin:0 auto;margin-left:210px}
+}
+/* ===== 手机端（媒体查询拆分：布局部分） ===== */
+@media(max-width:899px){
+  .sidebar{display:none}
+}

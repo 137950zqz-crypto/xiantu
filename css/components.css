@@ -1,0 +1,229 @@
+/* ===== 仙途行囊 · components.css（组件层：按钮 / 卡片 / 弹窗 / 任务 / 书架 / 资源 UI）（Phase 1-A 拆分）=====
+ * 本文件由 index.html <style>（原 16-294 行）按分类原样拆分，1:1 保留，未做任何优化。
+ * 加载顺序：base.css → layout.css → components.css
+ */
+
+.btn{background:var(--primary-bg);color:#4b331c}
+.btn-primary{background:var(--primary-bg);color:#4b331c}
+.btn-danger{background:var(--danger-bg);color:var(--danger)}
+.btn-gray{background:#e2dfd8;color:#555}
+.btn-ghost{background:transparent;color:var(--muted)}
+.btn-warn{background:#f0e6d2;color:var(--ink-2)}
+/* ===== 统一图标 ===== */
+.crystal-ic{font-style:normal;color:var(--crystal);font-weight:bold}
+.aura-ic{font-style:normal;color:var(--success);font-weight:bold}
+.today-card{background:linear-gradient(135deg,#fff8ec,#f3e5cf);border:2px solid #d4bc9c;border-radius:16px;padding:20px;margin-bottom:16px}
+.today-top{display:flex;justify-content:space-between;align-items:baseline}
+.today-title{font-size:16px;color:var(--ink-2)}
+.today-vol{font-size:13px;color:var(--muted)}
+.today-num{font-size:30px;font-weight:bold;color:var(--primary);margin:8px 0 4px}
+.today-num small{font-size:14px;color:var(--muted);font-weight:normal}
+.pbar{height:10px;background:#e8ddcc;border-radius:99px;overflow:hidden;margin:8px 0}
+.pfill{height:100%;background:linear-gradient(90deg,#c89a5e,#b8864e);border-radius:99px;transition:width .3s ease}
+.section-title{font-size:13px;color:var(--muted);margin:18px 0 8px;letter-spacing:2px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:"";flex:1;height:1px;background:var(--line)}
+.asset{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center}
+.asset .n{font-size:22px;font-weight:bold;color:var(--primary)}
+.asset .t{font-size:13px;color:var(--muted)}
+.continue-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center;margin-top:16px;cursor:pointer;min-height:52px}
+.continue-card:active{background:#fff1dc}
+.menu-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 8px;text-align:center;cursor:pointer;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.menu-item:active{background:#fff1dc}
+.menu-item .ic{font-size:22px}
+.menu-item .mt{font-size:13px;color:var(--ink-2)}
+/* ===== 标签筛选栏 ===== */
+.tagbar{display:flex;gap:8px;overflow-x:auto;padding:8px 0 10px;margin-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tagbar::-webkit-scrollbar{display:none}
+.tag-chip{flex-shrink:0;padding:5px 11px;border-radius:99px;background:#efe7da;color:var(--ink-2);font-size:12px;cursor:pointer;border:1px solid transparent;min-height:30px;display:inline-flex;align-items:center;gap:4px}
+.tag-chip.on{background:var(--primary-bg);border-color:var(--primary);color:#4b331c;font-weight:bold}
+.tag-chip i{font-style:normal;font-size:11px;background:rgba(0,0,0,.08);border-radius:99px;padding:0 6px}
+/* ===== 每日十课 · 实体书架（竖书，可折叠展开） ===== */
+.shelf{background:linear-gradient(180deg,#efe0c2,#e0c89e);border:10px solid #8a5a2b;border-radius:14px;padding:14px;margin-bottom:18px;box-shadow:0 6px 16px rgba(74,55,31,.18)}
+.shelf-head{display:flex;justify-content:space-between;align-items:center;padding:0 4px 10px}
+.shelf-head-info{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;cursor:pointer;flex:1}
+.shelf-date{font-size:14px;font-weight:bold;color:#5d3d1c}
+.shelf-count{font-size:12px;color:#8a6a3f}
+.shelf-fold-btn{background:rgba(255,255,255,.55);color:#5d3d1c;min-height:38px;padding:4px 12px;border-radius:6px;font-size:13px}
+.shelf-body{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;min-height:178px;padding:4px 2px}
+.shelf-body.folded{display:none}
+/* 书 */
+.book{width:54px;cursor:pointer;position:relative;transition:transform .2s ease,width .2s ease}
+.book:active{transform:translateY(-3px)}
+.book-spine{width:100%;height:168px;border-radius:5px 5px 9px 9px;background:linear-gradient(90deg,#b07f45,#d9b276 22%,#e8ca94 46%,#d9b276 80%,#a4763d);border:1px solid #96693a;box-shadow:3px 4px 7px rgba(74,55,31,.35);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 4px 8px;color:#fff;position:relative}
+.book-spine::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:rgba(0,0,0,.16);border-radius:5px 0 0 9px}
+.book-date{writing-mode:vertical-rl;letter-spacing:3px;font-size:14px;font-weight:bold;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.book-vol{font-size:10px;background:rgba(255,255,255,.3);border-radius:4px;padding:2px 4px;writing-mode:vertical-rl}
+.book-progress{width:5px;height:62px;background:rgba(0,0,0,.22);border-radius:3px;overflow:hidden;position:relative}
+.book-progress-fill{position:absolute;bottom:0;left:0;right:0;background:#eaf3dc;transition:height .3s}
+.book-count{font-size:11px;font-weight:bold;color:#fff}
+.book-lock{position:absolute;top:-8px;right:-8px;font-size:15px;background:#fffdf8;border-radius:50%;padding:3px;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}
+/* 书完成度达到100%时变浅玉色 */
+.book.done .book-spine{background:linear-gradient(90deg,#7f9a6f,#a5bf94 22%,#b9d1a6 46%,#a5bf94 80%,#6f8a5f)}
+/* 锁定书变灰 */
+.book.locked .book-spine{filter:grayscale(.3) brightness(.96)}
+/* 展开的书 */
+.book.expanded{width:100%;flex-basis:100%;cursor:default}
+.book.expanded:active{transform:none}
+.book.expanded .book-spine{height:auto;width:100%;flex-direction:row;justify-content:flex-start;gap:14px;align-items:center;padding:12px 16px;border-radius:9px 9px 0 0}
+.book.expanded .book-spine::before{display:none}
+.book.expanded .book-date{writing-mode:horizontal-tb;letter-spacing:0;font-size:16px}
+.book.expanded .book-vol{writing-mode:horizontal-tb}
+.book.expanded .book-progress{width:130px;height:10px;border-radius:5px}
+.book.expanded .book-progress-fill{height:100%;width:0;top:0;bottom:auto}
+.book.expanded .book-count{font-size:13px}
+.book-open{display:none;width:100%}
+.book.expanded .book-open{display:block;background:#fffaf0;border:1px solid #d4bc9c;border-top:none;border-radius:0 0 9px 9px;padding:12px}
+/* 展开区头部 */
+.open-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.open-title{font-size:14px;font-weight:bold;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.open-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.open-ops{display:flex;gap:8px;flex-wrap:wrap}
+.open-progress{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.open-progress .pbar{flex:1;margin:0}
+.open-pnum{font-size:12px;color:var(--muted);white-space:nowrap}
+.lock-pill{font-size:12px;color:#fff;background:var(--danger);border-radius:99px;padding:2px 10px}
+.unlock-pill{font-size:12px;color:var(--success);background:var(--success-bg);border-radius:99px;padding:2px 10px}
+.today-pill{font-size:12px;color:#4b331c;background:var(--primary-bg);border-radius:99px;padding:2px 10px}
+.lock-notice{background:var(--danger-bg);color:var(--danger);font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:10px;line-height:1.6}
+/* 空状态 */
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.empty .ic{font-size:40px;margin-bottom:10px}
+.empty .t{font-size:14px;color:var(--ink-2);margin-bottom:6px}
+.empty .d{font-size:13px;line-height:1.6}
+/* ===== 任务列表（严格完成交互） ===== */
+.task-list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.task-row{border-bottom:1px dashed var(--line)}
+.task-row:last-child{border-bottom:none}
+.task-main{display:flex;align-items:center;gap:10px;padding:12px 12px;cursor:pointer;min-height:60px}
+.task-main:active{background:#fff1dc}
+.task-main .num{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:#efdfc8;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold}
+.task-row.done .num{background:var(--success-bg);color:var(--success)}
+.task-main .tt{flex:1;font-size:14px;min-width:0;word-break:break-word}
+.task-main .tt.empty{color:#b0a08a}
+.task-row.done .tt{text-decoration:line-through;opacity:.7;color:var(--muted)}
+.task-tags{display:flex;flex-wrap:wrap;gap:4px}
+.task-tag{font-size:11px;padding:2px 8px;border-radius:99px;background:#efe7da;color:var(--muted);white-space:nowrap}
+.todo-btn{flex-shrink:0;min-width:88px;min-height:34px;border-radius:99px;font-size:12px;font-weight:bold;display:inline-flex;align-items:center;justify-content:center;gap:4px;border:2px solid var(--primary);background:#fff;color:var(--primary);cursor:pointer;padding:3px 9px}
+.todo-btn:active{transform:scale(.95)}
+.todo-btn.done{background:var(--success-bg);color:var(--success);border-color:var(--success);font-weight:normal;cursor:pointer}
+.todo-btn.locked{opacity:.65}
+.task-detail{display:none;padding:10px 12px 12px;background:#fff6e6}
+.task-detail.open{display:block}
+.task-detail .td-row{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.6}
+.task-detail .td-ops{display:flex;gap:8px;flex-wrap:wrap}
+/* ===== 行迹 ===== */
+.trail-head-num{font-size:14px;color:var(--muted);font-weight:normal}
+.trail-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.trail-stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px;font-size:13px;color:var(--ink-2)}
+.trail-stat b{color:var(--primary)}
+.trail-card .li-t{font-size:14px}
+.trail-no{color:var(--primary);font-weight:bold;margin-right:6px}
+.chain-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 4px;border-radius:99px;background:var(--primary-bg);color:var(--primary);font-size:11px;font-weight:bold;cursor:pointer;vertical-align:middle}
+.chain-node{display:flex;align-items:center;gap:8px;padding:6px 0;flex-wrap:wrap}
+.chain-no{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold}
+.chain-title{flex:1;min-width:0;font-size:14px;color:var(--ink);word-break:break-word}
+.chain-pos{font-size:11px;color:var(--muted);white-space:nowrap}
+.chain-node.chain-cur{background:var(--primary-bg);border-radius:8px;padding:6px 8px}
+.chain-node.chain-cur .chain-title{font-weight:bold}
+.chain-arrow{text-align:center;color:var(--muted);font-size:12px;line-height:1}
+/* ===== 行囊 ===== */
+.bag-toolbar{display:flex;gap:8px;margin-bottom:12px}
+.bag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px}
+.item-slot{background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:10px;position:relative;text-align:center;cursor:pointer;min-height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.item-slot:active{background:#fff1dc}
+.item-thumb{width:100%;aspect-ratio:1;border-radius:8px;background:#f0e6d2;display:flex;align-items:center;justify-content:center;font-size:34px;color:#b8a386;overflow:hidden;margin-bottom:6px}
+.item-thumb img{width:100%;height:100%;object-fit:cover}
+.item-badge{position:absolute;top:6px;right:6px;background:var(--primary);color:#fff;border-radius:99px;min-width:22px;height:22px;padding:0 6px;font-size:12px;display:flex;align-items:center;justify-content:center}
+.item-cb{position:absolute;top:8px;left:8px;width:22px;height:22px;display:none}
+.bag-selecting .item-cb{display:block}
+.bag-selecting .item-slot{padding-top:34px}
+.bag-selecting .item-slot.sel{border-color:var(--primary);background:#f7ead6}
+.selection-bar{position:fixed;bottom:70px;left:0;right:0;z-index:55;background:#fffaf1;border-top:1px solid var(--line);padding:10px 14px;display:none;align-items:center;gap:10px}
+.selection-bar.show{display:flex}
+/* 图片上传 */
+.img-prev{width:84px;height:84px;border-radius:10px;background:#f0e6d2;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:40px;color:#b8a386;margin:8px 0 2px;border:1px dashed var(--line)}
+.img-prev img{width:100%;height:100%;object-fit:cover}
+/* ===== 列表卡片（功法/卷宗/悟道/行迹）===== */
+.li-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;min-height:60px;display:flex;gap:12px;align-items:flex-start}
+.li-card:active{background:#fff1dc}
+.li-card .li-ic{width:40px;height:40px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0e6d2}
+.li-card .li-main{flex:1;min-width:0}
+.li-card .li-t{font-size:14px;color:var(--ink);font-weight:bold;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.li-card .li-sum{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.li-card .li-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.li-card .li-arrow{color:var(--muted);flex-shrink:0;align-self:center}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--success-bg);color:var(--success);white-space:nowrap}
+.tag-warn{background:var(--danger-bg);color:var(--danger)}
+/* ===== 设置 ===== */
+.set-section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.set-section h4{color:var(--primary);font-size:16px;margin-bottom:10px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.set-row:last-child{border-bottom:none}
+.set-row .k{font-size:14px;color:var(--ink)}
+.set-row .v{font-size:13px;color:var(--muted)}
+details.adv{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);margin-bottom:12px}
+details.adv summary{padding:14px;cursor:pointer;font-size:14px;color:var(--ink-2);list-style:none}
+details.adv summary::before{content:"▸ ";color:var(--primary)}
+details.adv[open] summary::before{content:"▾ "}
+details.adv .adv-body{padding:0 14px 14px}
+details.adv label{color:var(--muted)}
+/* ===== Toast ===== */
+#toastWrap{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:rgba(60,50,40,.92);color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;opacity:0;transform:translateY(-6px);transition:all .25s;min-width:140px;text-align:center}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--success)}
+.toast.warn{background:#b8864e}
+/* 行迹排序选择器 */
+.trail-sort{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.trail-sort .sort-label{font-size:12px;color:var(--muted);margin-right:2px}
+.trail-sort .sort-btn{font-size:12px;padding:5px 10px;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--muted);cursor:pointer}
+.trail-sort .sort-btn.on{background:var(--primary);border-color:var(--primary);color:#fff}
+/* 完成轻量推送：出现 200~300ms 动画，停留约 2 秒自动消失，不阻塞操作 */
+.completion-toast{background:linear-gradient(135deg,#7d5bb8,#5f3f9e);color:#fff;border-radius:12px;padding:12px 22px;min-width:230px;max-width:86vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35);opacity:0;transform:translateY(14px) scale(.96);transition:all .28s cubic-bezier(.2,.9,.3,1.2);pointer-events:none}
+.completion-toast.show{opacity:1;transform:translateY(0) scale(1)}
+.completion-toast .ct-head{font-size:15px;font-weight:bold;letter-spacing:1px}
+.completion-toast .ct-title{font-size:13px;margin-top:4px;opacity:.95;word-break:break-all}
+.completion-toast .ct-reward{font-size:12px;margin-top:5px;opacity:.85}
+.completion-toast .ct-reward b{font-size:15px;color:#ffe9a8}
+.toast.error{background:var(--danger)}
+/* ===== 弹窗 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:80}
+.modal-mask.show{display:flex}
+.modal-box{width:100%;max-width:520px;background:#fff9ef;border:2px solid #c9a87c;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;max-height:86vh}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--line);font-size:18px;color:var(--primary);font-weight:bold}
+.modal-body{padding:16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}
+.note-area{max-height:42vh;overflow-y:auto;word-break:break-word;padding-right:6px;line-height:1.7;color:var(--ink-2)}
+/* 标签编辑 */
+.tag-edit-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;min-height:40px}
+.tag-edit-wrap .tag-chip.on b{font-style:normal;color:var(--danger);margin-left:4px;font-weight:bold}
+.tag-common{margin-top:6px}
+.tag-common .tc-title{font-size:12px;color:var(--muted);margin-bottom:6px}
+.tag-common .tc-list{display:flex;flex-wrap:wrap;gap:6px}
+/* ===== 完成动画 ===== */
+@keyframes pop{0%{transform:scale(.6);opacity:.4}100%{transform:scale(1);opacity:1}}
+.task-row.done .num{animation:pop .25s ease}
+/* ===== 手机端（媒体查询拆分：任务组件部分） ===== */
+@media(max-width:899px){
+  /* 手机端任务行：缩小编号与「待修行」按钮，突出任务名称 */
+  .task-main{min-height:46px;padding:8px 10px;gap:8px}
+  .task-main .num{width:15px;height:15px;font-size:10px}
+  .task-main .tt{font-size:14px;font-weight:600}
+  .todo-btn{min-width:50px;min-height:20px;font-size:10px;padding:2px 5px;border-width:1.5px;border-radius:99px}
+}
+/* ===== 万宝阁 / 晶核系统 ===== */
+.shop-balance{background:linear-gradient(135deg,#fff8ec,#f3e5cf);border:2px solid #d4bc9c;border-radius:16px;padding:16px 18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.shop-balance .k{font-size:12px;color:var(--muted)}
+.shop-balance .v{font-size:22px;font-weight:bold;color:var(--primary)}
+.shop-balance .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.shop-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;position:relative;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.shop-card:active{background:#fff1dc}
+.shop-ic{width:46px;height:46px;border-radius:10px;background:#f0e6d2;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:4px;overflow:hidden;flex-shrink:0}
+.shop-ic img{width:100%;height:100%;object-fit:cover}
+.shop-name{font-size:14px;font-weight:bold;color:var(--ink);word-break:break-word}
+.shop-desc{font-size:12px;color:var(--muted);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
+.shop-price{font-size:14px;font-weight:bold;color:var(--crystal);margin-top:auto}
+.shop-price small{font-size:11px;color:var(--muted);font-weight:normal}
+.shop-op{position:absolute;top:6px;right:6px;font-size:15px;color:var(--muted);padding:4px 8px;cursor:pointer}
+.crystal-toast-undo{background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:bold;pointer-events:auto}

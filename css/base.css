@@ -1,0 +1,20 @@
+/* ===== 仙途行囊 · base.css（基础层：变量 / reset / 基础元素 / 排版 / 表单）（Phase 1-A 拆分）=====
+ * 本文件由 index.html <style>（原 16-294 行）按分类原样拆分，1:1 保留，未做任何优化。
+ * 加载顺序：base.css → layout.css → components.css
+ */
+
+:root{
+  --ink:#4a3c2e; --ink-2:#665442; --primary:#8b5e34; --primary-bg:#e6c8a0;
+  --success:#5f7f55; --success-bg:#e2ebd6; --danger:#a85032; --danger-bg:#f5d8cb;
+  --muted:#947c62; --line:#e0ccb2; --card:#fff8ec; --bg:#f8f3e8;
+  --radius:12px; --crystal:#7d5bb8;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",system-ui,-apple-system,"PingFang SC",sans-serif;}
+html{font-size:15px}
+body{background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+button{font-size:13px;border:none;border-radius:8px;cursor:pointer;background:var(--primary-bg);color:#4b331c;padding:7px 12px;min-height:36px;transition:transform .15s,opacity .15s;font-family:inherit}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:#fffdf8;color:var(--ink);min-height:36px;font-family:inherit}
+textarea{min-height:80px;resize:vertical}
+label{font-size:13px;color:var(--muted);display:block;margin-top:10px}

@@ -21,6 +21,14 @@
 - 建立 `.github/workflows/test.yml` 与 `.github/workflows/regression.yml`
 - 业务代码未修改；用户数据未修改；Phase 1 未启动（WAITING_FOR_APPROVAL）
 
+## 2026-09-08 · Phase 1-A（CSS / UI 基础层拆分）
+
+- `index.html` 内联 `<style>`（16-294 行）拆分为 `css/base.css` + `css/layout.css` + `css/components.css`
+- 视觉 1:1 验证通过：桌面/移动 242 选择器 × 全属性测量对比 0 差异；真实浏览器桌面 8/8、移动 10/10、PWA 6/6
+- Console 0 错误、Network 0 失败、数据持久化通过、SW 运行时缓存自动覆盖 3 个 css 文件
+- 未修改 JS / 数据结构 / sw.js / manifest.json / version.txt；65 处 JS 动态 inline style 保留
+- 状态：Phase 1-A COMPLETED / WAITING_FOR_REVIEW；Phase 1-B WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
 
 - GitHub Push is now mandatory for task completion.
