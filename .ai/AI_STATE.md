@@ -14,6 +14,9 @@ Automatic Code Modification: DISABLED
 Automatic Merge: DISABLED
 Automatic Main Push: DISABLED
 Human Approval Required: YES
+Remote Completion Rule: ENABLED
+Git Push Required for Completion: YES
+Remote HEAD Verification Required: YES
 ```
 
 ## 含义
@@ -30,3 +33,6 @@ Human Approval Required: YES
 | Automatic Merge | DISABLED | 禁止自动 merge 到 main |
 | Automatic Main Push | DISABLED | 禁止自动 push 到 main |
 | Human Approval Required | YES | 所有阶段推进必须人工批准 |
+| Remote Completion Rule | ENABLED | 任务完成必须满足：Commit → Push → 远程验证全链路 |
+| Git Push Required for Completion | YES | 未推送即视为 INCOMPLETE |
+| Remote HEAD Verification Required | YES | Local HEAD 必须等于 Remote HEAD |

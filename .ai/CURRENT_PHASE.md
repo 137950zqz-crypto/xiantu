@@ -58,3 +58,16 @@ TESTING
 
 - 每个 Phase 状态变更时更新本文件
 - 状态变更必须与 `.ai/AI_STATE.md`、`.ai/CHANGELOG.md` 保持一致
+
+## 远程完成条件（Remote Completion Rule，v1.1）
+
+任何 Phase / 子任务都必须满足：
+
+```
+Implementation → Testing → Report → Git Commit → Git Push → Remote Verification → Completed
+```
+
+- 本地完成 ≠ 任务完成
+- 远程验证（`LOCAL HEAD == ORIGIN/<CURRENT_BRANCH> HEAD`）为**强制**步骤
+- 只有 `Git Commit = PASS AND Git Push = PASS AND Remote Verification = PASS` 才允许标记 `Task Completed = YES`
+- 否则：`TASK STATUS = INCOMPLETE`（禁止报告完成）

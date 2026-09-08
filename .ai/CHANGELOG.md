@@ -20,3 +20,13 @@
 - 归档 Phase 0 基线报告 → `.ai/reports/phase-0-baseline.md`
 - 建立 `.github/workflows/test.yml` 与 `.github/workflows/regression.yml`
 - 业务代码未修改；用户数据未修改；Phase 1 未启动（WAITING_FOR_APPROVAL）
+
+## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
+
+- GitHub Push is now mandatory for task completion.
+- Remote HEAD verification is mandatory.
+- Local completion does not equal task completion.
+- Phase advancement remains manually approved.
+- Main merge/push remains disabled.
+- 更新文件：`.ai/DEVELOPMENT_RULES.md`（新增规则 8）、`.ai/CURRENT_PHASE.md`、`.ai/AI_STATE.md`、新增 `.ai/reports/pipeline-v1.1-remote-completion.md`
+- 业务代码未修改；用户数据未修改；Phase 1 未启动
