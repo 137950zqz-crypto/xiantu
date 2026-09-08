@@ -1,0 +1,41 @@
+name: Regression
+
+# 作用：V2 每个 Phase 的回归验证框架
+# 目标流程：Phase 修改 → 自动测试 → 回归测试 → 生成结果 → 供 AI / 人工审核
+# 当前状态：完整回归测试尚未建立，如实输出 NOT FULLY IMPLEMENTED，不伪造
+# 后续随 Phase 推进逐步补充（浏览器测试 / Console 检查 / Network 检查 / 数据持久化检查）
+
+on:
+  push:
+    branches: [main, v2-dev]
+  pull_request:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Detect regression suite
+        id: detect
+        run: |
+          if [ -f package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run regression suite (if defined)
+        if: steps.detect.outputs.exists == 'true'
+        run: npm run regression --if-present
+
+      - name: Output regression status
+        run: |
+          echo "Regression Suite: NOT FULLY IMPLEMENTED"
+          echo "说明：当前项目无自动化回归套件；后续 V2 Phase 推进时将逐步补充回归用例。"

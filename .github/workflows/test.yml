@@ -1,0 +1,45 @@
+name: Test
+
+# 作用：代码 Push / Pull Request 时自动执行已有测试
+# 当前状态：项目尚无 package.json / Node 测试套件，工作流如实输出 NOT IMPLEMENTED，不伪造测试
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Detect test suite
+        id: detect
+        run: |
+          if [ -f package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies (if project has package.json)
+        if: steps.detect.outputs.exists == 'true'
+        run: npm ci --ignore-scripts 2>/dev/null || npm install --no-fund --no-audit
+
+      - name: Run existing tests (if any)
+        if: steps.detect.outputs.exists == 'true'
+        run: npm test --if-present
+
+      - name: Output test result
+        run: |
+          if [ "${{ steps.detect.outputs.exists }}" == "true" ]; then
+            echo "Automated Test Suite: RUNNING (see previous step)"
+          else
+            echo "Automated Test Suite: NOT IMPLEMENTED"
+          fi
