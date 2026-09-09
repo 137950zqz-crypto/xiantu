@@ -57,6 +57,17 @@
 - 真实浏览器测试：桌面 8/8、移动 10/10、PWA 6/6；Console 0 错误；持久化通过；manifest/sw/version 零修改
 - 未修改业务逻辑/数据结构/事件机制/PWA；状态：Phase 1-D COMPLETED / WAITING_FOR_REVIEW；Phase 1-E WAITING_FOR_HUMAN_APPROVAL
 
+## 2026-09-09 · Phase 1-E（Storage 层最小安全迁移试点）
+
+- 将已形成的 Storage Adapter 层从 index.html 外移到 `js/core/storage.js`：
+  - 12 个业务 key 常量（BAG/PASSIVE/DAILY/FAIL/INSIGHT/TRAIL/CRYSTAL/AURA/SHOP/LEDGER/SCHEMA/REWARDS）
+  - 21 个纯 Adapter（getBagData/saveBag/.../getSchemaVersion/setSchemaVersion/getRewards/saveRewards）
+- 兼容验证：**23/23 函数体与迁移前逐字符一致**（git HEAD vs 运行时 toString 比对，含云钩子调用顺序）；Before/After 读取/写入/缺失 key 默认值/刷新重读逐项一致；window 全局可见 23/23
+- 云钩子原样保留：saveXxx → setItem → fbAutoUpload(模块) → cloudQueueSync()；saveRewards/setSchemaVersion/addLedger 无钩子属既有事实，逐字保留
+- 未迁移（按边界保留）：addLedger/hasReward/addReward（Domain 职责）、云配置 key 与读写、备份/恢复/迁移/初始化/导入/导出/重置逻辑（仅审计）
+- 真实浏览器测试：桌面 8/8、移动 10/10、PWA 6/6、完成链专项（晶核+1/行迹+1/账本+1/防重复）；Console 0 错误；持久化通过；manifest/sw/version 零修改
+- 未修改业务逻辑/数据结构/key/事件机制/PWA；状态：Phase 1-E COMPLETED / WAITING_FOR_REVIEW；Phase 2 / Phase 1-F（待定）WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
 
 - GitHub Push is now mandatory for task completion.
