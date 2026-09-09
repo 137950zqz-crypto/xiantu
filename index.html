@@ -2023,7 +2023,8 @@ function openAddItem(){
 function saveNewBagItem(){
   const arr=getBagData();
   arr.push({name:document.getElementById("iname").value.trim(),count:Number(document.getElementById("icount").value)||1,img:resolveItemImg(),note:document.getElementById("inote").value.trim()});
-  saveBag(arr);closeAllModal();renderBag();toast("已添加");
+  XiantuStore.bag.save(arr);   // Phase 2-B：真实写路径经 Store → saveBag()
+  closeAllModal();renderBag();toast("已添加");
 }
 function openBagDetail(i){
   const it=getBagData()[i];
@@ -2053,7 +2054,8 @@ function saveEditBag(i){
 function confirmDelBag(i){
   const it=getBagData()[i];
   showConfirm("删除物品",`确定删除「${esc(it.name)}」？`,true,()=>{
-    const arr=getBagData();arr.splice(i,1);saveBag(arr);closeAllModal();renderBag();toast("已删除");
+    const arr=getBagData();arr.splice(i,1);XiantuStore.bag.save(arr);   // Phase 2-B：真实写路径经 Store → saveBag()
+    closeAllModal();renderBag();toast("已删除");
   });
 }
 
@@ -2082,7 +2084,8 @@ function openAddPassive(){
 function saveAddPassive(){
   const arr=getPassive();
   arr.push({title:document.getElementById("ptitle").value.trim(),desc:document.getElementById("pdesc").value.trim(),mastered:false});
-  savePassive(arr);closeAllModal();renderPassive();toast("已添加");
+  XiantuStore.passive.save(arr);   // Phase 2-B：真实写路径经 Store → savePassive()
+  closeAllModal();renderPassive();toast("已添加");
 }
 function openPassiveEdit(i){
   const it=getPassive()[i];
@@ -2100,7 +2103,8 @@ function saveEditPassive(i){
 function confirmDelPassive(i){
   const it=getPassive()[i];
   showConfirm("删除功法",`确定删除「${esc(it.title)}」？`,true,()=>{
-    const arr=getPassive();arr.splice(i,1);savePassive(arr);closeAllModal();renderPassive();toast("已删除");
+    const arr=getPassive();arr.splice(i,1);XiantuStore.passive.save(arr);   // Phase 2-B：真实写路径经 Store → savePassive()
+    closeAllModal();renderPassive();toast("已删除");
   });
 }
 

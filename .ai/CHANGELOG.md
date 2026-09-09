@@ -80,6 +80,16 @@
 - Node test suite: NOT IMPLEMENTED（无 package.json，未伪造测试；已做 node --check 语法检查）
 - 未修改业务逻辑/数据结构/key/事件/PWA/迁移/云同步；状态：Phase 2-A COMPLETED / WAITING_FOR_REVIEW；Phase 2-B WAITING_FOR_HUMAN_APPROVAL
 
+## 2026-09-09 · Phase 2-B（Store 第二批安全迁移：受控读写边界试点）
+
+- store.js 扩展 bag/passive 两个集合（XiantuStore.bag.get/save → getBagData/saveBag；XiantuStore.passive.get/save → getPassive/savePassive），仍为纯委托（无 localStorage/DOM/云/业务判断，浏览器边界实测全 true）
+- 迁移 4 个**真实 WRITE** 调用点（其余调用点保留旧 API）：saveNewBagItem（新增物品）、confirmDelBag（删除物品）、saveAddPassive（新增功法）、confirmDelPassive（删除功法）→ XiantuStore.bag.save / XiantuStore.passive.save
+- 未迁移（渐进保留）：saveEditBag/saveEditPassive/confirmDeleteBagSelected/doShopBuy（万宝阁购买，涉晶核灵气，禁止）/全部云同步·快照·导入导出点
+- 云钩子链保持（save → setItem → fbAutoUpload → cloudQueueSync 由 storage.js 负责）；key/数据结构/默认值/事件/PWA 零修改
+- Store 专项 A–J 全通过；bag/passive 真实 UI 增删 + 刷新持久化 10/10；桌面 8/8、移动 10/10、PWA 6/6、完成链（晶核+1/行迹+1/账本+1/防重复）；Console 0 错误
+- Node test suite: NOT IMPLEMENTED（未伪造）；git diff --check 通过
+- 状态：Phase 2-B COMPLETED / WAITING_FOR_REVIEW；Phase 2-C WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
 
 - GitHub Push is now mandatory for task completion.

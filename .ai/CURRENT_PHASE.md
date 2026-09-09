@@ -41,9 +41,9 @@ TESTING
 |---|---|
 | Phase 0 | **COMPLETED**（PASSED，报告已归档） |
 | Phase 1 | **IN_PROGRESS**（子任务制推进） |
-| 当前子任务 | **Phase 2-A**（Store 层设计 + 最小安全迁移试点） |
+| 当前子任务 | **Phase 2-B**（Store 第二批安全迁移：受控读写边界试点） |
 | 子任务状态 | **COMPLETED / WAITING_FOR_REVIEW** |
-| 下一子任务 | **Phase 2-B**（WAITING_FOR_HUMAN_APPROVAL，禁止自动启动） |
+| 下一子任务 | **Phase 2-C**（WAITING_FOR_HUMAN_APPROVAL，禁止自动启动） |
 | 自动阶段推进 | DISABLED |
 | 人工批准 | REQUIRED |
 

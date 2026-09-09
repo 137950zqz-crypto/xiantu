@@ -22,5 +22,15 @@ window.XiantuStore = {
   trail: {
     get() { return getTrail(); },
     save(data) { return saveTrail(data); }
+  },
+  /* 物品行囊（xiantu_bag_data，Phase 2-B 试点：纯 CRUD 写路径） */
+  bag: {
+    get() { return getBagData(); },
+    save(data) { return saveBag(data); }
+  },
+  /* 被动功法（xiantu_passive，Phase 2-B 试点：纯 CRUD 写路径） */
+  passive: {
+    get() { return getPassive(); },
+    save(data) { return savePassive(data); }
   }
 };
