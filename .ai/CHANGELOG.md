@@ -29,6 +29,14 @@
 - 未修改 JS / 数据结构 / sw.js / manifest.json / version.txt；65 处 JS 动态 inline style 保留
 - 状态：Phase 1-A COMPLETED / WAITING_FOR_REVIEW；Phase 1-B WAITING_FOR_HUMAN_APPROVAL
 
+## 2026-09-09 · Phase 1-B（HTML 结构审计 + 最小拆分）
+
+- 完整审计：2760 行 index.html → DOM 树（App Shell / 9 页面容器 / 全局组件 / 动态容器），约 95 个 id 的 JS 依赖映射、219 个顶层函数
+- 判定：**不拆分 HTML**（JS 强 DOM 依赖 + 内联事件 + 无构建系统，激进拆分不安全）；仅加结构分区注释 + 3 个 aria-label（纯增量）
+- 真实浏览器测试：桌面 8/8、移动 10/10、PWA 6/6；Console 0 错误、Network 0 失败、持久化通过
+- 未修改 JS / CSS / 数据结构 / sw.js / manifest.json / version.txt
+- 状态：Phase 1-B COMPLETED / WAITING_FOR_REVIEW；Phase 1-C WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
 
 - GitHub Push is now mandatory for task completion.

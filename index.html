@@ -19,6 +19,7 @@
 </head>
 <body>
 
+<!-- ===== App Shell（应用外壳）===== -->
 <!-- 全局同步状态条 -->
 <div class="sync-bar sync-off" id="syncBar" onclick="openPage('setting')">☁ 未连接云端</div>
 
@@ -26,7 +27,7 @@
   <!-- 桌面侧边栏 -->
   <aside class="sidebar">
     <div class="brand">仙途行囊</div>
-    <nav id="sideNav">
+    <nav id="sideNav" aria-label="桌面主导航">
       <button data-page="home" class="active">🏠 首页</button>
       <button data-page="bag">🎒 物品行囊</button>
       <button data-page="dailyLesson">⛩ 每日十课</button>
@@ -40,8 +41,9 @@
   </aside>
 
   <!-- 主内容 -->
-  <main class="content">
+  <main class="content" aria-label="主内容区">
 
+    <!-- ===== 页面容器（9 页，openPage() 按 id="page-<name>" 切换）===== -->
     <!-- 首页 Dashboard -->
     <div class="page active" id="page-home">
       <div class="hd"><h1>仙途行囊</h1></div>
@@ -255,8 +257,9 @@
   </main>
 </div>
 
+<!-- ===== 全局组件（底部导航 / 弹窗 / Toast / 更新横幅）===== -->
 <!-- 移动端底部导航（横向滑动查看全部入口） -->
-<div class="mobile-nav" id="mobileNav">
+<div class="mobile-nav" id="mobileNav" aria-label="移动端底部导航">
   <button data-page="home" class="active"><span class="nav-ic">🏠</span>首页</button>
   <button data-page="bag"><span class="nav-ic">🎒</span>行囊</button>
   <button data-page="dailyLesson"><span class="nav-ic">⛩</span>十课</button>
