@@ -46,6 +46,17 @@
 - 真实浏览器测试：桌面 8/8、移动 10/10、PWA 6/6；Console 0 错误、持久化通过
 - 未修改任何业务 JS；状态：Phase 1-C COMPLETED / WAITING_FOR_REVIEW；Phase 1-D WAITING_FOR_HUMAN_APPROVAL
 
+## 2026-09-09 · Phase 1-D（JS 模块化迁移最小安全试点）
+
+- 从 index.html 内联 JS 抽离 10 个 Tier 1 纯工具函数 + 1 个测试钩子声明到外部模块：
+  - `js/core/ids.js`：uid
+  - `js/core/dates.js`：pad/fmtDate/fmtTime/fmtDateTime/getTodayStr/yesterdayStr/__DATE_OVERRIDE/fmtShortDate/fmtScrollNo
+- 兼容策略：经典 `<script>` + window 显式暴露，函数名零改动、调用方零修改（219 业务函数 + 102 内联 onclick 原样）；加载顺序固定于主业务脚本之前
+- `__DATE_OVERRIDE` 守卫声明（window.__DATE_OVERRIDE || ""）：生产行为一致，测试预加载注入兼容
+- Before/After 浏览器 Console 实测：9 函数输出逐项一致；完成链专项：晶核+1/行迹+1/账本+1、CompletionRecord 创建、重复调用无重复奖励
+- 真实浏览器测试：桌面 8/8、移动 10/10、PWA 6/6；Console 0 错误；持久化通过；manifest/sw/version 零修改
+- 未修改业务逻辑/数据结构/事件机制/PWA；状态：Phase 1-D COMPLETED / WAITING_FOR_REVIEW；Phase 1-E WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
 
 - GitHub Push is now mandatory for task completion.

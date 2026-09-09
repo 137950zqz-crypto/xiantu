@@ -289,6 +289,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!-- Phase 1-D 试点迁移：Tier 1 工具模块（必须先于主业务脚本加载；保持全局函数可见，调用方零修改） -->
+<script src="js/core/ids.js"></script>
+<script src="js/core/dates.js"></script>
+
 <script>
 /* ================= 版本检测 + 版本信息 UI（v1.1） =================
  * APP_VERSION 为当前前端版本号（正式版本 20260907-11），发布新版时同步递增并更新线上 version.txt 为同一值；
@@ -405,23 +409,10 @@ var SW_CACHE = 'xiantu-v7';
 })();
 /* ================= 工具 ================= */
 function esc(s){if(s===null||s===undefined)return "";return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function pad(n){return String(n).padStart(2,'0')}
-function fmtDate(d){return d.getFullYear()+"·"+pad(d.getMonth()+1)+"·"+pad(d.getDate())}
-function fmtTime(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
-function fmtDateTime(d){return fmtDate(d)+" "+fmtTime(d)}
-function getTodayStr(){if(__DATE_OVERRIDE)return __DATE_OVERRIDE;const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
-/* 严格「昨天」（规则22：禁止跨多天追溯顺延；仅用于测试时通过 __DATE_OVERRIDE 覆盖） */
-var __DATE_OVERRIDE="";
-function yesterdayStr(){
-  const d=new Date();
-  if(__DATE_OVERRIDE){const p=__DATE_OVERRIDE.split("-");d.setFullYear(+p[0],+p[1]-1,+p[2])}
-  d.setDate(d.getDate()-1);
-  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-}
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
-/* 卷轴编号展示：2026-09-02 → "9.2" */
-function fmtShortDate(date){const p=String(date||"").split("-");if(p.length<3)return date||"";return Number(p[1])+"."+Number(p[2])}
-function fmtScrollNo(date,no){return fmtShortDate(date)+" 卷"+no}
+/* Phase 1-D：工具函数已迁移至外部模块（保持全局可见，调用方零修改）——
+ *   js/core/ids.js:   uid
+ *   js/core/dates.js: pad / fmtDate / fmtTime / fmtDateTime / getTodayStr / yesterdayStr /
+ *                     __DATE_OVERRIDE / fmtShortDate / fmtScrollNo */
 
 /* ================= 统一图标 ================= */
 const IC={
