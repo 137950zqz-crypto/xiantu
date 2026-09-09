@@ -90,6 +90,17 @@
 - Node test suite: NOT IMPLEMENTED（未伪造）；git diff --check 通过
 - 状态：Phase 2-B COMPLETED / WAITING_FOR_REVIEW；Phase 2-C WAITING_FOR_HUMAN_APPROVAL
 
+## 2026-09-09 · Phase 2-C（Store 第三批安全迁移 + Store 边界规范化 + 控制层一致性修正）
+
+- store.js 扩展 fail/insight 两个集合（XiantuStore.fail.get/save → getFail/saveFail；XiantuStore.insight.get/save → getInsight/saveInsight），仍为纯委托（无 localStorage/DOM/云/资源业务逻辑，浏览器边界实测全 true，含 noResource）
+- 文件头注释从"Phase 2-A 试点"规范化为完整职责说明（6 集合清单 + 禁止项 + 已迁移路径），**仅注释、行为零变更**
+- 迁移 4 个真实 WRITE 调用点：saveAddFail / confirmDelFail → fail.save()；saveAddInsight / confirmDelInsight → insight.save()（其余调用点保留旧 API）
+- 控制层一致性修正：AI_STATE.md 代码块残留 `Next Task: Phase 1-D` / `Last Completed Phase: 0` 修正为 Phase 2-D / Last Completed Phase: 1（Phase 1 大阶段完成，历史字段加 Archive 说明）；CURRENT_PHASE.md 中 Phase 1 由 IN_PROGRESS 修正为 COMPLETED；两文件当前状态字段完全一致
+- 边界复核：2-A/2-B 已有 4 个 WRITE 仍经 XiantuStore；编辑路径 saveEditBag/saveEditPassive 与购买路径 doShopBuy 保持旧 API
+- Store 专项（6 集合 A–J + 已有回归）全通过；fail/insight 真实 UI 增删 + 刷新持久化 10/10；桌面 8/8、移动 10/10、PWA 6/6、完成链（+1/+1/+1/防重复）；Console 0 错误
+- Node test suite: NOT IMPLEMENTED（未伪造）；git diff --check 通过；Diff 仅限 .ai + index.html + store.js
+- 状态：Phase 2-C COMPLETED / WAITING_FOR_REVIEW；Phase 2-D WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
 
 - GitHub Push is now mandatory for task completion.

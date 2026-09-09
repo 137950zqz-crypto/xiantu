@@ -2133,7 +2133,8 @@ function openAddFail(){
 function saveAddFail(){
   const arr=getFail();
   arr.push({title:document.getElementById("ftitle").value.trim(),reason:document.getElementById("freason").value});
-  saveFail(arr);closeAllModal();renderFail();toast("已记录");
+  XiantuStore.fail.save(arr);   // Phase 2-C：真实写路径经 Store → saveFail()
+  closeAllModal();renderFail();toast("已记录");
 }
 function openFailDetail(i){
   const it=getFail()[i];
@@ -2155,7 +2156,8 @@ function saveEditFail(i){
 function confirmDelFail(i){
   const it=getFail()[i];
   showConfirm("删除卷宗",`确定删除「${esc(it.title)}」？`,true,()=>{
-    const arr=getFail();arr.splice(i,1);saveFail(arr);closeAllModal();renderFail();toast("已删除");
+    const arr=getFail();arr.splice(i,1);XiantuStore.fail.save(arr);   // Phase 2-C：真实写路径经 Store → saveFail()
+    closeAllModal();renderFail();toast("已删除");
   });
 }
 
@@ -2184,7 +2186,8 @@ function openAddInsight(){
 function saveAddInsight(){
   const arr=getInsight();
   arr.push({title:document.getElementById("ititle").value.trim(),content:document.getElementById("icontent").value});
-  saveInsight(arr);closeAllModal();renderInsight();toast("已记录");
+  XiantuStore.insight.save(arr);   // Phase 2-C：真实写路径经 Store → saveInsight()
+  closeAllModal();renderInsight();toast("已记录");
 }
 function openInsightDetail(i){
   const it=getInsight()[i];
@@ -2206,7 +2209,8 @@ function saveEditInsight(i){
 function confirmDelInsight(i){
   const it=getInsight()[i];
   showConfirm("删除札记",`确定删除「${esc(it.title)}」？`,true,()=>{
-    const arr=getInsight();arr.splice(i,1);saveInsight(arr);closeAllModal();renderInsight();toast("已删除");
+    const arr=getInsight();arr.splice(i,1);XiantuStore.insight.save(arr);   // Phase 2-C：真实写路径经 Store → saveInsight()
+    closeAllModal();renderInsight();toast("已删除");
   });
 }
 
