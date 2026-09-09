@@ -37,6 +37,15 @@
 - 未修改 JS / CSS / 数据结构 / sw.js / manifest.json / version.txt
 - 状态：Phase 1-B COMPLETED / WAITING_FOR_REVIEW；Phase 1-C WAITING_FOR_HUMAN_APPROVAL
 
+## 2026-09-09 · Phase 1-C（JS 架构审计 + 模块边界设计）
+
+- **只审计、零代码迁移**：完整读取 2746 行内联 JS，建立 219 函数 × 职责 × 行号 × 依赖映射
+- 关键发现：存储封装已成形（getXxx/saveXxx + 写时挂 fbAutoUpload/cloudQueueSync）；业务函数无绕过封装直写业务 key（除 setLocalSnapshot 刻意防回环）
+- 完成链实证：doCompleteTask → saveDailyScrolls → addCompletion → addReward/setCrystal/addLedger → render*+showCompletionToast
+- 模块映射 + 迁移顺序 + Tier 1（工具/存储/模型纯函数）/ Tier 2（迁移/自动卷/云同步）/ Tier 3（初始化/完成链/openPage/Modal/事件体系）已设计
+- 真实浏览器测试：桌面 8/8、移动 10/10、PWA 6/6；Console 0 错误、持久化通过
+- 未修改任何业务 JS；状态：Phase 1-C COMPLETED / WAITING_FOR_REVIEW；Phase 1-D WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
 
 - GitHub Push is now mandatory for task completion.
