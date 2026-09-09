@@ -41,13 +41,13 @@ TESTING
 |---|---|
 | Phase 0 | **COMPLETED**（PASSED，报告已归档） |
 | Phase 1 | **IN_PROGRESS**（子任务制推进） |
-| 当前子任务 | **Phase 1-E**（Storage 层最小安全迁移试点） |
+| 当前子任务 | **Phase 2-A**（Store 层设计 + 最小安全迁移试点） |
 | 子任务状态 | **COMPLETED / WAITING_FOR_REVIEW** |
-| 下一子任务 | **Phase 2 / Phase 1-F（待定）**（WAITING_FOR_HUMAN_APPROVAL，禁止自动启动） |
+| 下一子任务 | **Phase 2-B**（WAITING_FOR_HUMAN_APPROVAL，禁止自动启动） |
 | 自动阶段推进 | DISABLED |
 | 人工批准 | REQUIRED |
 
-> 注意：Phase 1-A / 1-B / 1-C / 1-D / 1-E 完成 ≠ Phase 1 整体完成。Phase 1 全部子任务完成并通过人工验收前，不得将 Phase 1 标记为 PASSED。
+> 注意：Phase 1-A~1-E 与 Phase 2-A 完成 ≠ 大阶段整体完成。任何大阶段标记 PASSED 前必须完成全部子任务并经人工验收。
 
 ## Phase 进入条件（任何 Phase 开始前必须同时满足）
 

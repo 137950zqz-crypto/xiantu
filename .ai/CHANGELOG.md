@@ -68,6 +68,18 @@
 - 真实浏览器测试：桌面 8/8、移动 10/10、PWA 6/6、完成链专项（晶核+1/行迹+1/账本+1/防重复）；Console 0 错误；持久化通过；manifest/sw/version 零修改
 - 未修改业务逻辑/数据结构/key/事件机制/PWA；状态：Phase 1-E COMPLETED / WAITING_FOR_REVIEW；Phase 2 / Phase 1-F（待定）WAITING_FOR_HUMAN_APPROVAL
 
+## 2026-09-09 · Phase 2-A（Store 层设计 + 最小安全迁移试点）
+
+- 在 js/core/storage.js 之上建立 Store 数据访问边界 `js/core/store.js`（window.XiantuStore）：
+  - dailyScrolls.get/save → getDailyScrolls/saveDailyScrolls；trail.get/save → getTrail/saveTrail
+  - 纯委托 storage.js：无 localStorage 直访、无业务逻辑、无 DOM、无云同步逻辑（边界浏览器实测全通过）
+- 迁移 2 条真实读取路径（其余 38 个调用点不动）：renderDailyShelf → XiantuStore.dailyScrolls.get()；renderTrail → XiantuStore.trail.get()
+- 旧 API 保留（getDailyScrolls/saveDailyScrolls/getTrail/saveTrail 存在、可调用、行为不变）；localStorage key / 数据结构 / 云钩子链（saveXxx → setItem → fbAutoUpload → cloudQueueSync）零修改
+- Store 专项 A/B/C/D 全通过（存在/API/旧API/数据一致）+ Store.save→刷新→Store.get 持久化通过
+- 真实浏览器测试：桌面 8/8、移动 10/10、PWA 6/6、完成链专项（晶核+1/行迹+1/账本+1/防重复）；Console 0 错误
+- Node test suite: NOT IMPLEMENTED（无 package.json，未伪造测试；已做 node --check 语法检查）
+- 未修改业务逻辑/数据结构/key/事件/PWA/迁移/云同步；状态：Phase 2-A COMPLETED / WAITING_FOR_REVIEW；Phase 2-B WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · AI Pipeline v1.1（远程完成闭环固化）
 
 - GitHub Push is now mandatory for task completion.

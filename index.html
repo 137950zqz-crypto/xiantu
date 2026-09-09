@@ -294,6 +294,8 @@
 <script src="js/core/dates.js"></script>
 <!-- Phase 1-E 试点迁移：Storage Adapter 层（必须先于主业务脚本加载；云同步钩子逐字符不变，调用方零修改） -->
 <script src="js/core/storage.js"></script>
+<!-- Phase 2-A 试点迁移：Store 数据访问边界（必须先于主业务脚本加载；仅委托 storage.js，无业务/UI/云逻辑） -->
+<script src="js/core/store.js"></script>
 
 <script>
 /* ================= 版本检测 + 版本信息 UI（v1.1） =================
@@ -1005,7 +1007,7 @@ function setDailyTagFilter(tg){dailyTagFilter=tg;renderDailyTagBar();renderDaily
 
 function renderDailyShelf(){
   ensureTodayScroll();
-  const list=getDailyScrolls();
+  const list=XiantuStore.dailyScrolls.get();   // Phase 2-A：真实调用路径经 Store → getDailyScrolls()
   const wrap=document.getElementById("dailyShelfContainer");
   wrap.innerHTML="";
   document.getElementById("dailyEmpty").style.display = list.length?"none":"block";
@@ -1230,7 +1232,7 @@ function nextTrailOrder(scrollId){return getTrail().filter(x=>x.scrollId===scrol
 let trailTagFilter="", trailSearch="", trailSort="desc";   // 排序：desc 时间倒序（默认）/ asc 时间正序 / chain 任务链编号
 function setTrailSort(v){trailSort=v;renderTrail()}
 function renderTrail(){
-  const list=getTrail();
+  const list=XiantuStore.trail.get();   // Phase 2-A：真实调用路径经 Store → getTrail()
   const total=document.getElementById("trailTotal");if(total)total.textContent=list.length;
   // 统计标签
   const cnt={};list.forEach(e=>(e.tags||[]).forEach(x=>{if(x)cnt[x]=(cnt[x]||0)+1}));
