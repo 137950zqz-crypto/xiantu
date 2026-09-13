@@ -2,6 +2,20 @@
 
 格式：`日期 · 内容`。记录每个 Phase 的关键动作与结果。
 
+## 2026-09-13 · Phase 2-D（扩大安全 READ 覆盖，不扩大业务边界）
+
+- 8 个安全 READ 迁移经 Store（Business/UI → XiantuStore → Storage → localStorage → 原有 cloud hooks）：
+  - renderHome 4 项 dashboard 计数：dashBag/dashPassive/dashTrail/dashInsight → XiantuStore.bag/passive/trail/insight.get().length
+  - renderBag / renderPassive / renderFail / renderInsight 列表渲染 → XiantuStore.bag/passive/fail/insight.get()
+- 迁移安全性：全部为纯渲染/计数读取，无副作用、无业务判断、非云上下文；旧 API（getBagData/getPassive/getFail/getInsight/getTrail/getDailyScrolls 等 12 个）全部保留可调用
+- 保留例外（零迁移）：50 处 localStorage 直访全部属例外区——migration（753）/backup（605-607）/restore（611-615）/初始化默认数据（836-877）/cloud config（2392-2393/2469/2487/2523-2525/2559）/云导入 applyCloudData（2528-2537）/ledger（460）；completion/reward/TaskChain/Auto Scroll/sealing/crystal/aura 未触碰
+- Store 边界复核：14 处 XiantuStore 调用全部为 6 集合 .get()/.save()；store.js 仅更新文件头注释（追加 Phase 2-D READ 清单），行为零变更；key/数据结构/云钩子/PWA 零修改
+- Store 专项（6 集合一致性 + dashboard + 边界 5 项 + 云钩子 + 写后刷新持久化）全通过；完成链回归（晶核+1/行迹+1/账本+1/防重复）PASS
+- 真实浏览器回归：桌面 1440×900 **12/12**、移动 390×844 **15/15**（含无横向溢出 sw=390、底部导航 flex、9 导航入口）、PWA **5/5**（SW activated、CSS 3 文件 200、刷新正常）；6 集合 UI 增删 + 刷新持久化全通过；Console 0 错误、Network 0 失败
+- 测试环境备注：历史 test-phase1a.js 被 /tmp 清理，已重建等价回归脚本 phase2d-regress.js；puppeteer-core 在测试工作区重装（不影响项目）
+- Node test suite: NOT IMPLEMENTED（项目无 package.json，未伪造）；git diff --check 通过；Diff 仅限 index.html（+16/-8）+ store.js（+2 注释）+ .ai
+- 状态：Phase 2-D COMPLETED / WAITING_FOR_REVIEW；Phase 2-E WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-08 · Phase 0 完成 + AI 开发流水线初始化
 
 ### Phase 0（仓库保护与基线）— 完成

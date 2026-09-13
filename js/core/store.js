@@ -20,6 +20,8 @@
  *   Phase 2-A（读）：renderDailyShelf → dailyScrolls.get()；renderTrail → trail.get()
  *   Phase 2-B（写）：saveNewBagItem / confirmDelBag → bag.save()；saveAddPassive / confirmDelPassive → passive.save()
  *   Phase 2-C（写）：saveAddFail / confirmDelFail → fail.save()；saveAddInsight / confirmDelInsight → insight.save()
+ *   Phase 2-D（读）：renderHome 4 项 dashboard 计数 → bag/passive/trail/insight.get()；
+ *                    renderBag / renderPassive / renderFail / renderInsight 列表渲染 → 对应集合.get()
  */
 window.XiantuStore = {
   /* 每日十课卷轴集（xiantu_daily_scroll，Phase 2-A） */

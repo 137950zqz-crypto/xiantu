@@ -942,10 +942,10 @@ function renderHome(){
   document.getElementById("todayNum").innerHTML = st.done + " <small>/ "+st.total+" 课</small>";
   document.getElementById("todayFill").style.width = st.percent+"%";
   document.getElementById("todayPercent").innerText = st.vol>0? (`${st.vol} 卷 · ${st.percent}% 完成`) : "今日尚未修行";
-  document.getElementById("dashBag").textContent=getBagData().length;
-  document.getElementById("dashPassive").textContent=getPassive().length;
-  document.getElementById("dashTrail").textContent=getTrail().length;
-  document.getElementById("dashInsight").textContent=getInsight().length;
+  document.getElementById("dashBag").textContent=XiantuStore.bag.get().length;      // Phase 2-D：安全 READ 经 Store
+  document.getElementById("dashPassive").textContent=XiantuStore.passive.get().length;  // Phase 2-D
+  document.getElementById("dashTrail").textContent=XiantuStore.trail.get().length;      // Phase 2-D
+  document.getElementById("dashInsight").textContent=XiantuStore.insight.get().length;  // Phase 2-D
   const hc=document.getElementById("dashCrystal");if(hc)hc.textContent=getCrystal();
   const ha=document.getElementById("dashAura");if(ha)ha.textContent=getAura();
   const list=getDailyScrolls();
@@ -1911,7 +1911,7 @@ function delScroll(idx){
 /* ================= 物品行囊（在线/本地图片） ================= */
 let bagSelectMode=false, bagSel=new Set();
 function renderBag(){
-  const list=getBagData();
+  const list=XiantuStore.bag.get();   // Phase 2-D：安全 READ 经 Store → getBagData()
   const wrap=document.getElementById("bagContainer");
   wrap.innerHTML="";
   document.getElementById("bagEmpty").style.display=list.length?"none":"block";
@@ -2063,7 +2063,7 @@ function confirmDelBag(i){
 function renderPassive(){
   const wrap=document.getElementById("passiveContainer");
   wrap.innerHTML="";
-  const list=getPassive();
+  const list=XiantuStore.passive.get();   // Phase 2-D：安全 READ 经 Store → getPassive()
   document.getElementById("passiveEmpty").style.display=list.length?"none":"block";
   list.forEach((it,i)=>{
     const d=document.createElement("div");d.className="li-card";
@@ -2112,7 +2112,7 @@ function confirmDelPassive(i){
 function renderFail(){
   const wrap=document.getElementById("failContainer");
   wrap.innerHTML="";
-  const list=getFail();
+  const list=XiantuStore.fail.get();   // Phase 2-D：安全 READ 经 Store → getFail()
   document.getElementById("failEmpty").style.display=list.length?"none":"block";
   list.forEach((it,i)=>{
     const d=document.createElement("div");d.className="li-card";
@@ -2165,7 +2165,7 @@ function confirmDelFail(i){
 function renderInsight(){
   const wrap=document.getElementById("insightContainer");
   wrap.innerHTML="";
-  const list=getInsight();
+  const list=XiantuStore.insight.get();   // Phase 2-D：安全 READ 经 Store → getInsight()
   document.getElementById("insightEmpty").style.display=list.length?"none":"block";
   list.forEach((it,i)=>{
     const d=document.createElement("div");d.className="li-card";
