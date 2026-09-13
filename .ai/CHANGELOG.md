@@ -2,6 +2,19 @@
 
 格式：`日期 · 内容`。记录每个 Phase 的关键动作与结果。
 
+## 2026-09-13 · Release Candidate 投入使用前总验收
+
+- **判定：RELEASE CANDIDATE = PASS**（P0 = 0，P1 = 0，P2 = 0）；状态 READY FOR REAL-WORLD USE；下一阶段 Real-world usage（停止主动架构优化）
+- 真实浏览器验收（独立 profile，零产品代码修改）：
+  - 核心流程（rc-core 24/24）：启动/10 槽位/完成链（TaskInstance→completed→CompletionRecord→Crystal+1→Ledger+1→TrailRecord 快照）/防重复（调用+刷新+快速点击）/历史快照（改当前任务不影响旧行迹）/多卷同日 3 卷 sequence=1/2/3/资源转换 1→100/万宝阁（足额/不足/无负数）/异常操作（快速点击只完成一次、取消删除不删、快速切页无错）
+  - 跨日与高级（rc-auto 25/25）：**Auto Scroll 跨日 P0**（昨天 13 未完成 → Auto01=10+Auto02=3，无丢失/重复/自动完成/身份不变）、连续跨日 Day3 不无限复制、TaskChain root→child→grandchild（rootTaskId/parentTaskId/branchId/nodeNumber）、标签继承（Inherited=祖先 ownTags 并集，无反向）、封卷只读/解封编辑不创建新任务不重复奖励/重新封印、Backup/Restore 恢复正确且 ID 不重新生成
+  - 细节（rc-misc 4/4）：点击标题/标签/卡片/展开收起不触发完成，仅待修行触发；真实鼠标双击购买只扣一次款（100→80）
+  - 全量回归：Desktop 1440×900 **12/12**、Mobile 390×844 **15/15**（无横向溢出）、PWA **5/5**；完成链/Store 专项/6 集合 UI 全 PASS
+- Console/Network 全部场景 0 错误；性能 DOM ready ~2.6s、页面切换 ≤2ms；Store 边界无越界；Schema 字段完整无新字段；git diff --check 通过；console.log 仅 2 处业务必要（schema 升级日志、SW 注册日志）
+- 问题登记：`.ai/reports/release-candidate-issues.md`（0 P0/0 P1/0 P2；RC-001 观察项真实双击已验证安全，RC-002/003 测试脚本缺陷已修正）
+- 版本标记：**git tag v2.0.0-rc1** 已创建并推送
+- 最终 PASS/FAIL 由 ChatGPT 独立读取 GitHub Remote Code/Commit/Tag/报告后审核；本条目不构成 v2.0.0 正式发布
+
 ## 2026-09-13 · Phase 2-E（统一安全访问规范 + 迁移剩余安全访问路径）
 
 - 建立 **Store Access Policy**（`.ai/store-access-policy.md`）：普通业务代码访问已纳入 Store 的 6 个数据集合时优先经 XiantuStore → Storage → localStorage + 原有 cloud hooks；高风险区域（completion/reward/ledger/crystal/aura/TaskChain/Auto Scroll/sealing/migration/backup/restore/import/export/reset/cloud config/cloud sync/商店购买）明确不通过 Store 统一；旧 API 保留、逐调用点迁移、不全局替换、不改变业务行为
