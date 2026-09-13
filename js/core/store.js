@@ -22,6 +22,15 @@
  *   Phase 2-C（写）：saveAddFail / confirmDelFail → fail.save()；saveAddInsight / confirmDelInsight → insight.save()
  *   Phase 2-D（读）：renderHome 4 项 dashboard 计数 → bag/passive/trail/insight.get()；
  *                    renderBag / renderPassive / renderFail / renderInsight 列表渲染 → 对应集合.get()
+ *   Phase 2-E（读+写，统一安全访问规范）：CRUD 页面读（saveNewBagItem/openBagDetail/openBagEdit/saveEditBag/confirmDelBag、
+ *                    saveAddPassive/openPassiveEdit/saveEditPassive/confirmDelPassive、saveAddFail/openFailDetail/openEditFail/
+ *                    saveEditFail/confirmDelFail、saveAddInsight/openInsightDetail/openEditInsight/saveEditInsight/confirmDelInsight
+ *                    → 对应集合.get()）；普通 CRUD 写（confirmDeleteBagSelected/saveEditBag/saveEditPassive/saveEditFail/
+ *                    saveEditInsight → 对应集合.save()）；纯计算读（getDayScrollIndex/getScrollNoById/collectAllTags/
+ *                    nextTrailOrder → dailyScrolls/trail.get()）
+ * 访问规范：普通业务代码访问已纳入 Store 的数据集合时优先经 XiantuStore；旧 API（getXxx/saveXxx）全部保留。
+ * 高风险区（completion/reward/ledger/crystal/aura/TaskChain/Auto Scroll/sealing/migration/backup/restore/import/export/
+ * reset/cloud config/cloud sync/商店购买）不通过 Store，保持原路径。详见 .ai/store-access-policy.md。
  */
 window.XiantuStore = {
   /* 每日十课卷轴集（xiantu_daily_scroll，Phase 2-A） */

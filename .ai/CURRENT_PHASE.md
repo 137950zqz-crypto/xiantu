@@ -42,13 +42,13 @@ TESTING
 | Phase 0 | **COMPLETED**（PASSED，报告已归档） |
 | Phase 1 | **COMPLETED**（子任务 1-A~1-E 全部 PASSED 并经人工审核） |
 | Phase 2 | **IN_PROGRESS**（子任务制推进） |
-| 当前子任务 | **Phase 2-D**（扩大安全 READ 覆盖：8 个纯渲染读取经 Store，不扩大业务边界） |
+| 当前子任务 | **Phase 2-E**（统一安全访问规范 + 迁移剩余安全访问路径） |
 | 子任务状态 | **COMPLETED / WAITING_FOR_REVIEW** |
-| 下一子任务 | **Phase 2-E**（WAITING_FOR_HUMAN_APPROVAL，禁止自动启动） |
+| 下一子任务 | **Phase 2-F**（WAITING_FOR_HUMAN_APPROVAL，禁止自动启动） |
 | 自动阶段推进 | DISABLED |
 | 人工批准 | REQUIRED |
 
-> 注意：Phase 1 大阶段已完成（1-A~1-E 全部 PASSED 并经人工审核）；Phase 2 尚未完成（2-A/2-B/2-C/2-D 为 Phase 2 子任务，全部完成并经人工验收前不得将 Phase 2 标记为 PASSED）。
+> 注意：Phase 1 大阶段已完成（1-A~1-E 全部 PASSED 并经人工审核）；Phase 2 尚未完成（2-A/2-B/2-C/2-D/2-E 为 Phase 2 子任务，全部完成并经人工验收前不得将 Phase 2 标记为 PASSED）。
 
 ## Phase 进入条件（任何 Phase 开始前必须同时满足）
 

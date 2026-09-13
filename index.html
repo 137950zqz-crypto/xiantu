@@ -978,22 +978,23 @@ let dailyTagFilter="";                // 每日十课标签筛选
 function isScrollLocked(s){return s && s.date!==getTodayStr() && !s.unlocked}
 /* 当日第几卷（同日期按数组顺序计数） */
 function getDayScrollIndex(idx){
-  const list=getDailyScrolls();
+  const list=XiantuStore.dailyScrolls.get();   // Phase 2-E：纯计算 READ 经 Store → getDailyScrolls()
   if(idx<0||idx>=list.length)return 1;
   let n=0;
   for(let i=0;i<=idx;i++){ if(list[i].date===list[idx].date) n++; }
   return n;
 }
 function getScrollNoById(scrollId){
-  const list=getDailyScrolls();const idx=list.findIndex(s=>s.id===scrollId);
+  const list=XiantuStore.dailyScrolls.get();   // Phase 2-E：纯计算 READ 经 Store → getDailyScrolls()
+  const idx=list.findIndex(s=>s.id===scrollId);
   return idx>=0?getDayScrollIndex(idx):1;
 }
 
 /* 全站标签集合 */
 function collectAllTags(){
   const set=new Set();
-  getDailyScrolls().forEach(s=>(s.tasks||[]).forEach(t=>(t.tags||[]).forEach(x=>{if(x)set.add(x)})));
-  getTrail().forEach(e=>(e.tags||[]).forEach(x=>{if(x)set.add(x)}));
+  XiantuStore.dailyScrolls.get().forEach(s=>(s.tasks||[]).forEach(t=>(t.tags||[]).forEach(x=>{if(x)set.add(x)})));   // Phase 2-E：纯计算 READ 经 Store
+  XiantuStore.trail.get().forEach(e=>(e.tags||[]).forEach(x=>{if(x)set.add(x)}));   // Phase 2-E：纯计算 READ 经 Store
   return Array.from(set).sort();
 }
 function renderDailyTagBar(){
@@ -1227,7 +1228,7 @@ function removeTrailForTask(scrollId, taskId){
   t.filter(x=>x.scrollId===scrollId).sort((a,b)=>a.order-b.order).forEach(x=>{x.order=k++});
   saveTrail(t);
 }
-function nextTrailOrder(scrollId){return getTrail().filter(x=>x.scrollId===scrollId).length+1}
+function nextTrailOrder(scrollId){return XiantuStore.trail.get().filter(x=>x.scrollId===scrollId).length+1}   // Phase 2-E：纯计算 READ 经 Store → getTrail()
 
 let trailTagFilter="", trailSearch="", trailSort="desc";   // 排序：desc 时间倒序（默认）/ asc 时间正序 / chain 任务链编号
 function setTrailSort(v){trailSort=v;renderTrail()}
@@ -1953,8 +1954,8 @@ function updateSelCount(){const el=document.getElementById("selCount");if(el)el.
 function confirmDeleteBagSelected(){
   if(bagSel.size===0){toast("未选择任何物品","warn");return}
   showConfirm("删除物品",`确定删除选中的 ${bagSel.size} 件物品？`,true,()=>{
-    const arr=getBagData().filter((_,i)=>!bagSel.has(i));
-    saveBag(arr);bagSel.clear();bagSelectMode=false;renderBag();toast("已删除");
+    const arr=XiantuStore.bag.get().filter((_,i)=>!bagSel.has(i));   // Phase 2-E：安全 READ 经 Store → getBagData()
+    XiantuStore.bag.save(arr);bagSel.clear();bagSelectMode=false;renderBag();toast("已删除");   // Phase 2-E：安全 WRITE 经 Store → saveBag()
   });
 }
 /* 本地图片 → 压缩 dataURL（避免撑爆 localStorage） */
@@ -2021,13 +2022,13 @@ function openAddItem(){
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveNewBagItem()">保存</button>`);
 }
 function saveNewBagItem(){
-  const arr=getBagData();
+  const arr=XiantuStore.bag.get();   // Phase 2-E：安全 READ 经 Store → getBagData()
   arr.push({name:document.getElementById("iname").value.trim(),count:Number(document.getElementById("icount").value)||1,img:resolveItemImg(),note:document.getElementById("inote").value.trim()});
   XiantuStore.bag.save(arr);   // Phase 2-B：真实写路径经 Store → saveBag()
   closeAllModal();renderBag();toast("已添加");
 }
 function openBagDetail(i){
-  const it=getBagData()[i];
+  const it=XiantuStore.bag.get()[i];   // Phase 2-E：安全 READ 经 Store → getBagData()
   showModal(`物品详情 · ${esc(it.name)}`,
     `<div style="color:var(--ink-2)">数量：${esc(String(it.count))}</div>
      <div style="margin:10px 0;color:var(--muted);font-size:13px">备注</div>
@@ -2037,7 +2038,7 @@ function openBagDetail(i){
      <button class="btn-danger" onclick="confirmDelBag(${i})">删除</button>`);
 }
 function openBagEdit(i){
-  const it=getBagData()[i];
+  const it=XiantuStore.bag.get()[i];   // Phase 2-E：安全 READ 经 Store → getBagData()
   itemImgData="";
   showModal("编辑物品",
     `<label>物品名称</label><input id="einame" value="${esc(it.name)}">
@@ -2047,14 +2048,14 @@ function openBagEdit(i){
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditBag(${i})">保存修改</button>`);
 }
 function saveEditBag(i){
-  const arr=getBagData();
+  const arr=XiantuStore.bag.get();   // Phase 2-E：安全 READ 经 Store → getBagData()
   arr[i]={name:document.getElementById("einame").value.trim(),count:Number(document.getElementById("eicount").value)||1,img:resolveItemImg(),note:document.getElementById("einote").value.trim()};
-  saveBag(arr);closeAllModal();renderBag();toast("已保存");
+  XiantuStore.bag.save(arr);closeAllModal();renderBag();toast("已保存");   // Phase 2-E：安全 WRITE 经 Store → saveBag()
 }
 function confirmDelBag(i){
-  const it=getBagData()[i];
+  const it=XiantuStore.bag.get()[i];   // Phase 2-E：安全 READ 经 Store → getBagData()
   showConfirm("删除物品",`确定删除「${esc(it.name)}」？`,true,()=>{
-    const arr=getBagData();arr.splice(i,1);XiantuStore.bag.save(arr);   // Phase 2-B：真实写路径经 Store → saveBag()
+    const arr=XiantuStore.bag.get();arr.splice(i,1);XiantuStore.bag.save(arr);   // Phase 2-E：安全 CRUD 读写经 Store
     closeAllModal();renderBag();toast("已删除");
   });
 }
@@ -2082,13 +2083,13 @@ function openAddPassive(){
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveAddPassive()">保存</button>`);
 }
 function saveAddPassive(){
-  const arr=getPassive();
+  const arr=XiantuStore.passive.get();   // Phase 2-E：安全 READ 经 Store → getPassive()
   arr.push({title:document.getElementById("ptitle").value.trim(),desc:document.getElementById("pdesc").value.trim(),mastered:false});
   XiantuStore.passive.save(arr);   // Phase 2-B：真实写路径经 Store → savePassive()
   closeAllModal();renderPassive();toast("已添加");
 }
 function openPassiveEdit(i){
-  const it=getPassive()[i];
+  const it=XiantuStore.passive.get()[i];   // Phase 2-E：安全 READ 经 Store → getPassive()
   showModal("编辑功法",
     `<label>功法名称</label><input id="eptitle" value="${esc(it.title)}">
      <label>描述备注</label><textarea id="epdesc" rows="4">${esc(it.desc)}</textarea>
@@ -2096,14 +2097,14 @@ function openPassiveEdit(i){
     `<button class="btn-danger" onclick="confirmDelPassive(${i})">删除</button><button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditPassive(${i})">保存</button>`);
 }
 function saveEditPassive(i){
-  const arr=getPassive();
+  const arr=XiantuStore.passive.get();   // Phase 2-E：安全 READ 经 Store → getPassive()
   arr[i]={title:document.getElementById("eptitle").value.trim(),desc:document.getElementById("epdesc").value.trim(),mastered:document.getElementById("emastered").checked};
-  savePassive(arr);closeAllModal();renderPassive();toast("已保存");
+  XiantuStore.passive.save(arr);closeAllModal();renderPassive();toast("已保存");   // Phase 2-E：安全 WRITE 经 Store → savePassive()
 }
 function confirmDelPassive(i){
-  const it=getPassive()[i];
+  const it=XiantuStore.passive.get()[i];   // Phase 2-E：安全 READ 经 Store → getPassive()
   showConfirm("删除功法",`确定删除「${esc(it.title)}」？`,true,()=>{
-    const arr=getPassive();arr.splice(i,1);XiantuStore.passive.save(arr);   // Phase 2-B：真实写路径经 Store → savePassive()
+    const arr=XiantuStore.passive.get();arr.splice(i,1);XiantuStore.passive.save(arr);   // Phase 2-E：安全 CRUD 读写经 Store
     closeAllModal();renderPassive();toast("已删除");
   });
 }
@@ -2131,32 +2132,32 @@ function openAddFail(){
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveAddFail()">保存</button>`);
 }
 function saveAddFail(){
-  const arr=getFail();
+  const arr=XiantuStore.fail.get();   // Phase 2-E：安全 READ 经 Store → getFail()
   arr.push({title:document.getElementById("ftitle").value.trim(),reason:document.getElementById("freason").value});
   XiantuStore.fail.save(arr);   // Phase 2-C：真实写路径经 Store → saveFail()
   closeAllModal();renderFail();toast("已记录");
 }
 function openFailDetail(i){
-  const it=getFail()[i];
+  const it=XiantuStore.fail.get()[i];   // Phase 2-E：安全 READ 经 Store → getFail()
   showModal(`失败尝试 · ${esc(it.title)}`,
     `<div class="note-area">${esc(it.reason||"无记录")}</div>`,
     `<button class="btn-gray" onclick="closeAllModal()">关闭</button><button class="btn-primary" onclick="openEditFail(${i})">编辑</button><button class="btn-danger" onclick="confirmDelFail(${i})">删除</button>`);
 }
 function openEditFail(i){
-  const it=getFail()[i];
+  const it=XiantuStore.fail.get()[i];   // Phase 2-E：安全 READ 经 Store → getFail()
   showModal("编辑失败卷宗",
     `<label>尝试事项名称</label><input id="eft" value="${esc(it.title)}"><label>失败原因</label><textarea id="efr" rows="6">${esc(it.reason)}</textarea>`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditFail(${i})">保存修改</button>`);
 }
 function saveEditFail(i){
-  const arr=getFail();
+  const arr=XiantuStore.fail.get();   // Phase 2-E：安全 READ 经 Store → getFail()
   arr[i]={title:document.getElementById("eft").value.trim(),reason:document.getElementById("efr").value};
-  saveFail(arr);closeAllModal();renderFail();toast("已保存");
+  XiantuStore.fail.save(arr);closeAllModal();renderFail();toast("已保存");   // Phase 2-E：安全 WRITE 经 Store → saveFail()
 }
 function confirmDelFail(i){
-  const it=getFail()[i];
+  const it=XiantuStore.fail.get()[i];   // Phase 2-E：安全 READ 经 Store → getFail()
   showConfirm("删除卷宗",`确定删除「${esc(it.title)}」？`,true,()=>{
-    const arr=getFail();arr.splice(i,1);XiantuStore.fail.save(arr);   // Phase 2-C：真实写路径经 Store → saveFail()
+    const arr=XiantuStore.fail.get();arr.splice(i,1);XiantuStore.fail.save(arr);   // Phase 2-E：安全 CRUD 读写经 Store
     closeAllModal();renderFail();toast("已删除");
   });
 }
@@ -2184,32 +2185,32 @@ function openAddInsight(){
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveAddInsight()">保存</button>`);
 }
 function saveAddInsight(){
-  const arr=getInsight();
+  const arr=XiantuStore.insight.get();   // Phase 2-E：安全 READ 经 Store → getInsight()
   arr.push({title:document.getElementById("ititle").value.trim(),content:document.getElementById("icontent").value});
   XiantuStore.insight.save(arr);   // Phase 2-C：真实写路径经 Store → saveInsight()
   closeAllModal();renderInsight();toast("已记录");
 }
 function openInsightDetail(i){
-  const it=getInsight()[i];
+  const it=XiantuStore.insight.get()[i];   // Phase 2-E：安全 READ 经 Store → getInsight()
   showModal(`悟道心得 · ${esc(it.title)}`,
     `<div class="note-area">${esc(it.content||"无记录")}</div>`,
     `<button class="btn-gray" onclick="closeAllModal()">关闭</button><button class="btn-primary" onclick="openEditInsight(${i})">编辑</button><button class="btn-danger" onclick="confirmDelInsight(${i})">删除</button>`);
 }
 function openEditInsight(i){
-  const it=getInsight()[i];
+  const it=XiantuStore.insight.get()[i];   // Phase 2-E：安全 READ 经 Store → getInsight()
   showModal("编辑悟道札记",
     `<label>心得标题</label><input id="eit" value="${esc(it.title)}"><label>感悟内容</label><textarea id="eic" rows="6">${esc(it.content)}</textarea>`,
     `<button class="btn-gray" onclick="closeAllModal()">取消</button><button class="btn-primary" onclick="saveEditInsight(${i})">保存修改</button>`);
 }
 function saveEditInsight(i){
-  const arr=getInsight();
+  const arr=XiantuStore.insight.get();   // Phase 2-E：安全 READ 经 Store → getInsight()
   arr[i]={title:document.getElementById("eit").value.trim(),content:document.getElementById("eic").value};
-  saveInsight(arr);closeAllModal();renderInsight();toast("已保存");
+  XiantuStore.insight.save(arr);closeAllModal();renderInsight();toast("已保存");   // Phase 2-E：安全 WRITE 经 Store → saveInsight()
 }
 function confirmDelInsight(i){
-  const it=getInsight()[i];
+  const it=XiantuStore.insight.get()[i];   // Phase 2-E：安全 READ 经 Store → getInsight()
   showConfirm("删除札记",`确定删除「${esc(it.title)}」？`,true,()=>{
-    const arr=getInsight();arr.splice(i,1);XiantuStore.insight.save(arr);   // Phase 2-C：真实写路径经 Store → saveInsight()
+    const arr=XiantuStore.insight.get();arr.splice(i,1);XiantuStore.insight.save(arr);   // Phase 2-E：安全 CRUD 读写经 Store
     closeAllModal();renderInsight();toast("已删除");
   });
 }

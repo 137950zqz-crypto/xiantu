@@ -2,6 +2,19 @@
 
 格式：`日期 · 内容`。记录每个 Phase 的关键动作与结果。
 
+## 2026-09-13 · Phase 2-E（统一安全访问规范 + 迁移剩余安全访问路径）
+
+- 建立 **Store Access Policy**（`.ai/store-access-policy.md`）：普通业务代码访问已纳入 Store 的 6 个数据集合时优先经 XiantuStore → Storage → localStorage + 原有 cloud hooks；高风险区域（completion/reward/ledger/crystal/aura/TaskChain/Auto Scroll/sealing/migration/backup/restore/import/export/reset/cloud config/cloud sync/商店购买）明确不通过 Store 统一；旧 API 保留、逐调用点迁移、不全局替换、不改变业务行为
+- 迁移 **5 处安全 WRITE**（普通 CRUD 保存）：confirmDeleteBagSelected（批量删除）、saveEditBag、saveEditPassive、saveEditFail、saveEditInsight → 对应集合 .save()
+- 迁移 **24 处安全 READ**（纯读取无副作用）：bag/passive/fail/insight 四集合的新增读/详情读/编辑预填读/删除回调读（19 处）+ 纯计算读（getDayScrollIndex/getScrollNoById/collectAllTags×2/nextTrailOrder，5 处）
+- 分类保留：BUSINESS-COUPLED（doCompleteTask/addCompletion/addReward/addLedger/setCrystal/setAura/doShopBuy/unlockScroll/resealScroll/TaskChain/Auto Scroll/renderHome 业务分支/getTodayStats）+ INFRASTRUCTURE（migration/backup/restore/import/export/reset/cloud config/cloud sync/初始化）——全部保持原路径，零迁移
+- 边界复核：48 处 XiantuStore 调用全部为 6 集合 .get()/.save()；store.js 仅注释更新，无业务方法；旧 API 12 个保留；key/数据结构/云钩子/PWA 零修改
+- 修复：getScrollNoById 迁移时注释与下一行被工具合并（语法错误），已修复并复测
+- Store 2E 专项全通过（编辑 4 集合经 Store、详情经 Store、批量删除 4→0、纯计算等价、刷新持久化、0 错误）；完成链回归（+1/+1/+1/防重复）PASS
+- 真实浏览器回归：桌面 1440×900 **12/12**、移动 390×844 **15/15**（无横向溢出、底部导航、9 入口）、PWA **5/5**（SW activated、CSS 200、刷新正常）；Console 0 错误、Network 0 失败
+- Node test suite: NOT IMPLEMENTED（无 package.json，未伪造）；git diff --check 通过；Diff 仅限 index.html（44+/34-）+ store.js（注释）+ store-access-policy.md + .ai
+- 状态：Phase 2-E COMPLETED / WAITING_FOR_REVIEW；Phase 2-F WAITING_FOR_HUMAN_APPROVAL
+
 ## 2026-09-13 · Phase 2-D（扩大安全 READ 覆盖，不扩大业务边界）
 
 - 8 个安全 READ 迁移经 Store（Business/UI → XiantuStore → Storage → localStorage → 原有 cloud hooks）：
